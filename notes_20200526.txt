@@ -1,0 +1,50 @@
+e scattering -- modest frequency shifts that don't change the frequency all that much
+
+find the intersection of a line with a sphere. Zones have a spherical shape
+Compute the intersection with all of those surfaces --- find which surface it intersects first
+
+Turning points in theta -- cause a problem
+
+
+First problem that we might want to do:
+
+  Whitney - MC experiments
+  Other papers about scattering of photons in slabs and spheres.
+    May be a good idea to imagine a sphere with univform density gas inside, uniform temperature. Very easy to set up. Source of photons coming from a single direction. Photons hit the sphere at any position --- impact parameter is random. Input spectrum (monochromatic), randomly choose the place where it will hit. 
+    Watch the photons bounce around, try to compute the flux and mean intensity everywhere inside sa a function of frequency. Get the relection coefficient. No desctruction --- all the photons eventually leave, so refleaction coefficient is 1. What direction do they leave in, and what frequency do they leave with.
+    When Lya photons come in, if they hit molecules, they can be ffective in dissociating them. Molecules are usually buried deep within an atmosphere, so for Lya to come in from the outside, it hsa to go to high optical depth. Look at stuff coming afrom the outside and see how deep it goes.
+    Photons going in the z direction but with a random uniform impact parameter.
+
+
+  Other problem: good analytic solution to check against
+    Release photons at the center with a certain frequency and look at the spectrum that leaves the sphere. 
+
+
+  Small MC exercise: have a position in a plane in cylindrical coordinates. Chooes points that are uniform in area, but don't choose x and y. How do you randomly sample impact parameter from 0 to r, and the angle. Want the points that you're choosing to be even in area. Doing an integral and then inverting it.
+
+  For frequency --- do things in an incoming monocrhomatic beam. Double peak spectrum could be a sum of two gaussians. 
+
+Instead, send in a spectrum--- Lya spectrum from the star is the sum of two gaussians. Peak that is moved away from line center, one positive one negative, both have the same width. How do you sample a probability distribution that is the sum of two distributions.
+
+code is slow for large optical depth --- core skipping. Could speed up --- cosmologists 
+
+Implement a simple version of this --- not resonant scattering, scattering with a constant optical depth
+Rewrite for a spherical boundary - column of photons with random impact parameter incident on a sphere of gas
+Write your own code to see how everything works
+Randomly choose where it hits the sphere, scatters around, when it exits the sphere
+    
+    Reconstructing intensity, and flux --- different in MC
+
+      How do you do this well? How do you tabulate fluxes? 
+      Every time a photon goes through a cell boundary, ...
+
+      Add up how much time a photon spends in every cell. Convert time spent into things like flux and intensity. Two limits: 
+
+        Sphere --- release a photon from the center of the sphere. optically thin. Photon travels directly out. Amount of time the photon would spend is the light crossing time. Cell width l divided by c. Minimum intensity you could ever get.
+
+        Now progressively make the sphere higher and higher optical depth. Photon takes a long time to ever get out. In the meantime, there are more photons. you build up a large number of photons thta are in the sphere at the same time. You could have a lot of photons in the sphere at the same time. 
+
+        Tabulating a frequency dependent mean intensity, tabulating a force
+
+
+
