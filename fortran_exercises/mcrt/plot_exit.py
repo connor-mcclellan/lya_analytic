@@ -10,21 +10,51 @@ data = np.loadtxt('exit_photons.dat', skiprows=1)
 
 fig = plt.figure(figsize=(10, 4), dpi=80)
 
-xlabels = [r'$r$', r'$\theta$', r'$\phi$', r'$\hat{r}$', r'$\hat{\theta}$', r'$\hat{\phi}$']
-titles = [r'$r$ Position', r'$\theta$ Position', r'$\phi$ Position', r'$r$ Direction', r'$\theta$ Direction', r'$\phi$ Direction']
-scale = [1., 180./np.pi, 180./np.pi, 1., 180./np.pi, 180./np.pi]
+xlabels = [r'$r$', r'$\theta$', r'$\phi$']
+titles = [r'$r$ Position', r'$\theta$ Position', r'$\phi$ Position']
+scale = [1., 180./np.pi, 180./np.pi]
 ############
 axs = fig.subplots(2, 3)
 axs = np.ndarray.flatten(axs)
 
-for i in range(6):
+for i in range(3):
   ax = axs[i]
   ax.hist(scale[i]*data[:, i], bins=50, color='k', histtype='step', density=True)
   ax.set_xlabel(xlabels[i])
   ax.set_ylabel(r'n')
   ax.set_title(titles[i])
 
+r = data[:, 0]
+theta = data[:, 1]
+phi = data[:, 2]
+
+xhat = data[:, 3]
+yhat = data[:, 4]
+zhat = data[:, 5]
+
+rhat = np.sin(theta)*np.cos(phi)*xhat   \
+       + np.sin(theta)*np.sin(phi)*yhat \
+       + np.cos(theta)*zhat
+
+exit_theta = np.arccos(zhat)
+exit_phi = np.arctan2(yhat, xhat)
+exit_phi[exit_phi < 0.0] += 2.0*np.pi
+
+dat = [rhat, exit_theta, exit_phi]
+xlabels = [r'$r$', r'$\theta$', r'$\phi$']
+titles = [r'$\hat{r}$', r'Exit $\theta$', r'Exit $\phi$']
+scale = [1., 180./np.pi, 180./np.pi]
+
+for i in range(3):
+  ax = axs[i+3]
+  ax.hist(scale[i]*dat[i], bins=50, color='k', histtype='step', density=True)
+  ax.set_xlabel(xlabels[i])
+  ax.set_ylabel(r'n')
+  ax.set_title(titles[i])
+
+plt.suptitle(r'$\chi=10^{-2}$, $R=20$, $b_{max}=20$')
 plt.tight_layout()
+plt.subplots_adjust(top=0.878)
 plt.show()
 
 plt.figure()
