@@ -30,6 +30,7 @@ for i in range(1, 3):
 axs[2].hist(data[:, 6], bins=20, color='k', histtype='step', density=False)
 axs[2].set_xlabel('Distance')
 axs[2].set_ylabel('n')
+axs[2].set_yscale('log')
 axs[2].set_title('Total Distance Traveled')
 
 r = data[:, 0]
@@ -52,7 +53,7 @@ axs[5].hist(data[:, 5], bins=20, color='k', histtype='step', density=False)
 plt.xlabel('n steps')
 plt.ylabel('n')
 
-plt.suptitle(r'$\tau=100$')
+plt.suptitle(r'Escape from Sphere, $\tau=100$')
 plt.tight_layout()
 plt.subplots_adjust(top=0.878)
-plt.savefig('tau100.pdf')
+plt.savefig('escape_tau100.pdf')

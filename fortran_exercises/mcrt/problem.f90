@@ -8,20 +8,28 @@ subroutine beam(pos, dir)
   real (dp) :: xi, zeta, b
   integer :: i
 
-  b=1.d0
+!!! INCIDENT ON POSITIVE Z HEMISPHERE IN NEGATIVE Z DIRECTION
+!  b=1.d0
+! 
+!  call random_number(xi)
+!  call random_number(zeta)
+! 
+!  pos(1) = 1.d0 - 1e-3 ! Set r coordinate to be rmax
+!  pos(2) = asin(b * sqrt(zeta))
+!  if (pos(2) .lt. 0.d0) then
+!    pos(2) = pos(2) + pi
+!  endif
+!  pos(3) = xi * 2.0 * pi  ! Distribute phi uniformly over a circle
+! 
+!  ! Unit vector pointing in negative z direction
+!  dir = (/pi, 0.d0/)
 
+!!! PHOTONS RELEASED AT CENTER
   call random_number(xi)
   call random_number(zeta)
 
-  pos(1) = 1.d0 - 1e-3 ! Set r coordinate to be rmax
-  pos(2) = asin(b * sqrt(zeta))
-  if (pos(2) .lt. 0.d0) then
-    pos(2) = pos(2) + pi
-  endif
-  pos(3) = xi * 2.0 * pi  ! Distribute phi uniformly over a circle
-
-  ! Unit vector pointing in negative z direction
-  dir = (/pi, 0.d0/)
+  pos = (/0.d0,  0.d0, 0.d0/)
+  dir = (/acos(2.d0 * zeta - 1.d0), 2.d0 * pi * xi/)
 
 end subroutine beam
 
@@ -32,13 +40,10 @@ subroutine step(pos, dir, exitflag, nsteps, d_tot)
   real (dp) :: x, y, z, x1, y1, z1, x2, y2, z2, r2, theta2, phi2
   real (dp), dimension(3), intent(inout) :: pos
   real (dp), dimension(2), intent(inout) :: dir
-  real (dp), intent(out) ::  d_tot
+  real (dp), intent(inout) ::  d_tot
   real (dp) :: d, s, dot, position_magsq, displacement_magsq
   integer, intent(inout) :: nsteps
   logical, intent(inout) :: exitflag
-
-  ! total distance traveled
-  d_tot = 0.
 
   ! random numbers
   call random_number(xi)
@@ -84,7 +89,7 @@ subroutine step(pos, dir, exitflag, nsteps, d_tot)
     displacement_magsq = norm2((/x, y, z/))**2.d0
     
     s = (-dot + sqrt(dot**2.d0 - displacement_magsq*(position_magsq - 1.d0**2.d0)))/displacement_magsq
-    
+
     ! travel that distance
     x2 = s*x + x1
     y2 = s*y + y1
@@ -121,21 +126,22 @@ program problem
   logical :: exitflag = .false., verbose
   integer :: i, n=100000, nsteps=0
 
-  tau = 100.d0
-  verbose = .false.
+  tau = 10.d0
+  verbose = .true.
 
   open(1, file='exit_photons.dat', status='replace')
   do i=1, n
     call beam(pos, dir)
+    d_tot = 0.d0
     if (verbose) then
       print *, 'photon', i
-      print *, 'incidence', pos
+!      print *, 'incidence', pos
     end if
     do while (exitflag .eqv. .false.)
       call step(pos, dir, exitflag, nsteps, d_tot)
-      if (verbose) then
-        print *, pos, dir, nsteps 
-      endif
+!      if (verbose) then
+!        print *, pos, dir, nsteps, d_tot
+!      endif
     end do
 
     write(1, *) pos, dir, nsteps, d_tot
