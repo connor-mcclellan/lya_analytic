@@ -125,11 +125,13 @@ program problem
   real (dp) :: d_tot
   logical :: exitflag = .false., verbose
   integer :: i, n=100000, nsteps=0
+  character(len=64) :: filenum
 
-  tau = 10.d0
+  tau = 30.d0
   verbose = .true.
 
-  open(1, file='exit_photons.dat', status='replace')
+  write (filenum, *) int(tau)
+  open(1, file='exit_photons_tau'//trim(adjustl(filenum))//'.dat', status='replace')
   do i=1, n
     call beam(pos, dir)
     d_tot = 0.d0
