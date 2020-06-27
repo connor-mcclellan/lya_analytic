@@ -124,31 +124,35 @@ program problem
   real (dp), dimension(2) :: dir
   real (dp) :: d_tot
   logical :: exitflag = .false., verbose
-  integer :: i, n=100000, nsteps=0
+  integer :: i, j, n=100000, nsteps=0
   character(len=64) :: filenum
 
-  tau = 30.d0
-  verbose = .true.
 
-  write (filenum, *) int(tau)
-  open(1, file='exit_photons_tau'//trim(adjustl(filenum))//'.dat', status='replace')
-  do i=1, n
-    call beam(pos, dir)
-    d_tot = 0.d0
-    if (verbose) then
-      print *, 'photon', i
-!      print *, 'incidence', pos
-    end if
-    do while (exitflag .eqv. .false.)
-      call step(pos, dir, exitflag, nsteps, d_tot)
-!      if (verbose) then
-!        print *, pos, dir, nsteps, d_tot
-!      endif
+  do j=1, 100
+    print *, 'j=', j
+    tau = float(j)
+    verbose = .false.
+
+    write (filenum, *) int(tau)
+    open(1, file='exit_photons_tau'//trim(adjustl(filenum))//'.dat', status='replace')
+    do i=1, n
+      call beam(pos, dir)
+      d_tot = 0.d0
+      if (verbose) then
+        print *, 'photon', i
+  !      print *, 'incidence', pos
+      end if
+      do while (exitflag .eqv. .false.)
+        call step(pos, dir, exitflag, nsteps, d_tot)
+  !      if (verbose) then
+  !        print *, pos, dir, nsteps, d_tot
+  !      endif
+      end do
+
+      write(1, *) pos, dir, nsteps, d_tot
+      exitflag = .false.
+      nsteps = 0
     end do
-
-    write(1, *) pos, dir, nsteps, d_tot
-    exitflag = .false.
-    nsteps = 0
   end do
 end program
 
