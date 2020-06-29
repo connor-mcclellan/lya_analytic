@@ -15,7 +15,7 @@ def plot_fit(tau):
     print(norm)
 
     # Load photon data, take care of float errors in r
-    data = np.loadtxt('./escape/escape_photons/exit_photons_tau{}.dat'.format(int(tau)), skiprows=1)
+    data = np.loadtxt('./escape/escape_photons_nphot1e6/exit_photons_tau{}.dat'.format(int(tau)), skiprows=1)
     data[:, 0] = np.round(data[:, 0], 5)
 
     # Set up figure, make initial histogram, normalize x and y
@@ -34,7 +34,7 @@ def plot_fit(tau):
     ax.set_xlabel('Distance')
     ax.set_ylabel('n (normalized)')
     ax.set_yscale('log')
-    ax.set_title(r'Total Distance Traveled, $\tau = {}$, $n = 10^5$'.format(int(tau)))
+    ax.set_title(r'Total Distance Traveled, $\tau = {}$, $n = 10^6$'.format(int(tau)))
 
     # Calculate probability density from Shane's series solution code
     prob = np.zeros(np.shape(bincenters))
@@ -54,8 +54,9 @@ def plot_fit(tau):
     return np.log(scale), shape
 
 
-filenames = glob('exit_photons_tau*.dat')
-taus = sorted([int(f.split('tau')[1].split('.dat')[0]) for f in filenames])[10:]
+filenames = glob('./escape/escape_photons_nphot1e6/exit_photons_tau*.dat')
+taus = sorted([int(f.split('tau')[1].split('.dat')[0]) for f in filenames])
+print(taus)
 mus = []
 sigmas = []
 for i in range(len(taus)):
@@ -65,7 +66,7 @@ for i in range(len(taus)):
 
 n = len(taus)
 arr = np.array([taus, mus, sigmas]).transpose()
-np.savetxt('fit_output.dat', arr)
+np.savetxt('fit_output_nphot1e6.dat', arr)
 
 ######################
 # Exponential fit

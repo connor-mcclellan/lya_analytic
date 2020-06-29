@@ -124,11 +124,11 @@ program problem
   real (dp), dimension(2) :: dir
   real (dp) :: d_tot
   logical :: exitflag = .false., verbose
-  integer :: i, j, n=100000, nsteps=0
+  integer :: i, j, n=1000000, nsteps=0
   character(len=64) :: filenum
 
 
-  do j=1, 100
+  do j=65, 65
     print *, 'j=', j
     tau = float(j)
     verbose = .false.
