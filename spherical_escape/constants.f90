@@ -1,6 +1,5 @@
 module constants
-
-  integer, parameter :: dp = kind(1.d0)
-  real (dp), parameter :: pi = 3.1415926535
-  real (dp) :: tau
+  use m_defs, only : dp
+  implicit none
+  real (dp) :: tau, T
 end module constants
