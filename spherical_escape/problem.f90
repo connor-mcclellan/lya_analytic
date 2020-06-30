@@ -1,10 +1,11 @@
-subroutine beam(pos, dir)
+subroutine beam(p)
 
   ! Determines how photons enter the simulation domain.
-  use m_defs, only : dp, pi
+  use m_defs, only : dp, pi, photon_spherical, spherical_vector, cartesian_vector
+  use m_util
+  use m_linelist, only : line
   implicit none
-  real (dp), dimension(3), intent(inout) :: pos
-  real (dp), dimension(2), intent(inout) :: dir
+  type (photon_spherical), intent(inout) :: p
   real (dp) :: xi, zeta, b
   integer :: i
 
@@ -28,23 +29,40 @@ subroutine beam(pos, dir)
   call random_number(xi)
   call random_number(zeta)
 
-  pos = (/0.d0,  0.d0, 0.d0/)
-  dir = (/acos(2.d0 * zeta - 1.d0), 2.d0 * pi * xi/)
+  p%nu = line%nu
+
+  p%theta = acos(2.d0 * zeta - 1.d0)
+  p%phi = 2.d0 * pi * xi
+
+  p%xs%r = 0.d0
+  p%xs%theta = 0.d0
+  p%xs%phi = 0.d0
+
+  p%nc%x=sin(p%theta)*cos(p%phi)
+  p%nc%y=sin(p%theta)*sin(p%phi)
+  p%nc%z=cos(p%theta)
+  
+  call convert_cart_vector_to_sph_vector(p%nc%x,p%nc%y,p%nc%z,p%xs%theta,p%xs%phi,p%ns%r,p%ns%theta,p%ns%phi)
 
 end subroutine beam
 
-subroutine step(pos, dir, exitflag, nsteps, d_tot, nu)
+subroutine step(p, exitflag, nsteps, d_tot)
 
+  ! This is a first rewrite of my original step subroutine, aiming to integrate Phil's photon_spherical
+  ! class with as few modifications to my original code as possible. It's super inefficient and neds to
+  ! be cleaned up.
   use constants
-  use m_defs, only : dp, pi, clight, kboltz
+  use m_defs, only : dp, pi, clight, kboltz, photon_spherical, spherical_vector, cartesian_vector
   use m_voigt
+  use m_util
+  use m_redistribute_unpol
   use m_linelist, only : line
+  implicit none
+  type (photon_spherical), intent(inout) :: p
   real (dp) :: xi, zeta, omega, theta, phi
   real (dp) :: x, y, z, x1, y1, z1, x2, y2, z2, r2, theta2, phi2
-  real (dp), dimension(3), intent(inout) :: pos
-  real (dp), dimension(2), intent(inout) :: dir
-  real (dp), intent(inout) ::  d_tot, nu
-  real (dp) :: d, s, dot, position_magsq, displacement_magsq, doppwidth, a, dlam, H
+  real (dp), intent(inout) ::  d_tot
+  real (dp) :: d, s, dot, position_magsq, displacement_magsq, doppwidth, a, dlam, H, vth
   integer, intent(inout) :: nsteps
   logical, intent(inout) :: exitflag
 
@@ -59,23 +77,21 @@ subroutine step(pos, dir, exitflag, nsteps, d_tot, nu)
   ! cross-section at this frequency
   doppwidth = line%nu * vth / clight
   a = line%lorwidth / doppwidth
-  dlam = (nu-line%nu)/doppwidth
+  dlam = (p%nu-line%nu)/doppwidth
   call voigt(a,dlam,H)
 
   ! displacement vector
   d = -log(1.d0 - xi) / (tau * H)
-  theta = dir(1)
-  phi = dir(2)
 
   ! cartesian displacement vector
-  x = d*sin(theta)*cos(phi)
-  y = d*sin(theta)*sin(phi)
-  z = d*cos(theta)
+  x = d*sin(p%theta)*cos(p%phi)
+  y = d*sin(p%theta)*sin(p%phi)
+  z = d*cos(p%theta)
   
   ! cartesian position vector
-  x1 = pos(1)*sin(pos(2))*cos(pos(3))
-  y1 = pos(1)*sin(pos(2))*sin(pos(3))
-  z1 = pos(1)*cos(pos(2))
+  x1 = p%xs%r*sin(p%xs%theta)*cos(p%xs%phi)
+  y1 = p%xs%r*sin(p%xs%theta)*sin(p%xs%phi)
+  z1 = p%xs%r*cos(p%xs%theta)
 
   ! new cartesian position vector
   x2 = x + x1
@@ -115,28 +131,34 @@ subroutine step(pos, dir, exitflag, nsteps, d_tot, nu)
       phi2 = phi2 + 2.d0*pi   
     endif
 
-    dir = (/theta, phi/)
-    pos = (/r2, theta2, phi2/)
+    ! Update photon attributes
+    p%xs%r = r2
+    p%xs%theta = theta2
+    p%xs%phi = phi2
     d_tot = d_tot + d*(s - 1.d0)
+    call convert_cart_vector_to_sph_vector(p%nc%x,p%nc%y,p%nc%z,p%xs%theta,p%xs%phi,p%ns%r,p%ns%theta,p%ns%phi)
 
     exitflag = .true.
 
   else
-    pos = (/r2, theta2, phi2/)
+    ! Update position
+    p%xs%r = r2
+    p%xs%theta = theta2
+    p%xs%phi = phi2
+
     ! Scatter into a new direction
-    dir = (/acos(2.d0 * zeta - 1.d0), 2.d0 * pi * omega/)
+    call redistribute_wrapper(T, p)
   endif
 
 end subroutine step
 
 program problem
   use constants
-  use m_defs, only : dp
+  use m_defs, only : dp, photon_spherical
   use m_linelist
   implicit none
-  real (dp), dimension(3) :: pos
-  real (dp), dimension(2) :: dir
   real (dp) :: d_tot
+  type (photon_spherical) :: p
   logical :: exitflag = .false., verbose
   integer :: i, j, n=1000000, nsteps=0
   character(len=64) :: filenum
@@ -153,16 +175,16 @@ program problem
     write (filenum, *) int(tau)
     open(1, file='./outputs/exit_photons_tau'//trim(adjustl(filenum))//'.dat', status='replace')
     do i=1, n
-      call beam(pos, dir)
+      call beam(p)
       d_tot = 0.d0
       if (verbose) then
         print *, 'photon', i
       end if
       do while (exitflag .eqv. .false.)
-        call step(pos, dir, exitflag, nsteps, d_tot, line%nu)
+        call step(p, exitflag, nsteps, d_tot)
       end do
 
-      write(1, *) pos, dir, nsteps, d_tot
+      write(1, *) p%xs%r, p%xs%theta, p%xs%phi, p%theta, p%phi, nsteps, d_tot, p%nu
       exitflag = .false.
       nsteps = 0
     end do

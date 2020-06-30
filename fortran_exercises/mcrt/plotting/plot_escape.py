@@ -15,12 +15,12 @@ def plot_fit(tau):
     print(norm)
 
     # Load photon data, take care of float errors in r
-    data = np.loadtxt('./escape/escape_photons_nphot1e6/exit_photons_tau{}.dat'.format(int(tau)), skiprows=1)
+    data = np.loadtxt('../outputs/escape/escape_photons_nphot1e6/exit_photons_tau{}.dat'.format(int(tau)), skiprows=1)
     data[:, 0] = np.round(data[:, 0], 5)
 
     # Set up figure, make initial histogram, normalize x and y
     fig, ax = plt.subplots(1, 1, dpi=180)
-    n, bins, patches = ax.hist(data[:, 6], bins=50, color='k', histtype='step', density=True)
+    n, bins, patches = ax.hist(data[:, 6], bins=50, color='k', histtype='step', density=True, range=(0, 15))
     bins = bins/norm
     n = n*norm
 
@@ -49,12 +49,12 @@ def plot_fit(tau):
 
     # Save or show the plot
     plt.legend()
-    plt.savefig('./escape/fit_tau{}.pdf'.format(int(tau)))
+    plt.savefig('../outputs/escape/fit_plots_nphot1e6/fit_tau{}.pdf'.format(int(tau)))
     plt.close()
     return np.log(scale), shape
 
 
-filenames = glob('./escape/escape_photons_nphot1e6/exit_photons_tau*.dat')
+filenames = glob('../outputs/escape/escape_photons_nphot1e6/exit_photons_tau*.dat')
 taus = sorted([int(f.split('tau')[1].split('.dat')[0]) for f in filenames])
 print(taus)
 mus = []
@@ -66,7 +66,7 @@ for i in range(len(taus)):
 
 n = len(taus)
 arr = np.array([taus, mus, sigmas]).transpose()
-np.savetxt('fit_output_nphot1e6.dat', arr)
+np.savetxt('../outputs/fit_output_nphot1e6.dat', arr)
 
 ######################
 # Exponential fit
