@@ -167,10 +167,10 @@ program problem
   call make_line_data
 
   ! Set range of tau here
-  do j=10, 10
+  do j=100, 100
     print *, 'j=', j
     tau = float(j)
-    verbose = .true.
+    verbose = .false.
 
     write (filenum, *) int(tau)
     open(1, file='./outputs/exit_photons_tau'//trim(adjustl(filenum))//'.dat', status='replace')
