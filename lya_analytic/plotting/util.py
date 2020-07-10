@@ -4,6 +4,8 @@ from scipy.io import FortranFile
 import astropy.constants as c
 import astropy.units as u
 
+beta = np.sqrt(2.0/3.0) * np.pi/3.0
+
 
 class Line(object):
 
