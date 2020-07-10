@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
-matplotlib.rcParams['agg.path.chunksize'] = 10000
 matplotlib.rc('text', usetex=True)
 matplotlib.rc('font',**{'family':'serif','serif':['Computer Modern Roman']})
 import astropy.constants as c
