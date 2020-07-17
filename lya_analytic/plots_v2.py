@@ -12,7 +12,7 @@ import matplotlib
 matplotlib.rc('text', usetex=True)
 matplotlib.rc('font', **{'family': 'serif',
                          'serif': ['Computer Modern Roman']})
-
+import pdb
 
 def get_input_info(filename):
     f = open(filename, 'r')
@@ -74,6 +74,23 @@ def bin_x(x, n, mytitle, tau0, xinit, temp, radius, L, delta, a):
     print('norm: ', norm)
     print("check norm of data=", np.sum(count) * dx)
 
+    # CM: Interpolate phix*H on uniform x grid
+    print('Interpolating solutions on uniform x grid...\n')
+    phix = voigtx_fast(a, x_ft)
+    xuniform = np.linspace(np.min(x_ft), np.max(x_ft), len(x_ft))
+    phix_xuniform = voigtx_fast(a, xuniform)
+    phix_xc = voigtx_fast(a, xc)
+
+    # CM: Solutions uniform in x
+    hsp_interp = interp1d(x_ft, Hsp_ft*phix*norm)
+    hp_interp = interp1d(x_ft, Hp_ft*phix*norm)
+    hh_interp = interp1d(x_ft, Hh_ft*phix*norm)
+
+    hsp_xuniform = hsp_interp(xuniform) / phix_xuniform
+    hp_xuniform = hp_interp(xuniform) / phix_xuniform
+    hh_xuniform = hh_interp(xuniform) / phix_xuniform
+
+
     ymax1 = np.amax((Hp_ft) * norm)
     ymax2 = np.amax((Hsp_ft) * norm)
     ymax3 = np.amax((Hh_ft) * norm)
@@ -81,31 +98,36 @@ def bin_x(x, n, mytitle, tau0, xinit, temp, radius, L, delta, a):
     ymax = max([ymax1, ymax2, ymax3, ymax4]) * 1.1
     ymin = np.amin(Hh_ft * norm) * 1.1
 
-    # CM: Get values of Hsp_ft at x positions of monte carlo data points
-    hsp_ft_func = interp1d(x_ft, Hsp_ft * norm)
+#    plt.figure()
+#    plt.plot(x_ft, (Hp_ft - Hsp_ft) * norm, label=r'$H_{\rm d} - H_0$')
+#    plt.plot(x_ft, Hh_ft * norm, label=r'$H_{\rm bc}$')
+#    plt.errorbar(xc, count - hsp_ft_func(xc), yerr=err, fmt='.', label="Monte Carlo - $H_0$")
+#    plt.title(mytitle)
+#    plt.legend(loc='best')
+#    plt.xlabel(r'$x$', fontsize=15)
+#    plt.ylabel(r'$P(x)$', fontsize=15)
+#    plt.savefig("./plots/1m_x_pdf_subtracted.pdf", format='pdf')
+#    plt.close()
 
     plt.figure()
-    plt.plot(x_ft, (Hp_ft - Hsp_ft) * norm, label=r'$H_{\rm d} - H_0$')
-    plt.plot(x_ft, Hh_ft * norm, label=r'$H_{\rm bc}$')
-    plt.errorbar(
-        xc,
-        count -
-        hsp_ft_func(xc),
-        yerr=err,
-        fmt='.',
-        label="Monte Carlo - $H_0$")
+#    plt.plot(x_ft, (Hp_ft - Hsp_ft - Hh_ft) * norm, label=r'$H_{\rm d} - (H_0 + H_{bc})$', alpha=0.5)
+    plt.plot(xuniform, hp_xuniform - (hsp_xuniform+hh_xuniform), label=r'$H_{\rm d} - (H_0 + H_{bc})$', alpha=0.5)
+#    plt.plot(x_ft, (Hsp_ft - (Hsp_ft + Hh_ft)) * norm, label=r'$H_{0} - (H_0 + H_{bc})$', alpha=0.5)
+    plt.plot(xuniform, hsp_xuniform - (hsp_xuniform+hh_xuniform), label=r'$H_{0} - (H_0 + H_{bc})$', alpha=0.5)
+    plt.plot(xuniform, np.zeros(len(xuniform)), label='$0.0$', alpha=0.5)
+    plt.errorbar(xc, count - hsp_interp(xc)/phix_xc - hh_interp(xc)/phix_xc, yerr=err, fmt='.', label="Monte Carlo - $(H_0 + H_{bc})$", alpha=0.75)
     plt.title(mytitle)
     plt.legend(loc='best')
     plt.xlabel(r'$x$', fontsize=15)
     plt.ylabel(r'$P(x)$', fontsize=15)
-    plt.savefig("./plots/x_pdf_subtracted.pdf", format='pdf')
+    plt.savefig("./plots/1m_x_pdf_residual.pdf", format='pdf')
     plt.close()
 
     plt.figure()
-    plt.plot(x_ft, Hp_ft * norm, label=r'$H_{\rm d}$')
-    plt.plot(x_ft, Hsp_ft * norm, label=r'$H_0$')
-    plt.plot(x_ft, Hh_ft * norm, label=r'$H_{\rm bc}$')
-    plt.plot(x_ft, (Hsp_ft + Hh_ft) * norm, label=r'$H_0+H_{\rm bc}$')
+    plt.plot(xuniform, hp_xuniform, label=r'$H_{\rm d}$')
+    plt.plot(xuniform, hsp_xuniform, label=r'$H_0$')
+    plt.plot(xuniform, hh_xuniform, label=r'$H_{\rm bc}$')
+    plt.plot(xuniform, hsp_xuniform+hh_xuniform, label=r'$H_0+H_{\rm bc}$')
     plt.errorbar(xc, count, yerr=err, fmt='.', label="Monte Carlo")
     plt.xlim((-x0, x0))
     plt.ylim((ymin, ymax))
@@ -114,7 +136,7 @@ def bin_x(x, n, mytitle, tau0, xinit, temp, radius, L, delta, a):
     plt.xlabel(r'$x$', fontsize=15)
     plt.ylabel(r'$P(x)$', fontsize=15)
     # plt.show()
-    plt.savefig("./plots/x_pdf.pdf", format='pdf')
+    plt.savefig("./plots/1m_x_pdf.pdf", format='pdf')
     plt.close()
 
     ymax1 = np.amax((Hp_ft) * norm)
@@ -125,10 +147,10 @@ def bin_x(x, n, mytitle, tau0, xinit, temp, radius, L, delta, a):
     ymin = ymax * 1.e-3
 
     plt.figure()
-    plt.plot(x_ft, np.abs(Hp_ft * norm), label=r'$H_{\rm d}$')
-    plt.plot(x_ft, np.abs(Hsp_ft * norm), label=r'$H_0$')
-    plt.plot(x_ft, np.abs(Hh_ft * norm), label=r'$H_{\rm bc}$')
-    plt.plot(x_ft, np.abs((Hsp_ft + Hh_ft) * norm), label=r'$H_0+H_{\rm bc}$')
+    plt.plot(xuniform, hp_xuniform, label=r'$H_{\rm d}$')
+    plt.plot(xuniform, hsp_xuniform, label=r'$H_0$')
+    plt.plot(xuniform, np.abs(hh_xuniform), label=r'$|H_{\rm bc}|$')
+    plt.plot(xuniform, hsp_xuniform+hh_xuniform, label=r'$H_0+H_{\rm bc}$')
     plt.errorbar(xc, count, yerr=err, fmt='.', label="Monte Carlo")
     plt.xlim((-x0, x0))
     plt.ylim((ymin, ymax))
@@ -138,7 +160,7 @@ def bin_x(x, n, mytitle, tau0, xinit, temp, radius, L, delta, a):
     plt.xlabel(r'$x$', fontsize=15)
     plt.ylabel(r'$P(x)$', fontsize=15)
     # plt.show()
-    plt.savefig("./plots/x_pdf_log.pdf", format='pdf')
+    plt.savefig("./plots/1m_x_pdf_log.pdf", format='pdf')
     plt.close()
 
 
@@ -179,7 +201,7 @@ def bin_time(t, n, tau0, mytitle):
             j = int(j)  # j=j.astype(int)
         if (te[j + 1] - tval) * (tval - te[j]) < 0.0:
             print(j, (te[j + 1] - tval) * (tval - te[j]))
-#      quit()
+            pb.update()
             continue
         count[j] = count[j] + 1.0
         pb.update()
@@ -190,28 +212,28 @@ def bin_time(t, n, tau0, mytitle):
     plt.plot(tc, 2.3 * tc * count, ".", label="data")
     plt.plot(tc, theory, label="theory")
 
-    norm = np.linspace(1./10., 1./20., 10)
-    prob = np.zeros((len(norm), len(tc)))
-    for j in range(len(norm)):
+    t0 = np.linspace(8., 11., 5)
+    prob = np.zeros((len(t0), len(tc)))
+    for j in range(len(t0)):
         for i in range(len(tc)):
-            prob[j, i] = prob_ct_tau(tc[i]*norm[j], tau0)/norm[j]
-        plt.plot(tc, 2.3*prob[j]*tc, '--', label='Norm={:.2f}'.format(norm[j]), alpha=0.25)
+            prob[j, i] = prob_ct_tau(tc[i]/t0[j], tau0)/t0[j]
+        plt.plot(tc, 2.3*prob[j]*tc, '--', label='t0={:.2f}'.format(t0[j]), alpha=0.25)
     plt.plot(tc, 2.3*fits.lognorm_fit(tc, xdata=t)[0]*tc, '--', label='Log Norm Fit')
     dat = np.array([tc, 2.3*tc*count, theory])
-    np.save('./outputs/bin_time', dat)
+    np.save('./outputs/1m_bin_time', dat)
+
     plt.yscale('log')
     plt.xscale('log')
     plt.legend(loc='best')
     plt.xlabel(r'$t$', fontsize=15)
     plt.ylabel(r'$2.3tP(t)$', fontsize=15)
     plt.ylim((1e-4, 1e1))
-    plt.show()
-    plt.savefig("./plots/time_pdf.pdf", format='pdf')
+    plt.savefig("./plots/1m_time_pdf.pdf", format='pdf')
     plt.close()
 
 
 if __name__ == '__main__':
-    data_dir = '/home/connor/Documents/999x/9999/lya_analytic/phils_code/tau0_10000000.0_xinit_0.0_temp_10000.0_probabs_0.0/'
+    data_dir = '/home/connor/Documents/999x/9999/lya_analytic/data/1m_tau0_10000000.0_xinit_0.0_temp_10000.0_probabs_0.0/'
 
     lya = Line(1215.6701, 0.4164, 6.265e8)
     L = 1.0
@@ -223,6 +245,6 @@ if __name__ == '__main__':
     mytitle = r'$\tau_0=$' + str(tau0) + r', $x_{\rm init}=$' + str(xinit) \
               + r', $ T=$' + str(temp) + r', $p_{\rm abs}=$' + str(prob_abs)
 
-    mu, x, time = read_bin(data_dir)
-    #bin_x(x, 64, mytitle, tau0, xinit, temp, radius, L, delta, a)
-    bin_time(time, 64, tau0, mytitle)
+    mu, x, time = np.load(data_dir+'mu_x_time.npy') #read_bin(data_dir)
+    bin_x(x, 64, mytitle, tau0, xinit, temp, radius, L, delta, a)
+    #bin_time(time, 64, tau0, mytitle)
