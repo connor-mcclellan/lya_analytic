@@ -191,7 +191,7 @@ def bin_time(t, n):
     # We don't actually need the figure though, so clear the axis
     plt.cla()
 
-    # Calculate bin centers
+    # Calculate bin centers. 1/2 * (bin 1 through bin n + bin 0 to bin n-1)
     tc = 0.5 * (bins[1:] + bins[:-1])
 
     # Phil's theory line (close to log normal fit)
