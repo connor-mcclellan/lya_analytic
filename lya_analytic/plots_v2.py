@@ -76,20 +76,24 @@ def bin_x(x, n, mytitle, tau0, xinit, temp, radius, L, delta, a):
 
     # CM: Interpolate phix*H on uniform x grid
     print('Interpolating solutions on uniform x grid...\n')
-    phix = voigtx_fast(a, x_ft)
+
+    # Make an array of uniformly spaced x-values (min, max, npoints)
     xuniform = np.linspace(np.min(x_ft), np.max(x_ft), len(x_ft))
+
+    # Calculate line profile at all the x points needed
+    phix = voigtx_fast(a, x_ft)
     phix_xuniform = voigtx_fast(a, xuniform)
     phix_xc = voigtx_fast(a, xc)
 
-    # CM: Solutions uniform in x
+    # Interpolate solutions from _ft points
     hsp_interp = interp1d(x_ft, Hsp_ft*phix*norm)
     hp_interp = interp1d(x_ft, Hp_ft*phix*norm)
     hh_interp = interp1d(x_ft, Hh_ft*phix*norm)
 
+    # Apply interpolation to uniformly distributed x values, divide by line profile at those x positions
     hsp_xuniform = hsp_interp(xuniform) / phix_xuniform
     hp_xuniform = hp_interp(xuniform) / phix_xuniform
     hh_xuniform = hh_interp(xuniform) / phix_xuniform
-
 
     ymax1 = np.amax((Hp_ft) * norm)
     ymax2 = np.amax((Hsp_ft) * norm)
@@ -98,6 +102,7 @@ def bin_x(x, n, mytitle, tau0, xinit, temp, radius, L, delta, a):
     ymax = max([ymax1, ymax2, ymax3, ymax4]) * 1.1
     ymin = np.amin(Hh_ft * norm) * 1.1
 
+## Solutions with only H_0 subtracted 
 #    plt.figure()
 #    plt.plot(x_ft, (Hp_ft - Hsp_ft) * norm, label=r'$H_{\rm d} - H_0$')
 #    plt.plot(x_ft, Hh_ft * norm, label=r'$H_{\rm bc}$')
