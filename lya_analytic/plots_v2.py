@@ -168,74 +168,32 @@ def bin_x(x, n, mytitle, tau0, xinit, temp, radius, L, delta, a):
     plt.savefig("./plots/1m_x_pdf_log.pdf", format='pdf')
     plt.close()
 
+def bin_time(t, n):
 
-def bin_time(t, n, tau0, mytitle):
+    # Use matplotlib.pyplot.hist to bin and normalize data
+    count, bins, _ = plt.hist(t, bins=n, density=True)
 
-    count = np.zeros(n)
+    # We don't actually need the figure though, so clear the axis
+    plt.cla()
 
-    tmax = np.amax(t)
-    tmin = np.amin(t)
-    dt = (tmax - tmin) / n
-    te = np.zeros(n + 1)
-    for i in range(n + 1):
-        te[i] = tmin + i * dt
-    tc = np.zeros(n)
-    for i in range(n):
-        tc[i] = 0.5 * (te[i] + te[i + 1])
+    # Calculate bin centers
+    tc = 0.5*(bins[1:]+bins[:-1])
 
+    # Phil's theory line (close to log normal fit)
     xbar = np.average(np.log10(t))
     xsqbar = np.average((np.log10(t))**2)
     xsigma = np.sqrt(xsqbar - xbar**2)
     theory = 1.0 / (np.sqrt(2.0 * np.pi) * xsigma) * \
         np.exp(-(np.log10(tc) - xbar)**2 / (2.0 * xsigma**2))
 
-    norm = 0.0
-    for i in range(n):
-        dlog10t = np.log10(te[i + 1] / te[i])
-        norm = norm + dlog10t * theory[i]
+    return tc, count, theory
 
-    print('Binning time...')
-    pb = ProgressBar(len(t))
-    for tval in t:
-        if tval <= tmin:
-            j = 0
-        elif tval >= tmax:
-            j = n - 1
-        else:
-            j = math.floor((tval - tmin) / dt)
-            j = int(j)  # j=j.astype(int)
-        if (te[j + 1] - tval) * (tval - te[j]) < 0.0:
-            print(j, (te[j + 1] - tval) * (tval - te[j]))
-            pb.update()
-            continue
-        count[j] = count[j] + 1.0
-        pb.update()
-    count = count / t.size / dt
-
-    plt.figure()
-    plt.title(mytitle)
-    plt.plot(tc, 2.3 * tc * count, ".", label="data")
-    plt.plot(tc, theory, label="theory")
-
-    t0 = np.linspace(8., 11., 5)
+def multiplot_time(tc, t0, tau0):
     prob = np.zeros((len(t0), len(tc)))
     for j in range(len(t0)):
         for i in range(len(tc)):
             prob[j, i] = prob_ct_tau(tc[i]/t0[j], tau0)/t0[j]
         plt.plot(tc, 2.3*prob[j]*tc, '--', label='t0={:.2f}'.format(t0[j]), alpha=0.25)
-    plt.plot(tc, 2.3*fits.lognorm_fit(tc, xdata=t)[0]*tc, '--', label='Log Norm Fit')
-    dat = np.array([tc, 2.3*tc*count, theory])
-    np.save('./outputs/1m_bin_time', dat)
-
-    plt.yscale('log')
-    plt.xscale('log')
-    plt.legend(loc='best')
-    plt.xlabel(r'$t$', fontsize=15)
-    plt.ylabel(r'$2.3tP(t)$', fontsize=15)
-    plt.ylim((1e-4, 1e1))
-    plt.savefig("./plots/1m_time_pdf.pdf", format='pdf')
-    plt.close()
-
 
 if __name__ == '__main__':
     data_dir = '/home/connor/Documents/999x/9999/lya_analytic/data/1m_tau0_10000000.0_xinit_0.0_temp_10000.0_probabs_0.0/'
@@ -252,4 +210,28 @@ if __name__ == '__main__':
 
     mu, x, time = np.load(data_dir+'mu_x_time.npy') #read_bin(data_dir)
     bin_x(x, 64, mytitle, tau0, xinit, temp, radius, L, delta, a)
-    #bin_time(time, 64, tau0, mytitle)
+
+    ##### Make time plots ######
+    tc, count, theory = bin_time(time, 64)
+    plt.plot(tc, 2.3 * tc * count, ".", label="data")
+    plt.plot(tc, theory, label="theory")
+    plt.plot(tc, 2.3*fits.lognorm_fit(tc, xdata=time)[0]*tc, '--', label='Log Norm Fit')
+
+    # Save output array for faster plotting using escape_times.py
+    dat = np.array([tc, 2.3*tc*count, theory])
+    np.save('./outputs/1m_bin_time', dat)
+
+    # Series solution lines
+    t0 = np.linspace(8., 11., 5)
+    multiplot_time(tc, t0, tau0)
+
+    # Plot labels and aesthetics
+    plt.title(mytitle)
+    plt.yscale('log')
+    plt.xscale('log')
+    plt.legend(loc='best')
+    plt.xlabel(r'$t$', fontsize=15)
+    plt.ylabel(r'$2.3tP(t)$', fontsize=15)
+    plt.ylim((1e-4, 1e1))
+    plt.savefig("./plots/1m_time_pdf.pdf", format='pdf')
+    plt.close()
