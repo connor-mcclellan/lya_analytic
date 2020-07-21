@@ -81,6 +81,9 @@ def bin_x(x, n, mytitle, tau0, xinit, temp, radius, L, delta, a):
     # Make an array of uniformly spaced x-values (min, max, npoints)
     xuniform = np.linspace(np.min(x_ft), np.max(x_ft), len(x_ft))
 
+    # Find sigma at each x-value
+    sigma_xuniform = (beta / a) * xuniform**3.
+
     # Calculate line profile at all the x points needed
     phix = voigtx_fast(a, x_ft)
     phix_xuniform = voigtx_fast(a, xuniform)
@@ -143,12 +146,14 @@ def bin_x(x, n, mytitle, tau0, xinit, temp, radius, L, delta, a):
     plt.close()
 
     plt.figure()
-    plt.plot(xuniform, hp_xuniform, label=r'$H_{\rm d}$')
-    plt.plot(xuniform, hsp_xuniform, label=r'$H_0$')
-    plt.plot(xuniform, hh_xuniform, label=r'$H_{\rm bc}$')
-    plt.plot(xuniform, hsp_xuniform + hh_xuniform, label=r'$H_0+H_{\rm bc}$')
+    plt.plot(xuniform, hp_xuniform, label=r'$H_{\rm d}$', alpha=0.5)
+    plt.plot(xuniform, hsp_xuniform, label=r'$H_0$', alpha=0.5)
+    plt.plot(xuniform, hh_xuniform, label=r'$H_{\rm bc}$', alpha=0.5)
+    plt.plot(xuniform, hsp_xuniform + hh_xuniform, label=r'$H_0+H_{\rm bc}$', alpha=0.5)
+    plt.plot(xuniform, np.exp(-np.sqrt(np.pi) * sigma_xuniform / tau0), label=r'exp$(-\sqrt{\pi}\sigma / \tau_0)$')
     plt.errorbar(xc, count, yerr=err, fmt='.', label="Monte Carlo")
-    plt.xlim((-x0, x0))
+#    plt.xlim((-x0, x0))
+    plt.xlim((0., x0))
     plt.ylim((ymin, ymax))
     plt.title(mytitle)
     plt.legend(loc='best')
@@ -166,12 +171,14 @@ def bin_x(x, n, mytitle, tau0, xinit, temp, radius, L, delta, a):
     ymin = ymax * 1.e-3
 
     plt.figure()
-    plt.plot(xuniform, hp_xuniform, label=r'$H_{\rm d}$')
-    plt.plot(xuniform, hsp_xuniform, label=r'$H_0$')
-    plt.plot(xuniform, np.abs(hh_xuniform), label=r'$|H_{\rm bc}|$')
-    plt.plot(xuniform, hsp_xuniform + hh_xuniform, label=r'$H_0+H_{\rm bc}$')
+    plt.plot(xuniform, hp_xuniform, label=r'$H_{\rm d}$', alpha=0.5)
+    plt.plot(xuniform, hsp_xuniform, label=r'$H_0$', alpha=0.5)
+    plt.plot(xuniform, np.abs(hh_xuniform), label=r'$|H_{\rm bc}|$', alpha=0.5)
+    plt.plot(xuniform, hsp_xuniform + hh_xuniform, label=r'$H_0+H_{\rm bc}$', alpha=0.5)
+    plt.plot(xuniform, np.exp(-np.sqrt(np.pi) * sigma_xuniform / tau0), label=r'exp$(-\sqrt{\pi}\sigma / \tau_0)$')
     plt.errorbar(xc, count, yerr=err, fmt='.', label="Monte Carlo")
-    plt.xlim((-x0, x0))
+#    plt.xlim((-x0, x0))
+    plt.xlim((0., x0))
     plt.ylim((ymin, ymax))
     plt.yscale('log')
     plt.title(mytitle)
@@ -182,11 +189,12 @@ def bin_x(x, n, mytitle, tau0, xinit, temp, radius, L, delta, a):
     plt.savefig("./plots/1m_x_pdf_log.pdf", format='pdf')
     plt.close()
 
+    return
 
 def bin_time(t, n):
 
     # Use matplotlib.pyplot.hist to bin and normalize data
-    count, bins, _ = plt.hist(t, bins=n, density=True)
+    count, bins, _ = plt.hist(t, bins=np.logspace(np.log10(min(t)), np.log10(max(t)), n), density=True)
 
     # We don't actually need the figure though, so clear the axis
     plt.cla()
@@ -227,7 +235,7 @@ if __name__ == '__main__':
               + r', $ T=$' + str(temp) + r', $p_{\rm abs}=$' + str(prob_abs)
 
     mu, x, time = np.load(data_dir + 'mu_x_time.npy')  # read_bin(data_dir)
-    bin_x(x, 64, mytitle, tau0, xinit, temp, radius, L, delta, a)
+    xuniform = bin_x(x, 64, mytitle, tau0, xinit, temp, radius, L, delta, a)
 
     ##### Make time plots ######
     tc, count, theory = bin_time(time, 64)
