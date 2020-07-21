@@ -9,7 +9,7 @@ data_dir = '/home/connor/Documents/999x/9999/lya_analytic/data/'\
 mu, x, time = np.load(data_dir + 'mu_x_time.npy')
 
 # Define frequency chunks by distance from line center
-freqs = np.array([0., 15., 25., 40.])
+freqs = np.array([0., 15., 20., 40.])
 n_bins = 64
 
 # Set up figure
