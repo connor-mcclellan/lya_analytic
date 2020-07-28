@@ -189,7 +189,10 @@ def bin_x(x, n, mytitle, tau0, xinit, temp, radius, L, delta, a):
     plt.savefig("./plots/1m_x_pdf_log.pdf", format='pdf')
     plt.close()
 
-    return
+    solutions = np.array([xuniform, hp_xuniform, hsp_xuniform, hh_xuniform])
+    montecarlo = np.array([xc, count, err])
+
+    return solutions, montecarlo
 
 def bin_time(t, n):
 
@@ -211,6 +214,20 @@ def bin_time(t, n):
 
     return tc, count, theory
 
+def rms_error(data, solution):
+    x, mc_y, mc_err = data
+    sol_x, _, sol_hsp, sol_hh = solution
+    sol_y = interp1d(sol_x, sol_hsp + sol_hh)(x)
+
+    return np.sqrt(np.sum((mc_y - sol_y)**2.)/len(mc_y))
+
+def relative_error(data, solution):
+    x, mc_y, mc_err = data
+    sol_x, _, sol_hsp, sol_hh = solution
+    sol_y = interp1d(sol_x, sol_hsp + sol_hh)(x)
+
+    mask = [mc_err>0.]
+    return np.sum(np.abs(mc_y[mask] - sol_y[mask])/mc_err[mask])
 
 def multiplot_time(tc, t0, tau0):
     prob = np.zeros((len(t0), len(tc)))
@@ -234,30 +251,35 @@ if __name__ == '__main__':
     mytitle = r'$\tau_0=$' + str(tau0) + r', $x_{\rm init}=$' + str(xinit) \
               + r', $ T=$' + str(temp) + r', $p_{\rm abs}=$' + str(prob_abs)
 
-    mu, x, time = np.load(data_dir + 'mu_x_time.npy')  # read_bin(data_dir)
-    xuniform = bin_x(x, 64, mytitle, tau0, xinit, temp, radius, L, delta, a)
+    mu, x, time = np.load(data_dir + 'mu_x_time.npy')  
+    #mu, x, time = read_bin(data_dir)
+    soln, mc = bin_x(x, 64, mytitle, tau0, xinit, temp, radius, L, delta, a)
+
+    # Test convergence of solution
+    print('RMS Deviation: ', rms_error(mc, soln))
+    print('Relative error: ', relative_error(mc, soln))
 
     ##### Make time plots ######
-    tc, count, theory = bin_time(time, 64)
-    plt.plot(tc, 2.3 * tc * count, ".", label="data")
-    plt.plot(tc, theory, label="theory")
-    plt.plot(tc, 2.3 * fits.lognorm_fit(tc, xdata=time)[0] * tc, '--', label='Log Norm Fit')
+#    tc, count, theory = bin_time(time, 64)
+#    plt.plot(tc, 2.3 * tc * count, ".", label="data")
+#    plt.plot(tc, theory, label="theory")
+#    plt.plot(tc, 2.3 * fits.lognorm_fit(tc, xdata=time)[0] * tc, '--', label='Log Norm Fit')
 
     # Save output array for faster plotting using escape_times.py
-    dat = np.array([tc, 2.3 * tc * count, theory])
-    np.save('./outputs/1m_bin_time', dat)
+#    dat = np.array([tc, 2.3 * tc * count, theory])
+#    np.save('./outputs/1m_bin_time', dat)
 
     # Series solution lines
-    t0 = np.linspace(8., 11., 5)
-    multiplot_time(tc, t0, tau0)
+#    t0 = np.linspace(8., 11., 5)
+#    multiplot_time(tc, t0, tau0)
 
     # Plot labels and aesthetics
-    plt.title(mytitle)
-    plt.yscale('log')
-    plt.xscale('log')
-    plt.legend(loc='best')
-    plt.xlabel(r'$t$', fontsize=15)
-    plt.ylabel(r'$2.3tP(t)$', fontsize=15)
-    plt.ylim((1e-4, 1e1))
-    plt.savefig("./plots/1m_time_pdf.pdf", format='pdf')
-    plt.close()
+#    plt.title(mytitle)
+#    plt.yscale('log')
+#    plt.xscale('log')
+#    plt.legend(loc='best')
+#    plt.xlabel(r'$t$', fontsize=15)
+#    plt.ylabel(r'$2.3tP(t)$', fontsize=15)
+#    plt.ylim((1e-4, 1e1))
+#    plt.savefig("./plots/1m_time_pdf.pdf", format='pdf')
+#    plt.close()
