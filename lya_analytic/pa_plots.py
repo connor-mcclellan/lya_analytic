@@ -13,7 +13,7 @@ import matplotlib
 matplotlib.rc('text', usetex=True)
 matplotlib.rc('font', **{'family': 'serif',
                          'serif': ['Computer Modern Roman']})
-
+from pathlib import Path
 
 def get_input_info(filename):
     f = open(filename, 'r')
@@ -40,7 +40,7 @@ def get_input_info(filename):
         x_init), np.float(prob_abs), np.float(rmax)
 
 
-def bin_x(x, n, mytitle, tau0, xinit, temp, radius, L, delta, a):
+def bin_x(x, n, mytitle, filename, tau0, xinit, temp, radius, L, delta, a):
     count = np.zeros(n)
     x0 = 2.0 * (a * tau0)**0.333
     # n bins, n+1 bin edges
@@ -142,7 +142,7 @@ def bin_x(x, n, mytitle, tau0, xinit, temp, radius, L, delta, a):
     plt.legend(loc='best')
     plt.xlabel(r'$x$', fontsize=15)
     plt.ylabel(r'$P(x)$', fontsize=15)
-    plt.savefig("./plots/1m_x_pdf_residual.pdf", format='pdf')
+    plt.savefig("./plots/"+filename+"/x_pdf_residual.pdf", format='pdf')
     plt.close()
 
     plt.figure()
@@ -152,15 +152,15 @@ def bin_x(x, n, mytitle, tau0, xinit, temp, radius, L, delta, a):
     plt.plot(xuniform, hsp_xuniform + hh_xuniform, label=r'$H_0+H_{\rm bc}$', alpha=0.5)
     plt.plot(xuniform, np.exp(-np.sqrt(np.pi) * sigma_xuniform / tau0), label=r'exp$(-\sqrt{\pi}\sigma / \tau_0)$')
     plt.errorbar(xc, count, yerr=err, fmt='.', label="Monte Carlo")
-#    plt.xlim((-x0, x0))
-    plt.xlim((0., x0))
+    plt.xlim((-x0, x0))
+#    plt.xlim((0., x0))
     plt.ylim((ymin, ymax))
     plt.title(mytitle)
     plt.legend(loc='best')
     plt.xlabel(r'$x$', fontsize=15)
     plt.ylabel(r'$P(x)$', fontsize=15)
     # plt.show()
-    plt.savefig("./plots/1m_x_pdf.pdf", format='pdf')
+    plt.savefig("./plots/"+filename+"/x_pdf.pdf", format='pdf')
     plt.close()
 
     ymax1 = np.amax((Hp_ft) * norm)
@@ -177,8 +177,8 @@ def bin_x(x, n, mytitle, tau0, xinit, temp, radius, L, delta, a):
     plt.plot(xuniform, hsp_xuniform + hh_xuniform, label=r'$H_0+H_{\rm bc}$', alpha=0.5)
     plt.plot(xuniform, np.exp(-np.sqrt(np.pi) * sigma_xuniform / tau0), label=r'exp$(-\sqrt{\pi}\sigma / \tau_0)$')
     plt.errorbar(xc, count, yerr=err, fmt='.', label="Monte Carlo")
-#    plt.xlim((-x0, x0))
-    plt.xlim((0., x0))
+    plt.xlim((-x0, x0))
+#    plt.xlim((0., x0))
     plt.ylim((ymin, ymax))
     plt.yscale('log')
     plt.title(mytitle)
@@ -186,7 +186,7 @@ def bin_x(x, n, mytitle, tau0, xinit, temp, radius, L, delta, a):
     plt.xlabel(r'$x$', fontsize=15)
     plt.ylabel(r'$P(x)$', fontsize=15)
     # plt.show()
-    plt.savefig("./plots/1m_x_pdf_log.pdf", format='pdf')
+    plt.savefig("./plots/"+filename+"/x_pdf_log.pdf", format='pdf')
     plt.close()
 
     solutions = np.array([xuniform, hp_xuniform, hsp_xuniform, hh_xuniform])
@@ -238,8 +238,10 @@ def multiplot_time(tc, t0, tau0):
 
 
 if __name__ == '__main__':
-    data_dir = '/home/connor/Documents/999x/9999/lya_analytic/data/'\
-               '1m_tau0_10000000.0_xinit_0.0_temp_10000.0_probabs_0.0/'
+
+    filename = '1M tau0_10000000.0_xinit_12.0_temp_10000.0_probabs_0.0'
+    data_dir = '/home/connor/Documents/999x/9999/lya_analytic/data/'+filename+'/'
+    Path("./plots/"+filename).mkdir(parents=True, exist_ok=True)
 
     lya = Line(1215.6701, 0.4164, 6.265e8)
     L = 1.0
@@ -253,17 +255,17 @@ if __name__ == '__main__':
 
     mu, x, time = np.load(data_dir + 'mu_x_time.npy')  
     #mu, x, time = read_bin(data_dir)
-    soln, mc = bin_x(x, 64, mytitle, tau0, xinit, temp, radius, L, delta, a)
+    soln, mc = bin_x(x, 64, mytitle, filename, tau0, xinit, temp, radius, L, delta, a)
 
     # Test convergence of solution
     print('RMS Deviation: ', rms_error(mc, soln))
     print('Relative error: ', relative_error(mc, soln))
 
     ##### Make time plots ######
-#    tc, count, theory = bin_time(time, 64)
-#    plt.plot(tc, 2.3 * tc * count, ".", label="data")
-#    plt.plot(tc, theory, label="theory")
-#    plt.plot(tc, 2.3 * fits.lognorm_fit(tc, xdata=time)[0] * tc, '--', label='Log Norm Fit')
+    tc, count, theory = bin_time(time, 64)
+    plt.plot(tc, 2.3 * tc * count, ".", label="data")
+    plt.plot(tc, theory, label="theory")
+    plt.plot(tc, 2.3 * fits.lognorm_fit(tc, xdata=time)[0] * tc, '--', label='Log Norm Fit')
 
     # Save output array for faster plotting using escape_times.py
 #    dat = np.array([tc, 2.3 * tc * count, theory])
@@ -274,12 +276,12 @@ if __name__ == '__main__':
 #    multiplot_time(tc, t0, tau0)
 
     # Plot labels and aesthetics
-#    plt.title(mytitle)
-#    plt.yscale('log')
-#    plt.xscale('log')
-#    plt.legend(loc='best')
-#    plt.xlabel(r'$t$', fontsize=15)
-#    plt.ylabel(r'$2.3tP(t)$', fontsize=15)
-#    plt.ylim((1e-4, 1e1))
-#    plt.savefig("./plots/1m_time_pdf.pdf", format='pdf')
-#    plt.close()
+    plt.title(mytitle)
+    plt.yscale('log')
+    plt.xscale('log')
+    plt.legend(loc='best')
+    plt.xlabel(r'$t$', fontsize=15)
+    plt.ylabel(r'$2.3tP(t)$', fontsize=15)
+    plt.ylim((1e-4, 1e1))
+    plt.savefig("./plots/"+filename+"/1m_time_pdf.pdf", format='pdf')
+    plt.close()
