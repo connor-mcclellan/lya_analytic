@@ -239,7 +239,7 @@ def multiplot_time(tc, t0, tau0):
 
 if __name__ == '__main__':
 
-    filename = '1M tau0_10000000.0_xinit_12.0_temp_10000.0_probabs_0.0'
+    filename = '1M tau0_1000000.0_xinit_12.0_temp_10000.0_probabs_0.0'
     data_dir = '/home/connor/Documents/999x/9999/lya_analytic/data/'+filename+'/'
     Path("./plots/"+filename).mkdir(parents=True, exist_ok=True)
 

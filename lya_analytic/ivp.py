@@ -18,7 +18,7 @@ num_dens = 1e6  # essentially sets a timescale, which determines range of omega
 energy = 1.
 
 # Grid parameters
-sigma_max = 100.
+sigma_max = 10.*tau0
 sigma_source = 0.
 npoints = 100000
 
@@ -201,7 +201,7 @@ def _mean_intensity(sigma, dependent, *args):
 
 # Build the sigma grid, x grid, and line profile grid
 sigma_grid = np.concatenate([np.linspace(-sigma_max, sigma_source, int(npoints / 2)), 
-                             np.linspace(sigma_source, sigma_max, int(npoints / 2)[1:]])
+                             np.linspace(sigma_source, sigma_max, int(npoints / 2))[1:]])
 x_grid=a_const / beta * np.cbrt(sigma_grid)
 phi_grid=voigtx_fast(a_const, x_grid)
 
@@ -212,7 +212,7 @@ print('omega_c=', omega_c)
 phi=interp1d(sigma_grid, phi_grid)
 
 # BoundaryValue Object and method calls --- will be cleaned up eventually
-bv=BoundaryValue(1., 1 / tc, sigma_grid, 0.)
+bv=BoundaryValue(1., 0., sigma_grid, 0.)
 bv.left_real()
 bv.right_real()
 bv.left_imag()
