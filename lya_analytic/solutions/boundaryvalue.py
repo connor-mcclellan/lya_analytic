@@ -1,11 +1,16 @@
 import numpy as np
 from scipy.integrate import solve_ivp
 from scipy.linalg import solve
-from solutions.util import voigtx_fast, Line
-from solutions.params import Params
+
+try:
+    from util import voigtx_fast, Line, Params
+except:
+    from solutions.util import voigtx_fast, Line, Params
+
 import time
 import matplotlib.pyplot as plt
 import astropy.constants as c
+import pdb
 
 
 class BoundaryValue(object):
@@ -57,6 +62,8 @@ class BoundaryValue(object):
         self.e = solution.y[0][at_source]  # d(J_real)/d(sigma)
         self.g = solution.y[1][at_source]  # d(J_imag)/d(sigma)
 
+        return solution
+
     def right_real(self):
         '''
         Determines four coefficients by setting J_{2, r} = 1 and J_{2, i} = 0.
@@ -72,6 +79,8 @@ class BoundaryValue(object):
         self.C = solution.y[3][at_source]  # J_imag
         self.E = solution.y[0][at_source]  # d(J_real)/d(sigma)
         self.G = solution.y[1][at_source]  # d(J_imag)/d(sigma)
+
+        return solution
 
     def left_imag(self):
         '''
@@ -89,6 +98,8 @@ class BoundaryValue(object):
         self.f = solution.y[0][at_source]  # d(J_real)/d(sigma)
         self.h = solution.y[1][at_source]  # d(J_imag)/d(sigma)
 
+        return solution
+
     def right_imag(self):
         '''
         Determines four coefficients by setting J_{2, r} = 0 and J_{2, i} = 1.
@@ -105,12 +116,14 @@ class BoundaryValue(object):
         self.F = solution.y[0][at_source]  # d(J_real)/d(sigma)
         self.H = solution.y[1][at_source]  # d(J_imag)/d(sigma)
 
+        return solution
+
     def solve_coeff_matrix(self):
 
         start = time.time()
         matrix = np.array([[self.a, self.b, -self.A, -self.B],
                            [self.c, self.d, -self.C, -self.D],
-                           [-self.e, -self.f, self.A, self.B],
+                           [-self.e, -self.f, self.E, self.F],
                            [self.g, self.h, -self.G, -self.H]])
 
         solution_vector = np.array([0.,
@@ -122,61 +135,72 @@ class BoundaryValue(object):
         J_1_real, J_1_imag, J_2_real, J_2_imag = solve(matrix, solution_vector)
         end = time.time()
         print('                                    {:8.3f} s'.format(end-start))
-
-        self.J1r = J_1_real
-        self.J1i = J_1_imag
-        self.J2r = J_2_real
-        self.J2i = J_2_imag
-
         return J_1_real, J_1_imag, J_2_real, J_2_imag
 
-    def J_final(self):
-        # Right-going piece
-        print('          (-)    ', end='', flush=True)
-        lbounds = (np.min(self.p.sigma_grid), self.p.sigma_source)
-        livs = (self.p.delta * self.kappa_n / self.p.k * self.J1r,
-               self.p.delta * self.kappa_n / self.p.k * self.J1i,
-               self.J1r,
-               self.J1i)
-        lsolution = self.integrate_J(lbounds, livs)
+#    def J_final(self):
+#        # Right-going piece
+#        print('          (-)    ', end='', flush=True)
+#        lbounds = (np.min(self.p.sigma_grid), self.p.sigma_source)
+#        livs = (self.p.delta * self.kappa_n / self.p.k * self.J1r,
+#               self.p.delta * self.kappa_n / self.p.k * self.J1i,
+#               self.J1r,
+#               self.J1i)
+#        lsolution = self.integrate_J(lbounds, livs)
+#
+#        # Left-going piece
+#        print('                         (+)    ', end='', flush=True)
+#        rbounds = (np.max(self.p.sigma_grid), self.p.sigma_source)
+#        rivs = (-self.p.delta * self.kappa_n / self.p.k * self.J1r,
+#               -self.p.delta * self.kappa_n / self.p.k * self.J1i,
+#               self.J1r,
+#               self.J1i)
+#        rsolution = self.integrate_J(rbounds, rivs)
+#
+#        sigma = np.ndarray.flatten(np.array((lsolution.t, rsolution.t)))
+#        J_real = np.ndarray.flatten(np.array((lsolution.y[2], rsolution.y[2])))
+#        J_imag = np.ndarray.flatten(np.array((lsolution.y[3], rsolution.y[3])))
+#
+#        sort = sigma.argsort()
+#        sigma = sigma[sort]
+#        J_real = J_real[sort]
+#        J_imag = J_imag[sort]
+#
+#        return np.array([sigma, J_real, J_imag])
 
-        # Left-going piece
-        print('                         (+)    ', end='', flush=True)
-        rbounds = (np.max(self.p.sigma_grid), self.p.sigma_source)
-        rivs = (-self.p.delta * self.kappa_n / self.p.k * self.J1r,
-               -self.p.delta * self.kappa_n / self.p.k * self.J1i,
-               self.J1r,
-               self.J1i)
-        rsolution = self.integrate_J(rbounds, rivs)
+    def solve(self):
+        print('integrate      ', end='', flush=True)
+        left_real = self.left_real()
+        right_real = self.right_real()
+        left_imag = self.left_imag()
+        right_imag = self.right_imag()
 
-        sigma = np.ndarray.flatten(np.array((lsolution.t, rsolution.t)))
-        J_real = np.ndarray.flatten(np.array((lsolution.y[2], rsolution.y[2])))
-        J_imag = np.ndarray.flatten(np.array((lsolution.y[3], rsolution.y[3])))
+        print('solve matrix   ', end='', flush=True)
+        J_1_real, J_1_imag, J_2_real, J_2_imag = self.solve_coeff_matrix()
+
+        sigma = np.ndarray.flatten(np.array((left_real.t, right_real.t)))
+        J_real = np.ndarray.flatten(np.array((J_1_real * left_real.y[2], J_2_real * right_real.y[2])))
+        J_imag = np.ndarray.flatten(np.array((J_1_imag * left_imag.y[3], J_2_imag * right_imag.y[3])))
+        J_prime_real = np.ndarray.flatten(np.array((J_1_real * left_real.y[0], J_2_real * right_real.y[0])))
+        J_prime_imag = np.ndarray.flatten(np.array((J_1_imag * left_imag.y[1], J_2_imag * right_imag.y[1])))
 
         sort = sigma.argsort()
         sigma = sigma[sort]
         J_real = J_real[sort]
         J_imag = J_imag[sort]
+        J_prime_real = J_prime_real[sort]
+        J_prime_imag = J_prime_imag[sort]
 
-        return np.array([sigma, J_real, J_imag])
-
-    def solve(self):
-        print('find ivs       ', end='', flush=True)
-        self.left_real()
-        self.right_real()
-        self.left_imag()
-        self.right_imag()
-        print('solve matrix   ', end='', flush=True)
-        self.solve_coeff_matrix()
-        print('integrate      ', end='', flush = True)
-        return self.J_final()
+        return np.array([sigma, J_real, J_imag, J_prime_real, J_prime_imag])
 
 
 def _mean_intensity(sigma, dependent, *args):
 
     (x2, y2, x1, y1) = dependent
     (obj, ) = args
-#    print('sigma=',sigma)
+
+## DEBUG
+#    if int(sigma)%100 == 0:
+#        print('sigma={}  x1={}  y1={}'.format(sigma, x1, y1))
 
     # x2 = d(J_real)/d(sigma)
     # y2 = d(J_imag)/d(sigma)
@@ -192,8 +216,6 @@ def _mean_intensity(sigma, dependent, *args):
 
 if __name__ == '__main__':
 
-    # Demonstrate how to use the boundary value integrator
-
     # Create params object
     lya = Line(1215.6701, 0.4164, 6.265e8)
     p = Params(line=lya, temp=1e4, tau0=1e7, num_dens=1e6, energy=1., 
@@ -207,17 +229,29 @@ if __name__ == '__main__':
     print('omega_c=', omega_c)
 
     # Plot some fourier coefficients
-    plt.figure()
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 6))
+
     print('\nSOLUTIONS')
     print('=========')
     for n in range(1, 6):
         bv = BoundaryValue(n, 0., p)
         J = bv.solve()
-        plot = plt.plot(J[0], J[1], '-', alpha=(5-n)/5)
-        plt.plot(J[0], J[2], '--', c=plot[-1].get_color(), alpha=(5-n)/5)
+        plot = ax1.plot(J[0], J[1], '-', alpha=0.5, label='n={}'.format(n))
+        ax1.plot(J[0], J[2], '--', c=plot[-1].get_color(), alpha=0.5)
+        ax1.legend()
+        dplot = ax2.plot(J[0], J[3], '-', alpha=0.5, label='n={}'.format(n))
+        ax2.plot(J[0], J[3], '-', c=dplot[-1].get_color(), alpha=0.5)
+        ax2.legend(loc=1)
 
-    plt.legend()
+        ax1.set_ylabel('J')
+        ax2.set_ylabel('dJ/dsigma')
+
+        ax1.set_xlim((-1e7, 1e7))
+        ax2.set_xlim((-1e7, 1e7))
+
     #plt.yscale('log')
+    plt.xlabel('Sigma')
+    plt.tight_layout()
     plt.show()
 
 

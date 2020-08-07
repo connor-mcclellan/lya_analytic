@@ -53,7 +53,29 @@ class Params(object):
 
         print("PARAMETER DICT")
         print('==============')
-        pprint.pprint(self.__dict__)
+        self.print_block(self)
+
+    def print_block(self, obj, indent=0):
+
+        if indent == 0:
+            print('{')
+            indent += 1
+
+        for key, value in obj.__dict__.items():
+            if key[0] == '_':
+                continue
+            elif hasattr(value, '__dict__'):
+                print('    '*indent + "'{}': {{".format(key))
+                self.print_block(value, indent=indent+1)
+            else:
+                if type(value) == np.ndarray:
+                    value = '[{} ... {}]'.format(value[0], value[-1])
+                print('    '*indent+"'{}': {},".format(key, value))
+
+        if indent == 1:
+            print('    }')
+        else:
+            print('    '*(indent)+'},')
 
 
 def read_bin(path):
