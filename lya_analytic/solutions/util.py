@@ -108,3 +108,6 @@ def voigtx_fast(a, x):
 
 def tanf(x, tau):
     return np.tan(x) - x / (1. - 1.5 * tau)
+
+def j0(kappa, r):
+    return np.sin(kappa*r)/(kappa*r)

@@ -176,12 +176,13 @@ class BoundaryValue(object):
 
         print('solve matrix   ', end='', flush=True)
         J_1_real, J_1_imag, J_2_real, J_2_imag = self.solve_coeff_matrix()
-
-        sigma = np.ndarray.flatten(np.array((left_real.t, right_real.t)))
-        J_real = np.ndarray.flatten(np.array((J_1_real * left_real.y[2], J_2_real * right_real.y[2])))
-        J_imag = np.ndarray.flatten(np.array((J_1_imag * left_imag.y[3], J_2_imag * right_imag.y[3])))
-        J_prime_real = np.ndarray.flatten(np.array((J_1_real * left_real.y[0], J_2_real * right_real.y[0])))
-        J_prime_imag = np.ndarray.flatten(np.array((J_1_imag * left_imag.y[1], J_2_imag * right_imag.y[1])))
+        
+        # Centerpoint is duplicated --- remove it from one of the arrays before combining with [:-1]
+        sigma = np.concatenate((left_real.t[:-1], right_real.t))
+        J_real = np.concatenate((J_1_real * left_real.y[2][:-1], J_2_real * right_real.y[2]))
+        J_imag = np.concatenate((J_1_imag * left_imag.y[3][:-1], J_2_imag * right_imag.y[3]))
+        J_prime_real = np.concatenate((J_1_real * left_real.y[0][:-1], J_2_real * right_real.y[0]))
+        J_prime_imag = np.concatenate((J_1_imag * left_imag.y[1][:-1], J_2_imag * right_imag.y[1]))
 
         sort = sigma.argsort()
         sigma = sigma[sort]
