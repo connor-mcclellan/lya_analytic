@@ -35,11 +35,11 @@ class BoundaryValue(object):
         sol = solve_ivp(_mean_intensity, bounds, ivs, atol=atol, rtol=rtol,
                         args=(self, ), t_eval=sigma_eval)
 
-        while len(sol.t) == 1:
-            atol = atol * 10.
-            rtol = rtol * 10.
-            sol = solve_ivp(_mean_intensity, bounds, ivs, atol=atol, rtol=rtol,
-                            args=(self, ), t_eval=sigma_eval)
+        #while len(sol.t) == 1:
+        #    atol = atol * 10.
+        #    rtol = rtol * 10.
+        #    sol = solve_ivp(_mean_intensity, bounds, ivs, atol=atol, rtol=rtol,
+        #                    args=(self, ), t_eval=sigma_eval)
         print('    [{}, {}]'.format(rtol, atol), end='', flush=True)
         end = time.time()
         print('{:9.3f} s'.format(end - start))
@@ -228,6 +228,7 @@ if __name__ == '__main__':
 
     print('1/tc=', 1. / tc)
     print('omega_c=', omega_c)
+    print('R/c = ', p.R/c.c.cgs.value)
 
     # Plot some fourier coefficients
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 6))
