@@ -47,6 +47,7 @@ class BoundaryValue(object):
         return sol
 
     def left_real(self):
+        global Jrealarray, sigmaarray
         '''
         Determines four coefficients by setting J_{1, r} = 1 and J_{1, i} = 0.
         Integration is performed from a large negative sigma to the source.
@@ -61,6 +62,8 @@ class BoundaryValue(object):
         self.c = solution.y[3][at_source]  # J_imag
         self.e = solution.y[0][at_source]  # d(J_real)/d(sigma)
         self.g = solution.y[1][at_source]  # d(J_imag)/d(sigma)
+
+        pdb.set_trace()
 
         return solution
 
@@ -177,7 +180,7 @@ class BoundaryValue(object):
         print('solve matrix   ', end='', flush=True)
         J_1_real, J_1_imag, J_2_real, J_2_imag = self.solve_coeff_matrix()
         
-        # Centerpoint is duplicated --- remove it from one of the arrays before combining with [:-1]
+        # Centerpoint is duplicated --- remove it from one of the arrays with [:-1] before combining 
         sigma = np.concatenate((left_real.t[:-1], right_real.t))
         J_real = np.concatenate((J_1_real * left_real.y[2][:-1], J_2_real * right_real.y[2]))
         J_imag = np.concatenate((J_1_imag * left_imag.y[3][:-1], J_2_imag * right_imag.y[3]))
@@ -195,18 +198,30 @@ class BoundaryValue(object):
 
 
 def _mean_intensity(sigma, dependent, *args):
+    global Jrealarray, sigmaarray
 
     (x2, y2, x1, y1) = dependent
     (obj, ) = args
 
 ## DEBUG
-#    if int(sigma)%100 == 0:
-#        print('sigma={}  x1={}  y1={}'.format(sigma, x1, y1))
+    print('sigma={}  x1={}  y1={}'.format(sigma, x1, y1))
+
+    try:
+        Jrealarray.append(x1)
+        sigmaarray.append(sigma)
+    except:
+        Jrealarray = [x1]
+        sigmaarray = [sigma]
+
+    if x1 >= 1e100:
+        pdb.set_trace()
 
     # x2 = d(J_real)/d(sigma)
     # y2 = d(J_imag)/d(sigma)
     # x1 = J_real
     # y1 = J_imag
+
+#    print(sigma, (obj.p.delta * obj.kappa_n / obj.p.k)**2., 3. * obj.omega * obj.p.delta**2. * obj.p.phi(sigma) / obj.p.k / c.c.cgs.value)
 
     return [(obj.p.delta * obj.kappa_n / obj.p.k)**2. * x1 + 3. * obj.omega * obj.p.delta**2. * obj.p.phi(sigma) / obj.p.k / c.c.cgs.value * y1,  # dx2_dsigma
             (obj.p.delta * obj.kappa_n / obj.p.k)**2. * y1 - 3. * obj.omega * obj.p.delta**2. * obj.p.phi(sigma) / obj.p.k / c.c.cgs.value * x1,  # dy2_dsigma
@@ -236,6 +251,7 @@ if __name__ == '__main__':
     print('\nSOLUTIONS')
     print('=========')
     for n in range(1, 6):
+        
         bv = BoundaryValue(n, 0., p)
         J = bv.solve()
         plot = ax1.plot(J[0], J[1], '-', alpha=0.5, label='n={}'.format(n))
