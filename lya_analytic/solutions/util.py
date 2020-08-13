@@ -1,14 +1,14 @@
 import numpy as np
 from glob import glob
 from scipy.io import FortranFile
-import astropy.constants as c
-import astropy.units as u
-import pprint
 from scipy.interpolate import interp1d
 
-
-beta = np.sqrt(2.0 / 3.0) * np.pi / 3.0
-
+# Constants (CGS)
+c = 29979245800.0
+esu = 4.803204712570263e-10
+m_e = 9.1093837015e-28
+k_B = 1.380649e-16
+m_p = 1.67262192369e-24
 
 class Line(object):
 
@@ -16,9 +16,8 @@ class Line(object):
         self.lambda0 = lambda0
         self.osc_strength = osc_strength
         self.gamma = gamma
-        self.nu0 = (c.c.cgs / (lambda0 * u.angstrom)).to('Hz').value
-        self.strength = (np.pi * c.e.esu**2. /
-                         (c.m_e.cgs * c.c.cgs) * osc_strength).value
+        self.nu0 = c / (lambda0 * 1e-8)
+        self.strength = (np.pi * esu**2. / (m_e * c) * osc_strength)
 
 class Params(object):
       
@@ -39,10 +38,10 @@ class Params(object):
 
         # Derived quantities
         self.sigma_max = 10.*self.tau0
-        self.k = self.num_dens * np.pi * c.e.esu.value**2. * \
-                 self.line.osc_strength / c.m_e.cgs.value / c.c.cgs.value  # eq A2
-        self.vth = np.sqrt(2.0 * c.k_B.cgs.value * self.temp / c.m_p.cgs.value)
-        self.delta = self.line.nu0 * self.vth / c.c.cgs.value
+        self.k = self.num_dens * np.pi * esu**2. * \
+                 self.line.osc_strength / m_e / c  # eq A2
+        self.vth = np.sqrt(2.0 * k_B * self.temp / m_p)
+        self.delta = self.line.nu0 * self.vth / c
         self.a = self.line.gamma / (4.0 * np.pi * self.delta)
 #        self.R = self.tau0 * np.sqrt(np.pi) * self.delta / self.k
 

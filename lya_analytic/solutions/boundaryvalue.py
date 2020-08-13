@@ -9,9 +9,10 @@ except:
 
 import time
 import matplotlib.pyplot as plt
-import astropy.constants as c
-import pdb
 
+
+# Constants
+c = 29979245800.0
 
 class BoundaryValue(object):
 
@@ -219,10 +220,10 @@ def _mean_intensity(sigma, dependent, *args):
     # x1 = J_real
     # y1 = J_imag
 
-#    print(sigma, (obj.p.delta * obj.kappa_n / obj.p.k)**2., 3. * obj.omega * obj.p.delta**2. * obj.p.phi(sigma) / obj.p.k / c.c.cgs.value)
+#    print(sigma, (obj.p.delta * obj.kappa_n / obj.p.k)**2., 3. * obj.omega * obj.p.delta**2. * obj.p.phi(sigma) / obj.p.k / c)
 
-    return [(obj.p.delta * obj.kappa_n / obj.p.k)**2. * x1 + 3. * obj.omega * obj.p.delta**2. * obj.p.phi(sigma) / obj.p.k / c.c.cgs.value * y1,  # dx2_dsigma
-            (obj.p.delta * obj.kappa_n / obj.p.k)**2. * y1 - 3. * obj.omega * obj.p.delta**2. * obj.p.phi(sigma) / obj.p.k / c.c.cgs.value * x1,  # dy2_dsigma
+    return [(obj.p.delta * obj.kappa_n / obj.p.k)**2. * x1 + 3. * obj.omega * obj.p.delta**2. * obj.p.phi(sigma) / obj.p.k / c * y1,  # dx2_dsigma
+            (obj.p.delta * obj.kappa_n / obj.p.k)**2. * y1 - 3. * obj.omega * obj.p.delta**2. * obj.p.phi(sigma) / obj.p.k / c * x1,  # dy2_dsigma
             x2,  # dx1_dsigma = x2
             y2  # dy1_dsigma = y2
            ]
@@ -236,12 +237,12 @@ if __name__ == '__main__':
                sigma_source=0., n_points=1e5)
 
     # Comparison of characteristic time and characteristic frequency
-    tc = p.R / c.c.cgs.value * p.tau0  # Characteristic timescale
-    omega_c = c.c.cgs.value / p.R * (p.a * p.tau0)**(-1. / 3.)
+    tc = p.R / c * p.tau0  # Characteristic timescale
+    omega_c = c / p.R * (p.a * p.tau0)**(-1. / 3.)
 
     print('1/tc=', 1. / tc)
     print('omega_c=', omega_c)
-    print('R/c = ', p.R/c.c.cgs.value)
+    print('R/c = ', p.R/c)
 
     # Plot some fourier coefficients
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 6))
