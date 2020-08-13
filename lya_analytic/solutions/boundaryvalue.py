@@ -1,5 +1,5 @@
-import numpy as np
 from __future__ import print_function
+import numpy as np
 from scipy.integrate import solve_ivp
 from scipy.linalg import solve
 
