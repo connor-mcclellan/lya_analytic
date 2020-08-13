@@ -9,7 +9,7 @@ except:
     from solutions.util import voigtx_fast, Line, Params
 
 import time
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 
 # Constants
@@ -246,7 +246,7 @@ if __name__ == '__main__':
     print('R/c = ', p.R/c)
 
     # Plot some fourier coefficients
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 6))
+#    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 6))
 
     print('\nSOLUTIONS')
     print('=========')
@@ -254,22 +254,22 @@ if __name__ == '__main__':
         
         bv = BoundaryValue(n, 0., p)
         J = bv.solve()
-        plot = ax1.plot(J[0], J[1], '-', alpha=0.5, label='n={}'.format(n))
-        ax1.plot(J[0], J[2], '--', c=plot[-1].get_color(), alpha=0.5)
-        ax1.legend()
-        dplot = ax2.plot(J[0], J[3], '-', alpha=0.5, label='n={}'.format(n))
-        ax2.plot(J[0], J[3], '-', c=dplot[-1].get_color(), alpha=0.5)
-        ax2.legend(loc=1)
+#        plot = ax1.plot(J[0], J[1], '-', alpha=0.5, label='n={}'.format(n))
+#        ax1.plot(J[0], J[2], '--', c=plot[-1].get_color(), alpha=0.5)
+#        ax1.legend()
+#        dplot = ax2.plot(J[0], J[3], '-', alpha=0.5, label='n={}'.format(n))
+#        ax2.plot(J[0], J[3], '-', c=dplot[-1].get_color(), alpha=0.5)
+#        ax2.legend(loc=1)
 
-        ax1.set_ylabel('J')
-        ax2.set_ylabel('dJ/dsigma')
+#        ax1.set_ylabel('J')
+#        ax2.set_ylabel('dJ/dsigma')
 
-        ax1.set_xlim((-1e7, 1e7))
-        ax2.set_xlim((-1e7, 1e7))
+#        ax1.set_xlim((-1e7, 1e7))
+#        ax2.set_xlim((-1e7, 1e7))
 
     #plt.yscale('log')
-    plt.xlabel('Sigma')
-    plt.tight_layout()
-    plt.show()
+#    plt.xlabel('Sigma')
+#    plt.tight_layout()
+#    plt.show()
 
 

@@ -1,7 +1,7 @@
 from solutions.boundaryvalue import BoundaryValue
 import numpy as np
 
-def process(n_grid, omega_grid, i, j, p):
+def process(n_grid, omega_grid, sigma_grid, i, j, p):
     bv = BoundaryValue(n_grid[j], omega_grid[i], p)
     _, J_real, J_imag, _, _ = bv.solve()
     J = np.zeros((len(sigma_grid), 2))

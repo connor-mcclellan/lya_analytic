@@ -10,7 +10,7 @@ from mpio import process
 c = 29979245800.0
 
 # Parallel processing setup
-pool = Pool(processes=(cpu_count() - 1))
+pool = Pool(processes=8)
 
 # Physical parameters
 lya = Line(1215.6701, 0.4164, 6.265e8)
@@ -37,7 +37,7 @@ sigma_grid = p.sigma_grid
 for i in range(len(omega_grid)):
     start = time.time()
     for j in range(len(n_grid)):
-        result = pool.apply_async(process, args=(n_grid, omega_grid, i, j, p))
+        result = pool.apply_async(process, args=(n_grid, omega_grid, sigma_grid, i, j, p))
 #    end = time.time()
 #    computation_times.append(end-start)
 
