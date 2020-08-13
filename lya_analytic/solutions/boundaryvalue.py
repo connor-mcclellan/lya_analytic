@@ -63,8 +63,6 @@ class BoundaryValue(object):
         self.e = solution.y[0][at_source]  # d(J_real)/d(sigma)
         self.g = solution.y[1][at_source]  # d(J_imag)/d(sigma)
 
-        pdb.set_trace()
-
         return solution
 
     def right_real(self):
@@ -204,7 +202,7 @@ def _mean_intensity(sigma, dependent, *args):
     (obj, ) = args
 
 ## DEBUG
-    print('sigma={}  x1={}  y1={}'.format(sigma, x1, y1))
+#    print('sigma={:.2f}  x1={:.2f}  y1={:.2f}, phi={}'.format(sigma, x1, y1, obj.p.phi(sigma)))
 
     try:
         Jrealarray.append(x1)
@@ -213,8 +211,8 @@ def _mean_intensity(sigma, dependent, *args):
         Jrealarray = [x1]
         sigmaarray = [sigma]
 
-    if x1 >= 1e100:
-        pdb.set_trace()
+#    if x1 >= 1e100:
+#        pdb.set_trace()
 
     # x2 = d(J_real)/d(sigma)
     # y2 = d(J_imag)/d(sigma)

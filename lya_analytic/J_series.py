@@ -12,12 +12,12 @@ p = Params(line=lya, temp=1e4, tau0=1e7, num_dens=1701290465.5139434, energy=1.,
 tdiff = p.R / c.c.cgs.value * (p.a * p.tau0)**(1./3) # Diffusion time
 print(p.R, p.R/c.c.cgs.value)
 dt = 0.1*tdiff
-N = 128
+N = 16
 print(tdiff, dt, N)
 
 # Internals
-#omega_grid, d_omega = np.linspace(0, 2*np.pi/dt, N, retstep=True)
-omega_grid = np.linspace(0, 2*np.pi/dt, N)[1:]
+omega_grid, d_omega = np.linspace(0, 2*np.pi/dt, N, retstep=True)
+#omega_grid = np.linspace(0, 2*np.pi/dt, N)[1:]
 print(omega_grid)
 n_grid = np.arange(1, 5, 1)
 sigma_grid = p.sigma_grid
