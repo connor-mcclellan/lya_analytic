@@ -1,35 +1,42 @@
 import numpy as np
 from solutions.util import j0
+from tqdm import tqdm
 
-# Load in data from J_n_sigma_omega.py output
-n_grid = np.load("./outputs/n_grid.npy")
-sigma_grid = np.load("./outputs/sigma_grid.npy")
-omega_grid = np.load("./outputs/omega_grid.npy")
-J = np.load("./outputs/J.npy")
+def evaluate_Jrt(path, r, t, n, omega):
 
-# Grids
-r_grid = np.linspace(0, 9, 10)
-t_grid = np.linspace(0, 1e4, int(1e6))
+    d_omega = np.diff(omega)[0]
+    R = r[-1]
+    Jrt = np.zeros((len(r), len(t)))
 
-# Other parameters
-d_omega = np.diff(omega_grid)[0]
-R = r_grid[-1]
+    # Sum & discretized integral
 
-# Sum & discretized integral
-for i in range(len(t_grid)):
+    # Reversing these loops would be faster, but might have to get clever
+    for i in tqdm(range(len(t))):
+        for j in tqdm(range(len(r))):
+            n_sum = 0.
+            for k in tqdm(range(len(n))):
+                omega_integral = 0.
+                for l in tqdm(range(len(omega)):
+                    kappa_n = n[k] * np.pi / R
 
-    for j in range(len(r_grid)):
-        n_sum = 0.
+                    # Load in data for this n and omega
+                    with np.load(path+'J_omega{}_n{}.npy'.format(l, k)) as Jdump:
+                        J_n_sigma_omega = Jdump[:, 0] + 1j*Jdump[:, 1]
 
-        for k in range(len(n_grid)):
-            n = n_grid[k]
-            omega_integral = 0.
+                    # Eq 34
+                    omega_integral += d_omega / (2.*np.pi) * J_n_sigma_omega * j0(kappa_n / r[j]) * np.exp(-1j*omega[l]*t[i])
+                n_sum += omega_integral
+            Jrt[j, i] = n_sum
+    return Jrt
 
-            for l in range(len(omega_grid):
-                omega = omega_grid[l]
-                kappa_n = n * np.pi / R
-                J_n_sigma_omega = J[k, :, l, 0] + 1j*J[k, :, l, 1]
 
-                # Eq 34
-                omega_integral += d_omega / (2.*np.pi) * J_n_sigma_omega * j0(kappa_n / r) * np.exp(-1j*omega*t)
-            n_sum += omega_integral
+if __name__ == "__main__":
+    r = np.linspace(0, 1e11, 1e3)
+    t = np.linspace(0, 1e3, 1e3)
+    
+    path = './outputs/n8_sigma1e6_omega64/'
+    n = np.load(path+'n_grid.npy')
+    omega = np.load(path+'omega_grid.npy')
+
+    Jrt = evaluate_Jrt(path, r, t, n, omega)
+    np.save(path+'Jrt.npy', Jrt)
