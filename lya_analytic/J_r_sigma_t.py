@@ -26,7 +26,7 @@ def evaluate_Jrt(path, r, sigma, t, n, omega):
 
 if __name__ == "__main__":
     r = np.linspace(1e-1, 1e11, int(1e1))
-    t = np.linspace(0, 1e3, int(1e1))
+    t = np.linspace(0, 30, int(1e1))
     
     path = './outputs/n8_sigma1e6_omega64/'
     n = np.load(path+'n_grid.npy')
