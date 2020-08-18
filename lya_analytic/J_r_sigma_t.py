@@ -34,4 +34,4 @@ if __name__ == "__main__":
     sigma = np.load(path+'sigma_grid.npy')
 
     Jrt = evaluate_Jrt(path, r, sigma, t, n, omega)
-    np.save(path+'Jrt_test.npy', Jrt)
+    np.save(path+'Jrt_t0to30.npy', Jrt)
