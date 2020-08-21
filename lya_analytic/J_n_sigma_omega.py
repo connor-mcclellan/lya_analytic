@@ -4,7 +4,8 @@ from solutions.boundaryvalue import BoundaryValue
 import time
 import pdb
 from multiprocessing import Pool, cpu_count
-from mpio import process
+from mpio import process, save_queue
+import h5py
 
 # Constants
 c = 29979245800.0
@@ -22,39 +23,38 @@ tdiff = p.R / c * (p.a * p.tau0)**(1./3) # Diffusion time
 dt = 0.1*tdiff
 
 # Number of omega points in grid
-N = 64
+N_omegas = 2
+N_ns = 4
 
 # Create grids
-omega_grid, d_omega = np.linspace(0, 2*np.pi/dt, N, retstep=True)
-n_grid = np.arange(1, 9, 1)
+omega_grid, d_omega = np.linspace(0, 2*np.pi/dt, N_omegas, retstep=True)
+n_grid = np.arange(1, N_ns+1, 1)
 sigma_grid = p.sigma_grid
 
-## Set up empty 4D array for data 
-#J = np.zeros((len(n_grid), len(sigma_grid), len(omega_grid), 2))
+# Create output hdf5 file
+fname = './outputs/n{}_sigma{}_omega{}.hdf5'.format(N_ns, len(sigma_grid), N_omegas)
 
 # Calculate J_n_sigma_omega for all grid points
-#computation_times = []
 for i in range(len(omega_grid)):
-    start = time.time()
     for j in range(len(n_grid)):
-        result = pool.apply_async(process, args=(n_grid, omega_grid, sigma_grid, i, j, p))
-#    end = time.time()
-#    computation_times.append(end-start)
+        result = pool.apply_async(process, args=(n_grid, omega_grid, sigma_grid, i, j, p, fname), callback=save_queue)
 
-    # Estimate time until finished
-#    if len(computation_times) >= 2:
-#        z = np.polyfit(omega_grid[:len(computation_times)], computation_times, 2)
-#        p = np.poly1d(z)
-#        projected = np.sum(p(omega_grid))
-#        remaining = projected - np.sum(computation_times)
-#        projectedstr = time.strftime('%H:%M:%S', time.gmtime(projected))
-#        remainingstr = time.strftime('%H:%M:%S', time.gmtime(remaining))
-#        print("\nProjected duration: {}".format(projectedstr))
-#        print("Projected time remaining: {} \n".format(remainingstr))
+output = h5py.File(fname, 'a')
+output.create_dataset("n", data=n_grid)
+output.create_dataset("sigma", data=sigma_grid)
+output.create_dataset("omega", data=omega_grid)
 
-np.save("./outputs/n8_sigma1e6_omega64/n_grid", n_grid)
-np.save("./outputs/n8_sigma1e6_omega64/sigma_grid", sigma_grid)
-np.save("./outputs/n8_sigma1e6_omega64/omega_grid", omega_grid)
+# Set attributes 
+for key, value in p.__dict__.items():
+    try:
+        print(key, value)
+        output.attrs[key] = value
+    except:
+        print('attribute failed')
+        pass
+output.attrs['tdiff'] = tdiff
+output.attrs['dt'] = dt
+output.close()
 
 pool.close()
 pool.join()
