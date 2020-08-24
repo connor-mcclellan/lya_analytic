@@ -17,14 +17,16 @@ c = 29979245800.0
 
 class BoundaryValue(object):
 
-    def __init__(self, n, omega, p):
+    def __init__(self, n, omega, p, verbose=False):
         self.n = n
         self.omega = omega
         self.p = p
+        self.verbose = verbose
         self.kappa_n = self.n * np.pi / self.p.R
-        print('\nn = {}    omega = {}    sigma_s = {}'.format(self.n, self.omega, self.p.sigma_source))
-        print('process        part      domain      rtol, atol        time')
-        print('-----------------------------------------------------------')
+        if self.verbose:
+            print('\nn = {}    omega = {}    sigma_s = {}'.format(self.n, self.omega, self.p.sigma_source))
+            print('process        part      domain      rtol, atol        time')
+            print('-----------------------------------------------------------')
 
     def integrate_J(self, bounds, ivs):
         start = time.time()
@@ -42,9 +44,12 @@ class BoundaryValue(object):
         #    rtol = rtol * 10.
         #    sol = solve_ivp(_mean_intensity, bounds, ivs, atol=atol, rtol=rtol,
         #                    args=(self, ), t_eval=sigma_eval)
-        print('    [{}, {}]'.format(rtol, atol), end='', flush=True)
+
+
         end = time.time()
-        print('{:9.3f} s'.format(end - start))
+        if self.verbose:
+            print('    [{}, {}]'.format(rtol, atol), end='', flush=True)
+            print('{:9.3f} s'.format(end - start))
 
         return sol
 
@@ -56,7 +61,8 @@ class BoundaryValue(object):
         '''
         bounds = (np.min(self.p.sigma_grid), self.p.sigma_source)
         ivs = (self.p.delta * self.kappa_n / self.p.k * 1., 0., 1., 0.)
-        print('real      (-)    ', end='', flush=True)
+        if self.verbose:
+            print('real      (-)    ', end='', flush=True)
         solution = self.integrate_J(bounds, ivs)
         at_source = (solution.t == self.p.sigma_source)
 
@@ -74,7 +80,8 @@ class BoundaryValue(object):
         '''
         bounds = (np.max(self.p.sigma_grid), self.p.sigma_source)
         ivs = (-self.p.delta * self.kappa_n / self.p.k * 1., 0., 1., 0.)
-        print('               real      (+)    ', end='', flush=True)
+        if self.verbose:
+            print('               real      (+)    ', end='', flush=True)
         solution = self.integrate_J(bounds, ivs)
         at_source = (solution.t == self.p.sigma_source)
 
@@ -92,7 +99,8 @@ class BoundaryValue(object):
         '''
         bounds = (np.min(self.p.sigma_grid), self.p.sigma_source)
         ivs = (0., self.p.delta * self.kappa_n / self.p.k * 1., 0., 1.)
-        print('               imag      (-)    ', end='', flush=True)
+        if self.verbose:
+            print('               imag      (-)    ', end='', flush=True)
         solution = self.integrate_J(bounds, ivs)
         at_source = (solution.t == self.p.sigma_source)
 
@@ -110,7 +118,8 @@ class BoundaryValue(object):
         '''
         bounds = (np.max(self.p.sigma_grid), self.p.sigma_source)
         ivs = (0., -self.p.delta * self.kappa_n / self.p.k * 1., 0., 1.)
-        print('               imag      (+)    ', end='', flush=True)
+        if self.verbose:
+            print('               imag      (+)    ', end='', flush=True)
         solution = self.integrate_J(bounds, ivs)
         at_source = (solution.t == self.p.sigma_source)
 
@@ -137,47 +146,21 @@ class BoundaryValue(object):
         # Solve the matrix equation
         J_1_real, J_1_imag, J_2_real, J_2_imag = solve(matrix, solution_vector)
         end = time.time()
-        print('                                    {:8.3f} s'.format(end-start))
+        if self.verbose:
+            print('                                    {:8.3f} s'.format(end-start))
         return J_1_real, J_1_imag, J_2_real, J_2_imag
 
-#    def J_final(self):
-#        # Right-going piece
-#        print('          (-)    ', end='', flush=True)
-#        lbounds = (np.min(self.p.sigma_grid), self.p.sigma_source)
-#        livs = (self.p.delta * self.kappa_n / self.p.k * self.J1r,
-#               self.p.delta * self.kappa_n / self.p.k * self.J1i,
-#               self.J1r,
-#               self.J1i)
-#        lsolution = self.integrate_J(lbounds, livs)
-#
-#        # Left-going piece
-#        print('                         (+)    ', end='', flush=True)
-#        rbounds = (np.max(self.p.sigma_grid), self.p.sigma_source)
-#        rivs = (-self.p.delta * self.kappa_n / self.p.k * self.J1r,
-#               -self.p.delta * self.kappa_n / self.p.k * self.J1i,
-#               self.J1r,
-#               self.J1i)
-#        rsolution = self.integrate_J(rbounds, rivs)
-#
-#        sigma = np.ndarray.flatten(np.array((lsolution.t, rsolution.t)))
-#        J_real = np.ndarray.flatten(np.array((lsolution.y[2], rsolution.y[2])))
-#        J_imag = np.ndarray.flatten(np.array((lsolution.y[3], rsolution.y[3])))
-#
-#        sort = sigma.argsort()
-#        sigma = sigma[sort]
-#        J_real = J_real[sort]
-#        J_imag = J_imag[sort]
-#
-#        return np.array([sigma, J_real, J_imag])
-
     def solve(self):
-        print('integrate      ', end='', flush=True)
+        if self.verbose:
+            print('integrate      ', end='', flush=True)
+
         left_real = self.left_real()
         right_real = self.right_real()
         left_imag = self.left_imag()
         right_imag = self.right_imag()
 
-        print('solve matrix   ', end='', flush=True)
+        if self.verbose:
+            print('solve matrix   ', end='', flush=True)
         J_1_real, J_1_imag, J_2_real, J_2_imag = self.solve_coeff_matrix()
         
         # Centerpoint is duplicated --- remove it from one of the arrays with [:-1] before combining 

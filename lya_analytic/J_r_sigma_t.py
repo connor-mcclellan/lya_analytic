@@ -1,94 +1,83 @@
 import numpy as np
 from solutions.util import j0
 import h5py
-from astropy.utils.console import ProgressBar
+from tqdm import tqdm
 from scipy.interpolate import interp1d
+from multiprocessing import Pool, cpu_count
+from mpio import Jrsigmat_parallel, save_queue_Jrsigmat
 import pdb
 
-def evaluate_Jrt(Jnomega, r, sigma, t, output, axis=1):
+def evaluate_J_H(inputname, r, sigma, t, outputname, axis=1, mp=True):
 
-    full_sigma = Jnomega['sigma'][:]
-    omega = Jnomega['omega'][:]
-    n = Jnomega['n'][:]
+    # Parallel processing setup
+    cores = 8
+    pool = Pool(processes=cores)
+
+    # Load in some input variable arrays
+    Jnsigmaomega = h5py.File(inputname, 'r')
+    full_sigma = Jnsigmaomega['sigma'][:]
+    omega = Jnsigmaomega['omega'][:]
+    n = Jnsigmaomega['n'][:]
     d_omega = np.diff(omega)[0]
     R = r[-1]
+    Jnsigmaomega.close()
 
-    lengths = [len(r), len(sigma), len(t)]
+    # Prepare output variable arrays
+    aux_variables = [r, sigma, t]
+    prim_variable = aux_variables.pop(axis)
     names = ['r', 'sigma', 't']
-    arrays = [r, sigma, t]
-
     name = names.pop(axis)
-    array = arrays.pop(axis)
-    length = lengths.pop(axis)
 
-    pb = ProgressBar(len(t)*len(r)*len(n)*len(omega)*len(sigma))
-
-    Jt = np.zeros(len(t), dtype=np.complex)
-    for i in range(len(t)):
-        Jr = np.zeros(len(r), dtype=np.complex)
-        for j in range(len(r)):
-            Js = np.zeros(len(sigma), dtype=np.complex)
-            # Sum & discretized integral
-            for k in range(len(n)):
-                kappa_n = n[k] * np.pi / R
-                for l in range(len(omega)):
-                    # Load fourier coefficients for this n and omega
-                    Jdump = Jnomega['J_omega{}_n{}'.format(l, k)][:]
-                    J_interp = interp1d(full_sigma, Jdump)
-                    for m in range(len(sigma)):
-                        iterators = [j, m, i]
-                        print(iterators)
-                        (Jr, Js, Jt)[axis][iterators[axis]] += d_omega / (2.*np.pi) * J_interp(sigma[m]) * j0(kappa_n, r[j]) * np.exp(-1j*omega[l]*t[i])
-                        pb.update()
-                    iterator = iterators.pop(axis)
-                    setname = 'J_{}{}_{}{}'.format(names[0], iterators[0], names[1], iterators[1])
-
-      # This doesn't work --- order of the loops matters. Maybe can't generalize?
-            if not np.all(Js==0.):
-                # Axis is sigma
-                output.create_dataset(setname, data=Js)
-        if not np.all(Jr==0.):
-            # Axis is r
-            output.create_dataset(setname, data=Js)
-    if not np.all(Jt==0.):
-        # Axis is r
-        pdb.set_trace()
-        output.create_dataset(setname, data=Jt)
-
-    output.create_dataset(names[0], data=arrays[0])
-    output.create_dataset(names[1], data=arrays[1])
+    # Create output file --- data will be filled in during loops
+    output = h5py.File(outputname, 'w')
+    output.create_dataset(names[0], data=aux_variables[0])
+    output.create_dataset(names[1], data=aux_variables[1])
+    output.create_dataset(name, data=prim_variable)
     output.close()
 
+    if mp:
+        for i in range(len(aux_variables[0])):
+            for j in range(len(aux_variables[1])):
+                result = pool.apply_async(rsigmat_parallel, args=(inputname, i, j, len(aux_variables[1]), prim_variable, n, R, omega, d_omega, r, sigma, full_sigma, t, names, name, axis, outputname), callback=save_queue_rsigmat)    
+        pool.close()
+        pool.join()
+    else:
+        output = h5py.File(outputname, 'w')
+        pb = tqdm(total=len(t)*len(r)*len(n)*len(omega)*len(sigma))
+        for i in range(len(aux_variables[0])):
+            for j in range(len(aux_variables[1])):
+                J = np.zeros(len(prim_variable), dtype=np.complex)
+                for k in range(len(prim_variable)):
+                    # Sum & discretized integral
+                    for l in range(len(n)):
+                        kappa_n = n[l] * np.pi / R
+                        for m in range(len(omega)):
+                            # Load fourier coefficients for this n and omega
+                            Jnsigmaomega = h5py.File(inputname, 'r')
+                            Jdump = Jnsigmaomega['J_omega{}_n{}'.format(m, l)][:]
+                            J_interp = interp1d(full_sigma, Jdump)
+                            Jnsigmaomega.close()
 
-def evaluate_H(path, r, sigma, t, n, omega):
+                            # Figure out which index goes with which variable
+                            iters = [i, j, k]
+                            order = np.argsort(np.array(names+[name]))
+                            r_index, sigma_index, t_index = [iters[s] for s in order]
 
-    d_omega = np.diff(omega)[0]
-    R = r[-1]
-    H = np.zeros((len(r), len(sigma), len(t)), dtype=np.complex)
-    full_sigma = np.load(path+'sigma_grid.npy')
-
-    # Sum & discretized integral
-    for k in tqdm(range(len(n))):
-        for l in tqdm(range(len(omega))):
-            kappa_n = n[k] * np.pi / R
-
-            # Load in data for this n and omega
-            Jdump = np.load(path+'J_omega{}_n{}.npy'.format(l, k))
-            J_n_sigma_omega = Jdump[:, 0] + 1j*Jdump[:, 1]
-            J_interp = interp1d(full_sigma, J_n_sigma_omega)
-
-            for i in tqdm(range(len(t))):
-                for j in tqdm(range(len(r))):
-                    # Eq 34
-                    j0_prime = np.cos(kappa_n*r[j])/r[j] - np.sin(kappa_n*r[j])/kappa_n/r[j]**2.
-                    H[j, :, i] += d_omega / (2.*np.pi) * J_interp(sigma) * j0_prime * np.exp(-1j*omega[l]*t[i])
-    return Jrt
+                            # Eq 34
+                            J[k] += d_omega / (2.*np.pi) * J_interp(sigma[sigma_index]) * j0(kappa_n, r[r_index]) * np.exp(-1j*omega[m]*t[t_index])
+                            pb.update()
+                pb.close()
+                iterator = iters.pop(axis)
+                Jsetname = 'J_{}{}_{}{}'.format(names[0], iters[0], names[1], iters[1])
+                Hsetname = 'H_{}{}_{}{}'.format(names[0], iters[0], names[1], iters[1])
+                output.create_dataset(Jsetname, data=J)
+                output.create_dataset(Hsetname, data=H)
 
 
 if __name__ == "__main__":
-    r = [1e11, ]
+    r = [1e6, 1e11, ]
     t = np.linspace(0, 30, int(1e2))
-    sigma_eval = [-1e6, ]
-    Jnomega = h5py.File('./outputs/n4_sigma999999_omega2.hdf5', 'r')
-    output = h5py.File('./outputs/r{}_sigma{}_t{}.hdf5'.format(len(r), len(sigma_eval), len(t)), 'w')
-    evaluate_Jrt(Jnomega, r, sigma_eval, t, output, axis=2)
+    sigma_eval = [-1e6, -1e2]
+    inputname = './outputs/n4_sigma999999_omega2.hdf5'
+    outputname = './outputs/r{}_sigma{}_t{}.hdf5'.format(len(r), len(sigma_eval), len(t))
+    evaluate_Jrt(inputname, r, sigma_eval, t, outputname, axis=2, mp=True)
