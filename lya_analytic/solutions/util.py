@@ -46,7 +46,7 @@ class Params(object):
 #        self.R = self.tau0 * np.sqrt(np.pi) * self.delta / self.k
 
         self.sigma_grid = np.concatenate([np.linspace(-self.sigma_max, self.sigma_source, int(self.n_points / 2)), 
-                                          np.linspace(self.sigma_source, self.sigma_max, int(self.n_points / 2))[1:]])
+                                          np.linspace(self.sigma_source, self.sigma_max, int(self.n_points / 2)+1)[1:]])
         self.x_grid = np.cbrt(self.a / self.beta * self.sigma_grid)
         self.phi_grid = voigtx_fast(self.a, self.x_grid)/(np.sqrt(np.pi)*self.delta)
         self.phi = interp1d(self.sigma_grid, self.phi_grid)

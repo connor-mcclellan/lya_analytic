@@ -16,15 +16,15 @@ pool = Pool(processes=8)
 # Physical parameters
 lya = Line(1215.6701, 0.4164, 6.265e8)
 p = Params(line=lya, temp=1e4, tau0=1e7, num_dens=1701290465.5139434, 
-           energy=1., R=1e11, sigma_source=0., n_points=1e6)
+           energy=1., R=1e11, sigma_source=0., n_points=1e5)
 
 # Diffusion time
 tdiff = p.R / c * (p.a * p.tau0)**(1./3) # Diffusion time
 dt = 0.1*tdiff
 
 # Number of omega points in gridh
-N_omegas = 2
-N_ns = 4
+N_omegas = 128
+N_ns = 16
 
 # Create grids
 omega_grid, d_omega = np.linspace(0, 2*np.pi/dt, N_omegas, retstep=True)
@@ -32,7 +32,7 @@ n_grid = np.arange(1, N_ns+1, 1)
 sigma_grid = p.sigma_grid
 
 # Create output hdf5 file
-fname = './outputs/n{}_sigma{}_omega{}.hdf5'.format(N_ns, len(sigma_grid), N_omegas)
+fname = '/LyraShared/bcm2vn/outputs/lya_analytic/n{}_sigma{}_omega{}.hdf5'.format(N_ns, len(sigma_grid), N_omegas)
 
 pb = tqdm(total=len(omega_grid)*len(n_grid))
 def save_queue(result):
