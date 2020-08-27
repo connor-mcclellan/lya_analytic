@@ -76,8 +76,8 @@ def evaluate_J_H(inputname, r, sigma, t, outputname, axis=1, mp=True):
 
 if __name__ == "__main__":
     r = [1e11, ]
-    t = np.linspace(0, 30, int(1e3))
-    sigma_eval = [-1e6, -1e2, 0., 1e6]
+    t = [10., ]
+    sigma_eval = np.linspace(-1e8, 1e8, 1e5)
     inputname = '/LyraShared/bcm2vn/outputs/lya_analytic/n16_sigma100000_omega128.hdf5'
     outputname = '/LyraShared/bcm2vn/outputs/lya_analytic/r{}_sigma{}_t{}.hdf5'.format(len(r), len(sigma_eval), len(t))
     evaluate_J_H(inputname, r, sigma_eval, t, outputname, axis=2, mp=True)
