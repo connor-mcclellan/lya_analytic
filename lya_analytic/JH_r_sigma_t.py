@@ -42,7 +42,7 @@ def evaluate_J_H(inputname, r, sigma, t, outputname, axis=1, mp=True):
         pool.close()
         pool.join()
     else:
-        output = h5py.File(outputname, 'w')
+        output = h5py.File(outputname, 'a')
         pb = tqdm(total=len(t)*len(r)*len(n)*len(omega)*len(sigma))
         for l in range(len(n)):
             kappa_n = n[l] * np.pi / R
@@ -63,23 +63,23 @@ def evaluate_J_H(inputname, r, sigma, t, outputname, axis=1, mp=True):
                             # Figure out which index goes with which variable
                             iters = [i, j, k]
                             order = np.argsort(np.array(names+[name]))
-                            r_index, sigma_index, t_index = [iters[s] for s in order]
+                            iters_ord = [iters[s] for s in order]
+                            r_index, sigma_index, t_index = iters_ord
 
                             # Eq 34
                             J[k] += d_omega / (2.*np.pi) * J_interp(sigma[sigma_index]) * j0(kappa_n, r[r_index]) * np.exp(-1j*omega[m]*t[t_index])
                             j0_prime = np.cos(kappa_n*r[r_index])/r[r_index] - np.sin(kappa_n*r[r_index])/kappa_n/r[r_index]**2.
                             H[k] += d_omega / (2.*np.pi) * J_interp(sigma[sigma_index]) * j0_prime * np.exp(-1j*omega[m]*t[t_index])
                             pb.update()
-
-                        iterator = iters.pop(axis)
-                        Jsetname = 'J_{}{}_{}{}'.format(names[0], iters[0], names[1], iters[1])
-                        Hsetname = 'H_{}{}_{}{}'.format(names[0], iters[0], names[1], iters[1])
+                        iterator = iters_ord.pop(axis)
+                        Jsetname = 'J_{}{}_{}{}'.format(names[0], iters_ord[0], names[1], iters_ord[1])
+                        Hsetname = 'H_{}{}_{}{}'.format(names[0], iters_ord[0], names[1], iters_ord[1])
                         try:
                             output.create_dataset(Jsetname, data=J)
                             output.create_dataset(Hsetname, data=H)
                         except:
-                            output[Jsetname] += J
-                            output[Hsetname] += H
+                            output[Jsetname][:] += J
+                            output[Hsetname][:] += H
         pb.close()
 
 
