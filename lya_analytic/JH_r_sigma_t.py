@@ -57,6 +57,7 @@ def evaluate_J_H(inputname, r, sigma, t, outputname, axis=1, mp=True):
                 for i in range(len(aux_variables[0])):
                     for j in range(len(aux_variables[1])):
                         J = np.zeros(len(prim_variable), dtype=np.complex)
+                        H = np.zeros(len(prim_variable), dtype=np.complex)
                         for k in range(len(prim_variable)):
 
                             # Figure out which index goes with which variable
