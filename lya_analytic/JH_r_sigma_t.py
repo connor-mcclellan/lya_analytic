@@ -4,13 +4,13 @@ import h5py
 from tqdm import tqdm
 from scipy.interpolate import interp1d
 from multiprocessing import Pool, cpu_count
-from mpio import rsigmat_parallel, save_queue_rsigmat
+from mpio import rsigmat_parallel
 import pdb
 
 def evaluate_J_H(inputname, r, sigma, t, outputname, axis=1, mp=True):
 
     # Parallel processing setup
-    cores = 16
+    cores = 8
     pool = Pool(processes=cores)
 
     # Load in some input variable arrays
@@ -36,11 +36,26 @@ def evaluate_J_H(inputname, r, sigma, t, outputname, axis=1, mp=True):
     output.close()
 
     if mp:
-        for i in range(len(aux_variables[0])):
-            for j in range(len(aux_variables[1])):
-                result = pool.apply_async(rsigmat_parallel, args=(inputname, i, j, len(aux_variables[1]), prim_variable, n, R, omega, d_omega, r, sigma, full_sigma, t, names, name, axis, outputname), callback=save_queue_rsigmat)    
+        pb = tqdm(total=len(t)*len(r)*len(n)*len(omega)*len(sigma))
+
+        def save_queue_rsigmat(result):
+            pb.update()
+            Jsetname, Hsetname, J, H, fname = result
+            output = h5py.File(fname, 'a')
+            try:
+                output.create_dataset(Jsetname, data=J)
+                output.create_dataset(Hsetname, data=H)
+            except:
+                output[Jsetname][:] += J
+                output[Hsetname][:] += H
+            output.close()
+
+        for l in range(len(n)):
+            for m in range(len(omega)):
+                result = pool.apply_async(rsigmat_parallel, args=(inputname, l, m, n, aux_variables, prim_variable, R, omega, d_omega, r, sigma, full_sigma, t, names, name, axis, outputname), callback=save_queue_rsigmat)    
         pool.close()
         pool.join()
+        pb.close()
     else:
         output = h5py.File(outputname, 'a')
         pb = tqdm(total=len(t)*len(r)*len(n)*len(omega)*len(sigma))
@@ -80,6 +95,7 @@ def evaluate_J_H(inputname, r, sigma, t, outputname, axis=1, mp=True):
                         except:
                             output[Jsetname][:] += J
                             output[Hsetname][:] += H
+        output.close()
         pb.close()
 
 
@@ -87,6 +103,6 @@ if __name__ == "__main__":
     r = [1e11, ]
     t = [10., ]
     sigma_eval = np.linspace(-1e8, 1e8, 64)
-    inputname = '/LyraShared/bcm2vn/outputs/lya_analytic/n16_sigma100000_omega128.hdf5'
-    outputname = '/LyraShared/bcm2vn/outputs/lya_analytic/r{}_sigma{}_t{}.hdf5'.format(len(r), len(sigma_eval), len(t))
-    evaluate_J_H(inputname, r, sigma_eval, t, outputname, axis=1, mp=False)
+    inputname = './outputs/n16_sigma100000_omega128.hdf5'
+    outputname = './outputs/r{}_sigma{}_t{}_debug.hdf5'.format(len(r), len(sigma_eval), len(t))
+    evaluate_J_H(inputname, r, sigma_eval, t, outputname, axis=1, mp=True)

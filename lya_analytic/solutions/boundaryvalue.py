@@ -9,6 +9,7 @@ except:
     from solutions.util import voigtx_fast, Line, Params
 
 import time
+import pdb
 #import matplotlib.pyplot as plt
 
 
@@ -36,15 +37,14 @@ class BoundaryValue(object):
         # Ensure eval points are sorted in same direction as bounds
         if bounds[0] > bounds[1]:
             sigma_eval = np.flip(sigma_eval)
-        sol = solve_ivp(_mean_intensity, bounds, ivs, atol=atol, rtol=rtol,
-                        args=(self, ), t_eval=sigma_eval)
+
+        sol = solve_ivp(_mean_intensity, bounds, ivs, atol=atol, rtol=rtol, args=(self, ), t_eval=sigma_eval)
 
         #while len(sol.t) == 1:
         #    atol = atol * 10.
         #    rtol = rtol * 10.
         #    sol = solve_ivp(_mean_intensity, bounds, ivs, atol=atol, rtol=rtol,
         #                    args=(self, ), t_eval=sigma_eval)
-
 
         end = time.time()
         if self.verbose:
@@ -142,7 +142,7 @@ class BoundaryValue(object):
                                     0.,
                                     -np.sqrt(6.) / 8. * self.n**2. * self.p.energy / self.p.k / self.p.R**3.,
                                     0.])
-
+        pdb.set_trace()
         # Solve the matrix equation
         J_1_real, J_1_imag, J_2_real, J_2_imag = solve(matrix, solution_vector)
         end = time.time()
@@ -218,7 +218,7 @@ if __name__ == '__main__':
     # Create params object
     lya = Line(1215.6701, 0.4164, 6.265e8)
     p = Params(line=lya, temp=1e4, tau0=1e7, num_dens=1e6, energy=1., 
-               sigma_source=0., n_points=1e5)
+               sigma_source=0., n_points=1e5, R=1e11)
 
     # Comparison of characteristic time and characteristic frequency
     tc = p.R / c * p.tau0  # Characteristic timescale

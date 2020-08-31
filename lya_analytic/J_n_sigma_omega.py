@@ -22,7 +22,7 @@ p = Params(line=lya, temp=1e4, tau0=1e7, num_dens=1701290465.5139434,
 tdiff = p.R / c * (p.a * p.tau0)**(1./3) # Diffusion time
 dt = 0.1*tdiff
 
-# Number of omega points in gridh
+# Number of omega points in grid
 N_omegas = 128
 N_ns = 16
 
@@ -45,6 +45,7 @@ def save_queue(result):
 # Calculate J_n_sigma_omega for all grid points
 for i in range(len(omega_grid)):
     for j in range(len(n_grid)):
+# DEBUG        process(n_grid, omega_grid, sigma_grid, i, j, p, fname)
         result = pool.apply_async(process, args=(n_grid, omega_grid, sigma_grid, i, j, p, fname), callback=save_queue)
 pool.close()
 pool.join()
