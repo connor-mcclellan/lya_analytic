@@ -36,7 +36,7 @@ def evaluate_J_H(inputname, r, sigma, t, outputname, axis=1, mp=True):
     output.close()
 
     if mp:
-        pb = tqdm(total=len(t)*len(r)*len(n)*len(omega)*len(sigma))
+        pb = tqdm(total=len(t)*len(r)*len(aux_variables[0])*len(aux_variables[1]))
 
         def save_queue_rsigmat(result):
             pb.update()
@@ -52,7 +52,17 @@ def evaluate_J_H(inputname, r, sigma, t, outputname, axis=1, mp=True):
 
         for l in range(len(n)):
             for m in range(len(omega)):
-                result = pool.apply_async(rsigmat_parallel, args=(inputname, l, m, n, aux_variables, prim_variable, R, omega, d_omega, r, sigma, full_sigma, t, names, name, axis, outputname), callback=save_queue_rsigmat)    
+                kappa_n = n[l] * np.pi / R
+
+                # Load fourier coefficients for this n and omega
+                Jnsigmaomega = h5py.File(inputname, 'r')
+                Jdump = Jnsigmaomega['J_omega{}_n{}'.format(m, l)][:]
+                J_interp = interp1d(full_sigma, Jdump)
+                Jnsigmaomega.close()
+
+                for i in range(len(aux_variables[0])):
+                    for j in range(len(aux_variables[1])):
+                        result = pool.apply_async(rsigmat_parallel, args=(inputname, i, j, l, m, n, J_interp, kappa_n, aux_variables, prim_variable, R, omega, d_omega, r, sigma, full_sigma, t, names, name, axis, outputname), callback=save_queue_rsigmat)    
         pool.close()
         pool.join()
         pb.close()
@@ -101,8 +111,8 @@ def evaluate_J_H(inputname, r, sigma, t, outputname, axis=1, mp=True):
 
 if __name__ == "__main__":
     r = [1e11, ]
-    t = np.linspace(0., 30., 1000)
-    sigma_eval = np.linspace(-1e8, 1e8, 1000)
+    t = np.linspace(0., 30., 100)
+    sigma_eval = np.linspace(-1e8, 1e8, 100)
     inputname = './outputs/n8_sigma1000_omega128.hdf5'
     outputname = './outputs/r{}_sigma{}_t{}.hdf5'.format(len(r), len(sigma_eval), len(t))
-    evaluate_J_H(inputname, r, sigma_eval, t, outputname, axis=2, mp=True)
+    evaluate_J_H(inputname, r, sigma_eval, t, outputname, axis=1, mp=True)
