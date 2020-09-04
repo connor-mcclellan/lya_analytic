@@ -21,7 +21,7 @@ class Line(object):
 
 class Params(object):
       
-    def __init__(self, line=None, temp=None, tau0=None, num_dens=None, energy=None, R=None, sigma_source=None, n_points=None):
+    def __init__(self, line=None, temp=None, tau0=None, num_dens=None, energy=None, R=None, sigma_source=None, n_points=None, log=False):
 
         # Parameters
         self.line = line
@@ -45,8 +45,17 @@ class Params(object):
         self.a = self.line.gamma / (4.0 * np.pi * self.delta)
 #        self.R = self.tau0 * np.sqrt(np.pi) * self.delta / self.k
 
-        self.sigma_grid = np.concatenate([np.linspace(-self.sigma_max, self.sigma_source, int(self.n_points / 2)), 
-                                          np.linspace(self.sigma_source, self.sigma_max, int(self.n_points / 2)+1)[1:]])
+        if log:
+            # Assumes source sigma is 0 and domains are symmetric
+            sourcelog = np.log10(self.sigma_source + 1.)
+            limitlog = np.log10(self.sigma_max + 1.)
+            left = -np.logspace(sourcelog, limitlog, int(self.n_points/2)) + 1.
+            right = (np.logspace(sourcelog, limitlog, int(self.n_points/2)+1) - 1.)[1:]
+            self.sigma_grid = np.concatenate([np.flip(left), right])
+
+        else:
+            self.sigma_grid = np.concatenate([np.linspace(-self.sigma_max, self.sigma_source, int(self.n_points / 2)), 
+                                              np.linspace(self.sigma_source, self.sigma_max, int(self.n_points / 2)+1)[1:]])
         self.x_grid = np.cbrt(self.a / self.beta * self.sigma_grid)
         self.phi_grid = voigtx_fast(self.a, self.x_grid)/(np.sqrt(np.pi)*self.delta)
         self.phi = interp1d(self.sigma_grid, self.phi_grid)
@@ -104,7 +113,7 @@ def read_bin(path):
 
 
 def voigtx_fast(a, x):
-    return np.exp(-x**2) / np.sqrt(np.pi) + a / np.pi / (0.01 + x**2)
+    return np.exp(-x**2) / np.sqrt(np.pi) #+ a / np.pi / (0.01 + x**2)
 
 def tanf(x, tau):
     return np.tan(x) - x / (1. - 1.5 * tau)

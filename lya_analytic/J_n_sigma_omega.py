@@ -6,6 +6,7 @@ from tqdm import tqdm
 from multiprocessing import Pool, cpu_count
 from mpio import process
 import h5py
+import math as m
 
 # Constants
 c = 29979245800.0
@@ -27,12 +28,14 @@ N_omegas = 128
 N_ns = 16
 
 # Create grids
-omega_grid, d_omega = np.linspace(0, 2*np.pi/dt, N_omegas, retstep=True)
+#omega_grid = np.linspace(0, 2*np.pi/dt, N_omegas)
+omega_grid = np.logspace(np.log(1e-3), np.log10(2*np.pi/dt), N_omegas-1)
+omega_grid = np.insert(omega_grid, 0, 0.)
 n_grid = np.arange(1, N_ns+1, 1)
 sigma_grid = p.sigma_grid
 
 # Create output hdf5 file
-fname = '/LyraShared/bcm2vn/outputs/lya_analytic/n{}_sigma{}_omega{}.hdf5'.format(N_ns, len(sigma_grid), N_omegas)
+fname = '/LyraShared/bcm2vn/outputs/lya_analytic/n{}_sigma{}_logomega{}.hdf5'.format(N_ns, len(sigma_grid), N_omegas)
 
 pb = tqdm(total=len(omega_grid)*len(n_grid))
 def save_queue(result):

@@ -13,7 +13,7 @@ for k in range(len(n)):
 
     plt.figure()
     colors = pl.cm.jet(np.linspace(0, 1, len(omega)))
-    for l in [0, 1, 2, 3, 4, 5]: #range(len(omega)):
+    for l in range(len(omega)):
 
         # Load in data for this n and omega
         J = data['J_omega{}_n{}'.format(l, k)][:]
