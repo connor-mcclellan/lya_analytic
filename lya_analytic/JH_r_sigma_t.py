@@ -101,8 +101,8 @@ def evaluate_J_H(inputname, r, sigma, t, outputname, axis=1, mp=True):
 
 if __name__ == "__main__":
     r = [1e11, ]
-    t = [10., ]
-    sigma_eval = np.linspace(-1e8, 1e8, 64)
-    inputname = './outputs/n16_sigma100000_omega128.hdf5'
-    outputname = './outputs/r{}_sigma{}_t{}_debug.hdf5'.format(len(r), len(sigma_eval), len(t))
-    evaluate_J_H(inputname, r, sigma_eval, t, outputname, axis=1, mp=True)
+    t = np.linspace(0., 30., 1000)
+    sigma_eval = np.linspace(-1e8, 1e8, 1000)
+    inputname = './outputs/n8_sigma1000_omega128.hdf5'
+    outputname = './outputs/r{}_sigma{}_t{}.hdf5'.format(len(r), len(sigma_eval), len(t))
+    evaluate_J_H(inputname, r, sigma_eval, t, outputname, axis=2, mp=True)
