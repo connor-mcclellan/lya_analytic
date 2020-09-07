@@ -36,10 +36,10 @@ def evaluate_J_H(inputname, r, sigma, t, outputname, axis=1, mp=True):
     output.close()
 
     if mp:
-        pb = tqdm(total=len(t)*len(r)*len(aux_variables[0])*len(aux_variables[1]))
+        pb = tqdm(total=len(t)*len(r)*len(n)*len(omega)*len(sigma))
 
         def save_queue_rsigmat(result):
-            pb.update()
+            pb.update(len(prim_variable))
             Jsetname, Hsetname, J, H, fname = result
             output = h5py.File(fname, 'a')
             try:
@@ -92,9 +92,9 @@ def evaluate_J_H(inputname, r, sigma, t, outputname, axis=1, mp=True):
                             r_index, sigma_index, t_index = iters_ord
 
                             # Eq 34
-                            J[k] += d_omega / (2.*np.pi) * J_interp(sigma[sigma_index]) * j0(kappa_n, r[r_index]) * np.exp(-1j*omega[m]*t[t_index])
+                            J[k] += 2. * d_omega / (2.*np.pi) * J_interp(sigma[sigma_index]) * j0(kappa_n, r[r_index]) * np.exp(-1j*omega[m]*t[t_index])
                             j0_prime = np.cos(kappa_n*r[r_index])/r[r_index] - np.sin(kappa_n*r[r_index])/kappa_n/r[r_index]**2.
-                            H[k] += d_omega / (2.*np.pi) * J_interp(sigma[sigma_index]) * j0_prime * np.exp(-1j*omega[m]*t[t_index])
+                            H[k] += - 2. * d_omega / (2.*np.pi) * J_interp(sigma[sigma_index]) * j0_prime * np.exp(-1j*omega[m]*t[t_index])
                             pb.update()
                         iterator = iters_ord.pop(axis)
                         Jsetname = 'J_{}{}_{}{}'.format(names[0], iters_ord[0], names[1], iters_ord[1])

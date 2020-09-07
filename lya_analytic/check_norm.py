@@ -1,22 +1,23 @@
 import h5py
 import numpy as np
 
-n_r, n_sigma, n_t = 1, 1000, 1000
+n_r, n_sigma, n_t = 1, 100, 100
 a = h5py.File('./outputs/r{}_sigma{}_t{}.hdf5'.format(n_r, n_sigma, n_t), 'r')
 
 r = a['r'][:]
 sigma = a['sigma'][:]
 t = a['t'][:]
 
-H_t = np.zeros(len(t))
-d_sigma = np.diff(sigma)[0]
-for i in range(len(sigma)):
-    Hdump = a['H_r0_sigma{}'.format(i)][:]
-    H_t += d_sigma * Hdump * 4. * np.pi * r**2.
-
-H = 0.
+H_sigma = np.zeros(len(sigma))
 dt = np.diff(t)[0]
 for j in range(len(t)):
-    H += dt * H_t
+    H_dump = a['H_r0_t{}'.format(j)][:]
+    H_sigma += dt * H_dump.real
+
+H = 0.
+d_sigma = np.diff(sigma)[0]
+for i in range(len(sigma)):
+    H += d_sigma * H_sigma[i] * 4. * np.pi * r**2.
+
 
 print("summed H = {}".format(H))
