@@ -142,7 +142,6 @@ class BoundaryValue(object):
                                     0.,
                                     -np.sqrt(6.) / 8. * self.n**2. * self.p.energy / self.p.k / self.p.R**3.,
                                     0.])
-        pdb.set_trace()
         # Solve the matrix equation
         J_1_real, J_1_imag, J_2_real, J_2_imag = solve(matrix, solution_vector)
         end = time.time()

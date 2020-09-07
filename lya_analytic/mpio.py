@@ -27,9 +27,9 @@ def rsigmat_parallel(inputname, i, j, l, m, n, J_interp, kappa_n, aux_variables,
             r_index, sigma_index, t_index = iters_ord
 
             # Eq 34
-            J[k] += d_omega / (2.*np.pi) * J_interp(sigma[sigma_index]) * j0(kappa_n, r[r_index]) * np.exp(-1j*omega[m]*t[t_index])
+            J[k] += 2. * d_omega / (2.*np.pi) * J_interp(sigma[sigma_index]) * j0(kappa_n, r[r_index]) * np.exp(-1j*omega[m]*t[t_index])
             j0_prime = np.cos(kappa_n*r[r_index])/r[r_index] - np.sin(kappa_n*r[r_index])/kappa_n/r[r_index]**2.
-            H[k] += d_omega / (2.*np.pi) * J_interp(sigma[sigma_index]) * j0_prime * np.exp(-1j*omega[m]*t[t_index])
+            H[k] += - 2. * d_omega / (2.*np.pi) * J_interp(sigma[sigma_index]) * j0_prime * np.exp(-1j*omega[m]*t[t_index])
         iterator = iters_ord.pop(axis)
         Jsetname = 'J_{}{}_{}{}'.format(names[0], iters_ord[0], names[1], iters_ord[1])
         Hsetname = 'H_{}{}_{}{}'.format(names[0], iters_ord[0], names[1], iters_ord[1])
