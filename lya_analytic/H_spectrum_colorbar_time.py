@@ -4,12 +4,15 @@ import matplotlib.pylab as pl
 import matplotlib
 matplotlib.rcParams['text.usetex'] = True
 import numpy as np
+import argparse
 
-a = h5py.File('./outputs/r1_sigma1001_t100.hdf5', 'r')
+parser = argparse.ArgumentParser()
+parser.add_argument('--inputfile', '-i', type=str, help='r_sigma_t file to plot')
+args = parser.parse_args()
 
+a = h5py.File(args.inputfile, 'r')
 sigma = a['sigma'][:]
 time = a['t'][:]
-
 
 fig = plt.figure()
 colors = pl.cm.jet(np.linspace(0, 1, len(time)))

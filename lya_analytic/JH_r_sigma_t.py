@@ -7,7 +7,13 @@ from multiprocessing import Pool, cpu_count
 from mpio import rsigmat_parallel
 import pdb
 
-def evaluate_J_H(inputname, r, sigma, t, outputname, axis=1, mp=True):
+def evaluate_J_H(inputname, r, sigma, t, outputname, axis=1, mp=True, skip=None):
+
+    '''
+    Calculate mean intensity J and flux H at desired points in radius, 
+    frequency, and time, given pre-calculated Fourier coefficients 
+    J_n_sigma_omega.
+    '''
 
     # Parallel processing setup
     cores = 8
@@ -54,6 +60,9 @@ def evaluate_J_H(inputname, r, sigma, t, outputname, axis=1, mp=True):
             for m in range(len(omega)):
                 kappa_n = n[l] * np.pi / R
 
+                if m in skip:
+                    continue
+
                 # Load fourier coefficients for this n and omega
                 Jnsigmaomega = h5py.File(inputname, 'r')
                 Jdump = Jnsigmaomega['J_omega{}_n{}'.format(m, l)][:]
@@ -72,6 +81,9 @@ def evaluate_J_H(inputname, r, sigma, t, outputname, axis=1, mp=True):
         for l in range(len(n)):
             kappa_n = n[l] * np.pi / R
             for m in range(len(omega)):
+
+                if m in skip:
+                    continue
 
                 # Load fourier coefficients for this n and omega
                 Jnsigmaomega = h5py.File(inputname, 'r')
@@ -112,7 +124,7 @@ def evaluate_J_H(inputname, r, sigma, t, outputname, axis=1, mp=True):
 if __name__ == "__main__":
     r = [1e11, ]
     t = np.linspace(0., 30., 100)
-    sigma_eval = np.linspace(-1e8, 1e8, 101)
+    sigma_eval = np.linspace(-1e8, 1e8, 1001)
     inputname = '/LyraShared/bcm2vn/outputs/lya_analytic/n8_sigma1000_omega128.hdf5'
-    outputname = '/LyraShared/bcm2vn/outputs/lya_analytic/r{}_sigma{}_t{}.hdf5'.format(len(r), len(sigma_eval), len(t))
-    evaluate_J_H(inputname, r, sigma_eval, t, outputname, axis=1, mp=True)
+    outputname = '/LyraShared/bcm2vn/outputs/lya_analytic/r{}_sigma{}_t{}_skipomega0.hdf5'.format(len(r), len(sigma_eval), len(t))
+    evaluate_J_H(inputname, r, sigma_eval, t, outputname, axis=1, mp=True, skip=[0, ])
