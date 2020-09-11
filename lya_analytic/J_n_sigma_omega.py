@@ -26,7 +26,7 @@ dt = 0.1*tdiff
 
 # Number of omega points in grid
 N_omegas = 128
-N_ns = 16
+N_ns = 4
 
 # Create grids
 #omega_grid = np.linspace(0, 2*np.pi/dt, N_omegas)
@@ -36,7 +36,7 @@ n_grid = np.arange(1, N_ns+1, 1)
 sigma_grid = p.sigma_grid
 
 # Create output hdf5 file
-fname = '/LyraShared/bcm2vn/outputs/lya_analytic/n{}_sigma{}_logomega{}.hdf5'.format(N_ns, len(sigma_grid), N_omegas)
+fname = '/LyraShared/bcm2vn/outputs/lya_analytic/n{}_widesigma{}_logomega{}.hdf5'.format(N_ns, len(sigma_grid), N_omegas)
 
 pb = tqdm(total=len(omega_grid)*len(n_grid))
 def save_queue(result):

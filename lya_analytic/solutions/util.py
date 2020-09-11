@@ -37,7 +37,7 @@ class Params(object):
         self.beta = np.sqrt(2.0 / 3.0) * np.pi / 3.0
 
         # Derived quantities
-        self.sigma_max = 10.*self.tau0
+        self.sigma_max = 100.*self.tau0
         self.k = self.num_dens * np.pi * esu**2. * \
                  self.line.osc_strength / m_e / c  # eq A2
         self.vth = np.sqrt(2.0 * k_B * self.temp / m_p)
