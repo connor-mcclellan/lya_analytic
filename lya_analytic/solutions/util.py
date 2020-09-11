@@ -113,7 +113,7 @@ def read_bin(path):
 
 
 def voigtx_fast(a, x):
-    return np.exp(-x**2) / np.sqrt(np.pi) #+ a / np.pi / (0.01 + x**2)
+    return np.exp(-x**2) / np.sqrt(np.pi) + a / np.pi / (0.01 + x**2)
 
 def tanf(x, tau):
     return np.tan(x) - x / (1. - 1.5 * tau)

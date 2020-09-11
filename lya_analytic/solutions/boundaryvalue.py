@@ -205,6 +205,10 @@ def _mean_intensity(sigma, dependent, *args):
 
 #    print(sigma, (obj.p.delta * obj.kappa_n / obj.p.k)**2., 3. * obj.omega * obj.p.delta**2. * obj.p.phi(sigma) / obj.p.k / c)
 
+# Insert if statement to check relative size of terms here --- stop if 
+# Once have set left and right boundary in sigma, if omega term (coefficients of x1 and y1) bigger than the other term in extreme case, stop the code
+# Just do once at the very start, no need to do it at every step
+
     return [(obj.p.delta * obj.kappa_n / obj.p.k)**2. * x1 + 3. * obj.omega * obj.p.delta**2. * obj.p.phi(sigma) / obj.p.k / c * y1,  # dx2_dsigma
             (obj.p.delta * obj.kappa_n / obj.p.k)**2. * y1 - 3. * obj.omega * obj.p.delta**2. * obj.p.phi(sigma) / obj.p.k / c * x1,  # dy2_dsigma
             x2,  # dx1_dsigma = x2
