@@ -15,6 +15,11 @@ matplotlib.rc('font', **{'family': 'serif',
                          'serif': ['Computer Modern Roman']})
 from pathlib import Path
 
+
+'''
+An attempt to recreate Phil's plots for his Monte Carlo data.
+'''
+
 def get_input_info(filename):
     f = open(filename, 'r')
     g = f.readlines()

@@ -7,6 +7,13 @@ from astropy.utils.console import ProgressBar
 matplotlib.rc('text', usetex=True)
 import pdb
 
+'''
+Plots Shane's series solution alongside Monte Carlo data to fit the wait time 
+distribution for photons escaping a sphere.
+'''
+
+
+
 array = np.load('./outputs/1m_bin_time.npy')
 tc = array[0]
 ydata = array[1]

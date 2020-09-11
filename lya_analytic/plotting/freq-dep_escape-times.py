@@ -3,6 +3,11 @@ import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.rc('text', usetex=True)
 
+'''
+Splits wait time distribution data into chunks organized by frequency, to see 
+how the dependence changes for photons in different populations.
+'''
+
 # Load photon data
 data_dir = '/home/connor/Documents/999x/9999/lya_analytic/data/'\
            '1m_tau0_10000000.0_xinit_0.0_temp_10000.0_probabs_0.0/'

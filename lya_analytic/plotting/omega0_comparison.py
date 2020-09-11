@@ -7,6 +7,11 @@ import matplotlib
 matplotlib.rcParams['text.usetex'] = True
 import pdb
 
+'''
+Compares 16 fourier coefficients against the analytic solution for omega=0
+'''
+
+
 # Eq 30
 #def J(r, sigma, R, delta, L, k, sigma_source):
 #    return np.sqrt(6)/32./np.pi**2.*L/R/r/delta*(np.sin(np.pi*r/R)/(np.cosh(np.pi*delta*np.abs(sigma-sigma_source)/k/R) - np.cos(np.pi*r/R)))
