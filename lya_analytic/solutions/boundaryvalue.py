@@ -54,7 +54,6 @@ class BoundaryValue(object):
         return sol
 
     def left_real(self):
-        global Jrealarray, sigmaarray
         '''
         Determines four coefficients by setting J_{1, r} = 1 and J_{1, i} = 0.
         Integration is performed from a large negative sigma to the source.
