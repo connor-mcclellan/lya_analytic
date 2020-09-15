@@ -34,6 +34,13 @@ class BoundaryValue(object):
         atol, rtol = (3e-10, 3e-10)
         sigma_eval = self.p.sigma_grid[(self.p.sigma_grid <= np.max(bounds)) & (self.p.sigma_grid >= np.min(bounds))]
 
+        # Check to see if omega term dominates; it never should!
+        extremal_phi = np.max(self.p.phi(np.array(bounds)))
+        omega_term = 3. * self.omega * self.p.delta**2. * extremal_phi / self.p.k / c
+        other_term = (self.p.delta * self.kappa_n / self.p.k)**2. 
+        if omega_term >= other_term:
+            raise ValueError("Omega term exceeds kappa term. Aborting integration at n={}, omega={}, sigma bounds {}".format(self.n, self.omega, bounds))
+
         # Ensure eval points are sorted in same direction as bounds
         if bounds[0] > bounds[1]:
             sigma_eval = np.flip(sigma_eval)
