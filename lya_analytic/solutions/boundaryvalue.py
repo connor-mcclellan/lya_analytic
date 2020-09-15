@@ -30,6 +30,7 @@ class BoundaryValue(object):
             print('-----------------------------------------------------------')
 
     def integrate_J(self, bounds, ivs):
+
         start = time.time()
         atol, rtol = (3e-10, 3e-10)
         sigma_eval = self.p.sigma_grid[(self.p.sigma_grid <= np.max(bounds)) & (self.p.sigma_grid >= np.min(bounds))]
@@ -188,11 +189,15 @@ class BoundaryValue(object):
 def _mean_intensity(sigma, dependent, *args):
     global Jrealarray, sigmaarray
 
+    rescale = 1e-300
     (x2, y2, x1, y1) = dependent
     (obj, ) = args
 
+    x1 = rescale * x1
+    y1 = rescale * y1
+
 ## DEBUG
-#    print('sigma={:.2f}  x1={:.2f}  y1={:.2f}, phi={}'.format(sigma, x1, y1, obj.p.phi(sigma)))
+    print('sigma={:.2E}  x1={:.2E}  y1={:.2E}, phi={:.2E}'.format(sigma, x1, y1, obj.p.phi(sigma)))
 
     try:
         Jrealarray.append(x1)
@@ -201,7 +206,7 @@ def _mean_intensity(sigma, dependent, *args):
         Jrealarray = [x1]
         sigmaarray = [sigma]
 
-#    if x1 >= 1e100:
+#    if (sigma > -1):
 #        pdb.set_trace()
 
     # x2 = d(J_real)/d(sigma)
@@ -209,18 +214,11 @@ def _mean_intensity(sigma, dependent, *args):
     # x1 = J_real
     # y1 = J_imag
 
-#    print(sigma, (obj.p.delta * obj.kappa_n / obj.p.k)**2., 3. * obj.omega * obj.p.delta**2. * obj.p.phi(sigma) / obj.p.k / c)
-
-# Insert if statement to check relative size of terms here --- stop if 
-# Once have set left and right boundary in sigma, if omega term (coefficients of x1 and y1) bigger than the other term in extreme case, stop the code
-# Just do once at the very start, no need to do it at every step
-
-    return [(obj.p.delta * obj.kappa_n / obj.p.k)**2. * x1 + 3. * obj.omega * obj.p.delta**2. * obj.p.phi(sigma) / obj.p.k / c * y1,  # dx2_dsigma
-            (obj.p.delta * obj.kappa_n / obj.p.k)**2. * y1 - 3. * obj.omega * obj.p.delta**2. * obj.p.phi(sigma) / obj.p.k / c * x1,  # dy2_dsigma
+    return [1./rescale * ((obj.p.delta * obj.kappa_n / obj.p.k)**2. * x1 + 3. * obj.omega * obj.p.delta**2. * obj.p.phi(sigma) / obj.p.k / c * y1),  # dx2_dsigma
+            1./rescale * ((obj.p.delta * obj.kappa_n / obj.p.k)**2. * y1 - 3. * obj.omega * obj.p.delta**2. * obj.p.phi(sigma) / obj.p.k / c * x1),  # dy2_dsigma
             x2,  # dx1_dsigma = x2
             y2  # dy1_dsigma = y2
            ]
-
 
 if __name__ == '__main__':
 
