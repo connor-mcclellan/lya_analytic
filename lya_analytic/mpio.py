@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 def process(n_grid, omega_grid, sigma_grid, i, j, p, fname):
     try:
-        bv = BoundaryValue(n_grid[j], omega_grid[i], p)
+        bv = BoundaryValue(n_grid[j], omega_grid[i], p, verbose=True)
         _, J_real, J_imag, _, _ = bv.solve()
         J = J_real + 1j*J_imag
     except Exception as e:

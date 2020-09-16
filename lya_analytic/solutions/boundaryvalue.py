@@ -189,22 +189,22 @@ class BoundaryValue(object):
 def _mean_intensity(sigma, dependent, *args):
     global Jrealarray, sigmaarray
 
-    rescale = 1e-300
+#    rescale = 1e-300
     (x2, y2, x1, y1) = dependent
     (obj, ) = args
 
-    x1 = rescale * x1
-    y1 = rescale * y1
+#    x1 = rescale * x1
+#    y1 = rescale * y1
 
 ## DEBUG
-    print('sigma={:.2E}  x1={:.2E}  y1={:.2E}, phi={:.2E}'.format(sigma, x1, y1, obj.p.phi(sigma)))
+#    print('sigma={:.2E}  x1={:.2E}  y1={:.2E}, phi={:.2E}'.format(sigma, x1, y1, obj.p.phi(sigma)))
 
-    try:
-        Jrealarray.append(x1)
-        sigmaarray.append(sigma)
-    except:
-        Jrealarray = [x1]
-        sigmaarray = [sigma]
+#    try:
+#        Jrealarray.append(x1)
+#        sigmaarray.append(sigma)
+#    except:
+#        Jrealarray = [x1]
+#        sigmaarray = [sigma]
 
 #    if (sigma > -1):
 #        pdb.set_trace()
@@ -214,8 +214,8 @@ def _mean_intensity(sigma, dependent, *args):
     # x1 = J_real
     # y1 = J_imag
 
-    return [1./rescale * ((obj.p.delta * obj.kappa_n / obj.p.k)**2. * x1 + 3. * obj.omega * obj.p.delta**2. * obj.p.phi(sigma) / obj.p.k / c * y1),  # dx2_dsigma
-            1./rescale * ((obj.p.delta * obj.kappa_n / obj.p.k)**2. * y1 - 3. * obj.omega * obj.p.delta**2. * obj.p.phi(sigma) / obj.p.k / c * x1),  # dy2_dsigma
+    return [(obj.p.delta * obj.kappa_n / obj.p.k)**2. * x1 + 3. * obj.omega * obj.p.delta**2. * obj.p.phi(sigma) / obj.p.k / c * y1,  # dx2_dsigma
+            (obj.p.delta * obj.kappa_n / obj.p.k)**2. * y1 - 3. * obj.omega * obj.p.delta**2. * obj.p.phi(sigma) / obj.p.k / c * x1,  # dy2_dsigma
             x2,  # dx1_dsigma = x2
             y2  # dy1_dsigma = y2
            ]
