@@ -7,7 +7,7 @@ from multiprocessing import Pool, cpu_count
 from mpio import rsigmat_parallel
 import pdb
 
-def evaluate_J_H(inputname, r, sigma, t, outputname, axis=1, mp=True, skip=None):
+def evaluate_J_H(inputname, r, sigma, t, outputname, axis=1, mp=True, skip=[]):
 
     '''
     Calculate mean intensity J and flux H at desired points in radius, 
@@ -22,7 +22,7 @@ def evaluate_J_H(inputname, r, sigma, t, outputname, axis=1, mp=True, skip=None)
     # Load in some input variable arrays
     Jnsigmaomega = h5py.File(inputname, 'r')
     full_sigma = Jnsigmaomega['sigma'][:]
-    omega = Jnsigmaomega['omega'][:]
+    omega = Jnsigmaomega['omega'][:110] # Temporary fix TO DO
     n = Jnsigmaomega['n'][:]
     d_omega = np.diff(omega)[0]
     R = r[-1]
@@ -88,6 +88,10 @@ def evaluate_J_H(inputname, r, sigma, t, outputname, axis=1, mp=True, skip=None)
                 # Load fourier coefficients for this n and omega
                 Jnsigmaomega = h5py.File(inputname, 'r')
                 Jdump = Jnsigmaomega['J_omega{}_n{}'.format(m, l)][:]
+
+                if any(np.isnan(Jdump)):
+                    Jdump = np.zeros(len(Jdump), dtype=np.complex)
+
                 J_interp = interp1d(full_sigma, Jdump)
                 Jnsigmaomega.close()
 
@@ -108,6 +112,7 @@ def evaluate_J_H(inputname, r, sigma, t, outputname, axis=1, mp=True, skip=None)
                             j0_prime = np.cos(kappa_n*r[r_index])/r[r_index] - np.sin(kappa_n*r[r_index])/kappa_n/r[r_index]**2.
                             H[k] += - 2. * d_omega / (2.*np.pi) * J_interp(sigma[sigma_index]) * j0_prime * np.exp(-1j*omega[m]*t[t_index])
                             pb.update()
+
                         iterator = iters_ord.pop(axis)
                         Jsetname = 'J_{}{}_{}{}'.format(names[0], iters_ord[0], names[1], iters_ord[1])
                         Hsetname = 'H_{}{}_{}{}'.format(names[0], iters_ord[0], names[1], iters_ord[1])
@@ -124,7 +129,7 @@ def evaluate_J_H(inputname, r, sigma, t, outputname, axis=1, mp=True, skip=None)
 if __name__ == "__main__":
     r = [1e11, ]
     t = np.linspace(0., 30., 100)
-    sigma_eval = np.linspace(-1e8, 1e8, 1001)
-    inputname = '/LyraShared/bcm2vn/outputs/lya_analytic/n8_sigma1000_omega128.hdf5'
-    outputname = '/LyraShared/bcm2vn/outputs/lya_analytic/r{}_sigma{}_t{}_skipomega0.hdf5'.format(len(r), len(sigma_eval), len(t))
-    evaluate_J_H(inputname, r, sigma_eval, t, outputname, axis=1, mp=True, skip=[0, ])
+    sigma_eval = [1e7, 2e7] #np.linspace(-1e8, 1e8, 1001)
+    inputname = './outputs/n4_widesigma100000_omega128.hdf5'
+    outputname = './outputs/r{}_widesigma{}_t{}.hdf5'.format(len(r), len(sigma_eval), len(t))
+    evaluate_J_H(inputname, r, sigma_eval, t, outputname, axis=2, mp=False)
