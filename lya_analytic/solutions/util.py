@@ -44,7 +44,7 @@ class Params(object):
         self.delta = self.line.nu0 * self.vth / c
         self.a = self.line.gamma / (4.0 * np.pi * self.delta)
 #        self.sigma_max = self.tau0 * (1.12 * self.R / c)**(3./2.) * (self.a * self.tau0)**(1./2.) # Eq. 46 in Phil's notes --- must multiply by omega**(3/2)
-        self.sigma_max = 100.*self.tau0
+        self.sigma_max = 50.*self.tau0
 #        self.R = self.tau0 * np.sqrt(np.pi) * self.delta / self.k
 
         if log:
