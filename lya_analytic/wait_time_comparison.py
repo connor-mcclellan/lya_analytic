@@ -34,7 +34,7 @@ val, exp = '{:.1e}'.format(a['sigma'][sigma_index]).split('e+')
 
 plt.xlabel('$t$')
 plt.ylabel('$H(r=10^{11}, \sigma='+val+'\\times 10^{'+str(int(exp))+'}, t)$')
-plt.yscale('log')
+#plt.yscale('log')
 plt.title('Surface Flux v. Time by Number of $\omega$ Points')
 plt.legend()
 plt.show()

@@ -22,10 +22,10 @@ p = Params(line=lya, temp=1e4, tau0=1e7, num_dens=1701290465.5139434,
 
 # Diffusion time
 tdiff = p.R / c * (p.a * p.tau0)**(1./3) # Diffusion time
-dt = 0.1*tdiff
+dt = 0.1*tdiff #TODO: Do a run with dt = 0.1*tdiff/4
 
 # Number of omega points in grid
-N_omegas = 128
+N_omegas = 128 # TODO: Do a run with 512 omegas, with dt = 0.1*tdiff/4. Reduce sigma max if needed
 N_ns = 8
 
 # Create grids
