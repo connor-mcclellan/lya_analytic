@@ -130,6 +130,6 @@ if __name__ == "__main__":
     r = [1e11, ]
     t = np.linspace(0., 60., 200)
     sigma_eval = [1e7, 2e7] #np.linspace(-1e8, 1e8, 1001)
-    inputname = './outputs/n4_widesigma100000_omega256.hdf5'
-    outputname = './outputs/r{}_widesigma{}_t{}.hdf5'.format(len(r), len(sigma_eval), len(t))
+    inputname = './outputs/Jnso/n8_sigma100000_omega512_convergence.hdf5'
+    outputname = './outputs/Jrst/r{}_sigma{}_t{}_convergence_512.hdf5'.format(len(r), len(sigma_eval), len(t))
     evaluate_J_H(inputname, r, sigma_eval, t, outputname, axis=2, mp=False)
