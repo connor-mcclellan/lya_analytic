@@ -128,11 +128,11 @@ def evaluate_J_H(inputname, r, sigma, t, outputname, axis=1, mp=True, skip=[]):
 
 if __name__ == "__main__":
     r = [1e11, ]
-    t = np.linspace(0., 2.*np.pi/0.00219798, 512)
+    t = np.linspace(0., 2.*np.pi/0.00219798, 256)
 
     # TODO: Set max t to be equal to 2pi / minimum omega, and set n points to be equal to n omegas. Reproduce these outputs for 512, 256, and 128 omegas (also, the special 512 run with dt' = dt/4)
 
     sigma_eval = [1e7, 2e7] #np.linspace(-1e8, 1e8, 1001)
-    inputname = './outputs/Jnso/n8_sigma100000_omega512_convergence.hdf5'
-    outputname = './outputs/Jrst/r{}_sigma{}_t{}_convergence_512_verylatetime.hdf5'.format(len(r), len(sigma_eval), len(t))
+    inputname = './outputs/Jnso/n8_sigma100000_omega256_convergence.hdf5'
+    outputname = './outputs/Jrst/r{}_sigma{}_t{}_convergence_256_verylatetime.hdf5'.format(len(r), len(sigma_eval), len(t))
     evaluate_J_H(inputname, r, sigma_eval, t, outputname, axis=2, mp=False)
