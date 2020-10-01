@@ -22,10 +22,10 @@ p = Params(line=lya, temp=1e4, tau0=1e7, num_dens=1701290465.5139434,
 
 # Diffusion time
 tdiff = p.R / c * (p.a * p.tau0)**(1./3) # Diffusion time
-dt = 0.1*tdiff #TODO: Do a run with dt = 0.1*tdiff/4
+dt = 0.1*tdiff/4.#TODO: Do a run with dt = 0.1*tdiff/4
 
 # Number of omega points in grid
-N_omegas = 128 # TODO: Do a run with 512 omegas, with dt = 0.1*tdiff/4. Reduce sigma max if needed
+N_omegas = 512 # TODO: Do a run with 512 omegas, with dt = 0.1*tdiff/4. Reduce sigma max if needed
 N_ns = 8
 
 # Create grids
@@ -36,7 +36,7 @@ n_grid = np.arange(1, N_ns+1, 1)
 sigma_grid = p.sigma_grid
 
 # Create output hdf5 file
-fname = '/LyraShared/bcm2vn/outputs/lya_analytic/n{}_sigma{}_omega{}_convergence.hdf5'.format(N_ns, len(sigma_grid), N_omegas)
+fname = '/LyraShared/bcm2vn/outputs/lya_analytic/n{}_sigma{}_omega{}_highfreq_lorprofile.hdf5'.format(N_ns, len(sigma_grid), N_omegas)
 #fname = './outputs/n{}_widesigma{}_logomega{}.hdf5'.format(N_ns, len(sigma_grid), N_omegas)
 
 pb = tqdm(total=len(omega_grid)*len(n_grid))
