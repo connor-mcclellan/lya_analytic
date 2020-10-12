@@ -19,7 +19,7 @@ colors = pl.cm.jet(np.linspace(0, 1, len(args.inputfiles)))
 
 # Load in the flux data for one of the files
 for i, inputfile in enumerate(args.inputfiles):
-    a = h5py.File(inputfile, 'r')
+    a = h5py.File('./outputs/Jrst/'+inputfile, 'r')
     sigma = a['sigma'][:]
     time = a['t'][:]
 

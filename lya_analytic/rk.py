@@ -59,7 +59,7 @@ def rk(f, bounds, ivs, dt=1e-1, dt_min=1e-3,
             if (abs(step_x - half_step_x) / abs(step_x) > dx_max).any():
                 # Error is too large for one or more x; decrease step size.
                 dt = dt / 2
-                new_x = half_step_x
+                new_x = half_step_x # Reject? Check again?
             elif (abs(step_x - dble_step_x) / abs(step_x) < dx_min).all():
                 # Larger error is acceptable for all x; increase step size.
                 dt = dt * 2
