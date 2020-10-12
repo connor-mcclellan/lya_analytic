@@ -334,7 +334,7 @@ def dEdnudt(t,sigma,ssoln,Jsoln,p):
 
 def main():
 
-  array = np.load('/Users/pla7y/radiation/harrington/time_dependent/eigenmode_data.npy',\
+  array = np.load('./eigenmode_data.npy',\
                   allow_pickle=True, fix_imports=True, )
   energy = array[0]
   temp = array[1]

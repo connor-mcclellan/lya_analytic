@@ -42,7 +42,8 @@ def line_profile(sigma,p):					# units of Hz^{-1}
   line_profile = p.a/np.pi/x**2/p.Delta								# just natural. don't use sigma=0!
   return line_profile
 
-def func(y,sigma,n,s,p):
+def func(sigma, y):
+  global n, s, p
   J = y[0]
   dJ = y[1]
   phi=line_profile(sigma,p)
@@ -55,9 +56,8 @@ def func(y,sigma,n,s,p):
   dydsigma[1]= (term1+term2) * J
   return dydsigma
 
-def integrate(sigma,y_start,n,s,p):
-
-  sol=odeint(func,y_start,sigma,rtol=relative_tol,atol=absolute_tol,args=(n,s,p))
+def integrate(sigma, y_start, n, s, p):
+  sol = rk(func, [sigma[0], sigma[-1]], y_start, t_eval=sigma)
   return sol
 
 def one_s_value(n,s,p):
@@ -77,6 +77,8 @@ def one_s_value(n,s,p):
     quit()
 
   # make the grids (assuming sigmas=0, otherwise we need three segments)
+  # # # EDITS HERE FOR THREE SEGMENT CODE
+  # Roughly the same spacing in sigma for each segment is a goal
   nleft=np.int( p.nsigma * (p.sigmas-1.e3-sigma_left)/(sigma_right-sigma_left) )
   nright=np.int( p.nsigma * (sigma_right-p.sigmas-1.e3)/(sigma_right-sigma_left) )
   if nright+nleft<p.nsigma:
@@ -88,7 +90,7 @@ def one_s_value(n,s,p):
   rightgrid=np.linspace(sigma_right,p.sigmas+1.e3,nright)
 
   kappan=n*np.pi/p.radius
-  wavenum = kappan*p.Delta/p.k
+  wavenum = kappan*p.Delta/p.k # used for initial conditions
 
   # rightward integration
   J=1.0
@@ -133,25 +135,33 @@ def one_s_value(n,s,p):
 
 def solve(s1,s2,s3,n,p):
   # iterate to find the eigenfrequency sres and eigenvector Jres(sigma)
-
-  err=1.e20
+  # three frequencies s1, s2, s3
+  err=1.e20 # initialize error to be something huge
   i=0
   while err>1.e-6:
     i=i+1
     sigma,J1,dJ1=one_s_value(n,s1,p)
     sigma,J2,dJ2=one_s_value(n,s2,p)
     sigma,J3,dJ3=one_s_value(n,s3,p)
-    f1 = np.sum(np.abs(J1))
-    f2 = np.sum(np.abs(J2))
+    f1 = np.sum(np.abs(J1)) # sum of absolute values of ENTIRE spectrum
+    f2 = np.sum(np.abs(J2)) # this is the size of the response!
     f3 = np.sum(np.abs(J3))
-    err=np.abs((s3-s1)/s2)
+    err=np.abs((s3-s1)/s2) # error is fractional difference between eigenfrequencies
+
+    # s is the imaginary part of frequency omega
+    # J of sigma is the spectrum at all frequency points sigma
+
     #print i,err,s1,s2,s3,f1,f2,f3
-    sl=0.5*(s1+s2)
+    sl=0.5*(s1+s2) # s between s1 and s2
     sigma,Jl,dJl=one_s_value(n,sl,p)
     fl = np.sum(np.abs(Jl))
-    sr=0.5*(s2+s3)
+    sr=0.5*(s2+s3) # s between s2 and s3
     sigma,Jr,dJr=one_s_value(n,sr,p)
     fr = np.sum(np.abs(Jr))
+
+# three sets of three points --- one of those sets will have a maximal response in the center
+# find that maximum response
+
     if fl>f1 and fl>f2:
       s3=s2
       f3=f2
@@ -173,8 +183,11 @@ def solve(s1,s2,s3,n,p):
     quit()
 
   print()
+  # choose middle point to be eigenfrequency
   sres=s2
+  # Response looks very close to the eigenvector when frequency is close to the eigenfrequency
   Jres = (J3-J1)*(s3-sres)*(s1-sres)/(s1-s3)
+  # Slighly better estimate than using just J2 --- derivation in notes
   return sigma,sres,Jres
 
 def sweep(s,p):
@@ -232,7 +245,7 @@ def main():
   sigma,ssoln,Jsoln=sweep(s,p)
 
   output_data = np.array([energy,temp,tau0,radius,alpha_abs,prob_dest,xsource,nmax,nsigma,nomega,tdiff,sigma,ssoln,Jsoln])
-  np.save('/Users/pla7y/radiation/harrington/time_dependent/eigenmode_data',output_data,allow_pickle=True, fix_imports=True)
+  np.save('./eigenmode_data.npy',output_data,allow_pickle=True, fix_imports=True)
   
 
 if __name__ == "__main__":
