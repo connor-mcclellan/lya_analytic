@@ -2,6 +2,7 @@ import numpy as np
 import mpmath as m
 from collections.abc import Iterable
 import pdb
+import time
 
 class Solution(object):
 
@@ -11,7 +12,7 @@ class Solution(object):
 
 
 def rk(f, bounds, ivs, t_eval=None, dt=1e-1, dt_min=1e-3,
-       dx_max=1e0, dx_min=1e0, x_tol=1e-3):
+       dx_max=1e0, dx_min=1e0, x_tol=1e-3, verbose=False):
 
     ivs = np.array([m.mpf(iv) for iv in ivs])
     bounds = np.array([m.mpf(bound) for bound in bounds])
@@ -31,6 +32,10 @@ def rk(f, bounds, ivs, t_eval=None, dt=1e-1, dt_min=1e-3,
 
     t = bounds[0]
     x = ivs
+
+    if verbose:
+        print('Integrating between {} and {}... '.format(*[str(b) for b in bounds]))
+        start = time.time()
 
     while (t < bounds[1]):
 
@@ -80,40 +85,58 @@ def rk(f, bounds, ivs, t_eval=None, dt=1e-1, dt_min=1e-3,
             xout = [np.array(x)]
             tout = [t]
 
-    if t_eval is not None:
-        xinterp = interpolate(tout, xout)
-        x_eval = xinterp(t_eval)
-    else:
-        t_eval, x_eval = tout, xout
+    if verbose:
+        end = time.time()
+        print('Done in {:.1f} s.'.format(end-start))
 
-    return Solution(np.array(t_eval), np.array(x_eval).T)
+    tout = np.array(tout)
+    xout = np.array(xout)
+
+    if t_eval is not None:
+        if verbose:
+            start = time.time()
+            print('Interpolating solution at desired points...')
+
+        x_eval = []
+        for coldata in xout.T:
+            xinterp = interpolate(tout, coldata)
+            x_eval.append(xinterp(t_eval))
+
+        if verbose:
+            end = time.time()
+            print('Done in {:.1f} s.'.format(end-start))
+    else:
+        t_eval, x_eval = tout, xout.T
+    return Solution(np.array(t_eval), np.array(x_eval))
 
 
 def interpolate(t, x):
     # Create a function which will return the value of x at any t_eval
     def intp(t_eval):
-        # If t_eval is a single value, make it iterable
-        if not isinstance(t_eval, Iterable):
-            t_eval = [t_eval, ]
-        # Loop through eval points
-        x_eval = np.zeros((len(t_eval), len(x)))
-        for i in range(len(t_eval)):
-            # Find where the closest value of t to this t_eval is
-            t_index = (np.abs(t - t_eval[i])).argmin()
-            # If closest t is on the "left", then find the next closest t on 
-            # the "right"
-            if t[t_index] < t_eval[i]:
-                t_lo = t[t_index]
-                t_hi = t[t_index+1]
-                x_lo = x[:, t_index]
-                x_hi = x[:, t_index+1]
-            else:
-                t_hi = t[t_index]
-                t_lo = t[t_index-1]
-                x_hi = x[:, t_index]
-                x_lo = x[:, t_index-1]
-            # Find x value at t_eval point, using slope of the function
-            x_eval[i] = (x_hi - x_lo)/(t_hi - t_lo)*t_eval[i]
+        ind = np.searchsorted(t, t_eval, side='right')
+
+        # Remove last index if endpoint is at max
+        endpoint_flag = False
+        if isinstance(t_eval, Iterable):
+            if t_eval[-1] == t[-1]:
+                ind = ind[:-1]
+                t_eval = t_eval[:-1]
+                endpoint_flag = True
+        else:
+            # t_eval is a single number, at the rightmost endpoint
+            if t_eval == t[-1]:
+                return x[-1]
+
+        x_hi = x[ind]
+        x_lo = x[ind-1]
+        t_hi = t[ind]
+        t_lo = t[ind-1]
+        x_eval = (x_hi - x_lo)/(t_hi - t_lo)*(t_eval-t[0]) + x[0]
+
+        # Add in right endpoint, if excluded earlier
+        if endpoint_flag:
+            x_eval = np.hstack([x_eval, x[-1]])
+
         return x_eval
     return intp
 
@@ -129,5 +152,5 @@ if __name__ == '__main__':
        # print(t, x1)
         return np.array([x1, x2])
 
-    sol = rk(_integrator, [-1000, 0], [1., 0.], t_eval=[-990, -700, -200, -1])
+    sol = rk(_integrator, [-1000, 0], [1., 0.], t_eval=np.linspace(-1000, 0, 100), verbose=True)
     pdb.set_trace()
