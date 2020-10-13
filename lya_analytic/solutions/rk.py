@@ -1,8 +1,7 @@
 import numpy as np
 import mpmath as m
-from scipy.interpolate import interp1d
+from collections.abc import Iterable
 import pdb
-
 
 class Solution(object):
 
@@ -81,10 +80,8 @@ def rk(f, bounds, ivs, t_eval=None, dt=1e-1, dt_min=1e-3,
             xout = [np.array(x)]
             tout = [t]
 
-    # TODO: Reduce solution array to t_eval, if t_eval is specified
-    # TODO: Write multidimensional interpolator using mpmath
     if t_eval is not None:
-        xinterp = interp1d(tout, xout)
+        xinterp = interpolate(tout, xout)
         x_eval = xinterp(t_eval)
     else:
         t_eval, x_eval = tout, xout
@@ -93,10 +90,18 @@ def rk(f, bounds, ivs, t_eval=None, dt=1e-1, dt_min=1e-3,
 
 
 def interpolate(t, x):
+    # Create a function which will return the value of x at any t_eval
     def intp(t_eval):
+        # If t_eval is a single value, make it iterable
+        if not isinstance(t_eval, Iterable):
+            t_eval = [t_eval, ]
+        # Loop through eval points
+        x_eval = np.zeros((len(t_eval), len(x)))
         for i in range(len(t_eval)):
-            x_eval = np.zeros((len(t_eval), len(x)))
+            # Find where the closest value of t to this t_eval is
             t_index = (np.abs(t - t_eval[i])).argmin()
+            # If closest t is on the "left", then find the next closest t on 
+            # the "right"
             if t[t_index] < t_eval[i]:
                 t_lo = t[t_index]
                 t_hi = t[t_index+1]
@@ -107,6 +112,7 @@ def interpolate(t, x):
                 t_lo = t[t_index-1]
                 x_hi = x[:, t_index]
                 x_lo = x[:, t_index-1]
+            # Find x value at t_eval point, using slope of the function
             x_eval[i] = (x_hi - x_lo)/(t_hi - t_lo)*t_eval[i]
         return x_eval
     return intp
@@ -123,5 +129,5 @@ if __name__ == '__main__':
        # print(t, x1)
         return np.array([x1, x2])
 
-    sol = rk(_integrator, [-1000, 0], [1., 0.])
+    sol = rk(_integrator, [-1000, 0], [1., 0.], t_eval=[-990, -700, -200, -1])
     pdb.set_trace()
