@@ -33,6 +33,9 @@ def rk(f, bounds, ivs, t_eval=None, dt=1e-1, dt_min=1e-3,
     t = bounds[0]
     x = ivs
 
+    xout = [np.array(x)]
+    tout = [t]
+
     if verbose:
         print('Integrating between {} and {}... '.format(*[str(b) for b in bounds]))
         start = time.time()
@@ -78,12 +81,9 @@ def rk(f, bounds, ivs, t_eval=None, dt=1e-1, dt_min=1e-3,
         x = new_x
         t = t + dt
 
-        try:
-            xout.append(np.array(x))
-            tout.append(t)
-        except BaseException:
-            xout = [np.array(x)]
-            tout = [t]
+        xout.append(np.array(x))
+        tout.append(t)
+
 
     if verbose:
         end = time.time()
