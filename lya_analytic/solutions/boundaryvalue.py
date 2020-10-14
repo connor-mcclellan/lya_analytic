@@ -1,6 +1,6 @@
 from __future__ import print_function
 import numpy as np
-import mpmath as m
+from scipy.integrate import solve_ivp
 from scipy.linalg import solve
 
 try:
@@ -30,7 +30,6 @@ class BoundaryValue(object):
             print('-----------------------------------------------------------')
 
     def integrate_J(self, bounds, ivs):
-        global obj
 
         start = time.time()
         atol, rtol = (3e-10, 3e-10)
@@ -47,9 +46,13 @@ class BoundaryValue(object):
         if bounds[0] > bounds[1]:
             sigma_eval = np.flip(sigma_eval)
 
-        obj = self
-        sol = m.odefun(_mean_intensity, bounds[0], ivs, verbose=True, tol=m.mpf('1e300'), degree=10)
-        pdb.set_trace()
+        sol = solve_ivp(_mean_intensity, bounds, ivs, atol=atol, rtol=rtol, args=(self, ), t_eval=sigma_eval)
+
+        #while len(sol.t) == 1:
+        #    atol = atol * 10.
+        #    rtol = rtol * 10.
+        #    sol = solve_ivp(_mean_intensity, bounds, ivs, atol=atol, rtol=rtol,
+        #                    args=(self, ), t_eval=sigma_eval)
 
         end = time.time()
         if self.verbose:
@@ -183,10 +186,15 @@ class BoundaryValue(object):
         return np.array([sigma, J_real, J_imag, J_prime_real, J_prime_imag])
 
 
-def _mean_intensity(sigma, dependent):
+def _mean_intensity(sigma, dependent, *args):
+    global Jrealarray, sigmaarray
 
+#    rescale = 1e-300
     (x2, y2, x1, y1) = dependent
-#    print(sigma)
+    (obj, ) = args
+
+#    x1 = rescale * x1
+#    y1 = rescale * y1
 
 ## DEBUG
 #    print('sigma={:.2E}  x1={:.2E}  y1={:.2E}, phi={:.2E}'.format(sigma, x1, y1, obj.p.phi(sigma)))
@@ -201,28 +209,15 @@ def _mean_intensity(sigma, dependent):
 #    if (sigma > -1):
 #        pdb.set_trace()
 
-    x = np.cbrt(obj.p.a / obj.p.beta * float(sigma))
-    phi = voigtx_fast(obj.p.a, x)/(np.sqrt(np.pi)*obj.p.delta)
-
-
-    try:
-        d1 = (obj.p.delta * obj.kappa_n / obj.p.k)**2. * x1 + 3. * obj.omega * obj.p.delta**2. * phi / obj.p.k / c * y1
-        d2 = (obj.p.delta * obj.kappa_n / obj.p.k)**2. * y1 - 3. * obj.omega * obj.p.delta**2. * phi / obj.p.k / c * x1
-        d3 = x2
-        d4 = y2
-    except Exception as e:
-        print(e)
-        pdb.set_trace()
-
     # x2 = d(J_real)/d(sigma)
     # y2 = d(J_imag)/d(sigma)
     # x1 = J_real
     # y1 = J_imag
 
-    return [d1,  # dx2_dsigma
-            d2,  # dy2_dsigma
-            d3,  # dx1_dsigma = x2
-            d4  # dy1_dsigma = y2
+    return [(obj.p.delta * obj.kappa_n / obj.p.k)**2. * x1 + 3. * obj.omega * obj.p.delta**2. * obj.p.phi(sigma) / obj.p.k / c * y1,  # dx2_dsigma
+            (obj.p.delta * obj.kappa_n / obj.p.k)**2. * y1 - 3. * obj.omega * obj.p.delta**2. * obj.p.phi(sigma) / obj.p.k / c * x1,  # dy2_dsigma
+            x2,  # dx1_dsigma = x2
+            y2  # dy1_dsigma = y2
            ]
 
 if __name__ == '__main__':
