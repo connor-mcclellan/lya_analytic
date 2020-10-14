@@ -12,7 +12,7 @@ class Solution(object):
 
 
 def rk(f, bounds, ivs, t_eval=None, dt=1e-1, dt_min=1e-3,
-       dx_max=1e0, dx_min=1e0, x_tol=1e-3, verbose=False):
+       dx_max=1e0, dx_min=1e0, x_tol=1e-3, args=None, verbose=False):
 
     ivs = np.array([m.mpf(iv) for iv in ivs])
     bounds = np.array([m.mpf(bound) for bound in bounds])
@@ -43,22 +43,22 @@ def rk(f, bounds, ivs, t_eval=None, dt=1e-1, dt_min=1e-3,
     while (t < bounds[1]):
 
         # Calculate normal step
-        k1 = sign*f(t, x)
-        k2 = sign*f(t + dt / 2, x + dt * k1 / 2)
-        k3 = sign*f(t + dt / 2, x + dt * k2 / 2)
-        k4 = sign*f(t + dt, x + dt * k3)
+        k1 = sign*f(t, x, args=args)
+        k2 = sign*f(t + dt / 2, x + dt * k1 / 2, args=args)
+        k3 = sign*f(t + dt / 2, x + dt * k2 / 2, args=args)
+        k4 = sign*f(t + dt, x + dt * k3, args=args)
         step_x = x + dt / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
 
         # Calculate half step
-        k2 = sign*f(t + dt / 4, x + dt * k1 / 4)
-        k3 = sign*f(t + dt / 4, x + dt * k2 / 4)
-        k4 = sign*f(t + dt / 2, x + dt * k3 / 2)
+        k2 = sign*f(t + dt / 4, x + dt * k1 / 4, args=args)
+        k3 = sign*f(t + dt / 4, x + dt * k2 / 4, args=args)
+        k4 = sign*f(t + dt / 2, x + dt * k3 / 2, args=args)
         half_step_x = x + dt / 12 * (k1 + 2 * k2 + 2 * k3 + k4)
 
         # Calculate double step
-        k2 = sign*f(t + dt, x + dt * k1)
-        k3 = sign*f(t + dt, x + dt * k2)
-        k4 = sign*f(t + 2 * dt, x + 2 * dt * k3)
+        k2 = sign*f(t + dt, x + dt * k1, args=args)
+        k3 = sign*f(t + dt, x + dt * k2, args=args)
+        k4 = sign*f(t + 2 * dt, x + 2 * dt * k3, args=args)
         dble_step_x = x + dt / 3 * (k1 + 2 * k2 + 2 * k3 + k4)
 
         # Use a fixed step size if any x smaller than the x tolerance.
@@ -127,6 +127,8 @@ def interpolate(t, x):
             if t_eval == t[-1]:
                 return x[-1]
 
+        # TODO: Fix jigsaw error for low number of points, high number of evals
+
         x_hi = x[ind]
         x_lo = x[ind-1]
         t_hi = t[ind]
@@ -143,7 +145,7 @@ def interpolate(t, x):
 
 if __name__ == '__main__':
 
-    def _integrator(t, x):
+    def _integrator(t, x, args=None):
         (x2, x1) = x
 
        # x2 = dx/dt

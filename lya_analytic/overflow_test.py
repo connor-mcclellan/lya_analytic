@@ -3,8 +3,11 @@ import pdb
 import matplotlib.pyplot as plt
 import numpy as np
 from solutions.rk import rk
+import pickle
+import time
+from scipy.integrate import solve_ivp
 
-def _integrator(x, y):
+def _integrator(x, y, args=None):
     (y2, y1) = y
 
    # y2 = dy/dx
@@ -23,17 +26,22 @@ def _integrator(x, y):
 
 
 # Custom RK convergence test
-for tol in np.linspace(1e0, 1e-4, 4):
-    sol = rk(_integrator, [-1000, 0], [1., 0.], t_eval=np.linspace(-1000, 0, 10000), dx_max=tol, dx_min=tol, verbose=True)
+
+#try:
+#    ax = pickle.load(open('./plotting/rk_converge.p', 'rb'))
+#except:
+ax = plt.subplot(111)
+
+for tol in np.logspace(0, -2, 1):
+    start = time.time()
+    sol = rk(_integrator, [-1000, 0], [1., 0.], dx_max=tol, dx_min=tol, verbose=True)
+    end = time.time()
     logx = np.array([m.log10(val) for val in sol.x[1]])
-    pdb.set_trace()
-    plt.plot(sol.t, logx, label='tol={} with eval'.format(tol))
+    pickle.dump(np.array([sol.t, logx]), open('./plotting/{:.1f}s_tol{}_no_eval.p'.format(end-start, tol), 'wb'))
 
-plt.ylabel('log x')
-plt.xlabel('t')
-
-
-
-plt.show()
-
-
+ivp = solve_ivp(_integrator, [-1000, 0], [1., 0.])
+pickle.dump(np.array([ivp.t, np.log10(ivp.y[1])]), open('./plotting/scipy.integrate.solve_ivp.p', 'wb'))
+#ax.plot(ivp.t, np.log10(ivp.y[1]), marker='o', ms=2, alpha=0.5, label='scipy.integrate.solve_ivp')
+#plt.legend()
+#ax.plot(sol.t, logx, marker='o', ms=2, alpha=0.5, label='{:.1f}s, tol={}'.format(end-start, tol))
+#pickle.dump(ax, open('./plotting/rk_converge_noeval.p', 'wb'))
