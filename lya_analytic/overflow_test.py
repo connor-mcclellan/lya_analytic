@@ -34,12 +34,12 @@ ax = plt.subplot(111)
 
 for tol in np.logspace(0, -2, 1):
     start = time.time()
-    sol = rk(_integrator, [-1000, 0], [1., 0.], dx_max=tol, dx_min=tol, verbose=True)
+    sol = rk(_integrator, [-1000, 0], [0., 1.], dx_max=tol, dx_min=tol, verbose=True)
     end = time.time()
     logx = np.array([m.log10(val) for val in sol.x[1]])
     pickle.dump(np.array([sol.t, logx]), open('./plotting/{:.1f}s_tol{}_no_eval.p'.format(end-start, tol), 'wb'))
 
-ivp = solve_ivp(_integrator, [-1000, 0], [1., 0.])
+ivp = solve_ivp(_integrator, [-1000, 0], [0., 1.])
 pickle.dump(np.array([ivp.t, np.log10(ivp.y[1])]), open('./plotting/scipy.integrate.solve_ivp.p', 'wb'))
 #ax.plot(ivp.t, np.log10(ivp.y[1]), marker='o', ms=2, alpha=0.5, label='scipy.integrate.solve_ivp')
 #plt.legend()
