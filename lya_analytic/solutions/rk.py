@@ -3,6 +3,7 @@ import mpmath as m
 from collections.abc import Iterable
 import pdb
 import time
+import matplotlib.pyplot as plt
 
 class Solution(object):
 
@@ -11,18 +12,15 @@ class Solution(object):
         self.x = x
 
 
-def rk(f, bounds, ivs, t_eval=None, dt=1e-1, dt_min=1e-3,
-       dx_max=1e0, dx_min=1e0, x_tol=1e-3, args=None, verbose=False):
+def rk(f, bounds, ivs, t_eval=None, dt=1., dx_max=1e-3, dx_min=1e-6, args=None, verbose=False):
 
     ivs = np.array([m.mpf(iv) for iv in ivs])
     bounds = np.array([m.mpf(bound) for bound in bounds])
 
     dt = m.mpf(dt)          # initial step size.
-    dt_min = m.mpf(dt_min)  # Min step size.
     dx_max = m.mpf(dx_max)  # Maximum allowed change in x
     # Min change in x, below which step size will increase
     dx_min = m.mpf(dx_min)
-    x_tol = m.mpf(x_tol)    # Fixed step size for where the solution is small
 
     if bounds[0] > bounds[1]:
         bounds = np.flip(bounds)
@@ -42,48 +40,46 @@ def rk(f, bounds, ivs, t_eval=None, dt=1e-1, dt_min=1e-3,
 
     while (t < bounds[1]):
 
-        # Calculate normal step
-        k1 = sign*f(t, x, args=args)
-        k2 = sign*f(t + dt / 2, x + dt * k1 / 2, args=args)
-        k3 = sign*f(t + dt / 2, x + dt * k2 / 2, args=args)
-        k4 = sign*f(t + dt, x + dt * k3, args=args)
-        step_x = x + dt / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
-
-        # Calculate half step
-        k2 = sign*f(t + dt / 4, x + dt * k1 / 4, args=args)
-        k3 = sign*f(t + dt / 4, x + dt * k2 / 4, args=args)
-        k4 = sign*f(t + dt / 2, x + dt * k3 / 2, args=args)
-        half_step_x = x + dt / 12 * (k1 + 2 * k2 + 2 * k3 + k4)
-
         # Calculate double step
+        k1 = sign*f(t, x, args=args)
         k2 = sign*f(t + dt, x + dt * k1, args=args)
         k3 = sign*f(t + dt, x + dt * k2, args=args)
         k4 = sign*f(t + 2 * dt, x + 2 * dt * k3, args=args)
         dble_step_x = x + dt / 3 * (k1 + 2 * k2 + 2 * k3 + k4)
 
-        # Use a fixed step size if any x smaller than the x tolerance.
-        if (abs(step_x) < x_tol).any():
-            if (dt != dt_min):
-                dt = dt_min
-            new_x = step_x
+        # Calculate two normal steps
+        k2 = sign*f(t + dt / 2, x + dt * k1 / 2, args=args)
+        k3 = sign*f(t + dt / 2, x + dt * k2 / 2, args=args)
+        k4 = sign*f(t + dt, x + dt * k3, args=args)
+        step_x = x + dt / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
+
+        k1 = sign*f(t, step_x, args=args)
+        k2 = sign*f(t + dt / 2, step_x + dt * k1 / 2, args=args)
+        k3 = sign*f(t + dt / 2, step_x + dt * k2 / 2, args=args)
+        k4 = sign*f(t + dt, step_x + dt * k3, args=args)
+        step_x_2 = step_x + dt / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
+
+ #       print(dt, np.abs(step_x_2 - dble_step_x)/np.abs(step_x_2))
+
+        if (np.abs(step_x_2 - dble_step_x) > np.abs(step_x_2)*dx_max).any():
+            # Error is too large for one or more x; decrease step size.
+            dt = dt / 2
+            continue
+        elif (np.abs(step_x_2 - dble_step_x)< np.abs(step_x_2)*dx_min).all():
+            # Larger error is acceptable for all x; increase step size.
+            dt = dt * 2
+            continue
         else:
-            if (abs(step_x - half_step_x) / abs(step_x) > dx_max).any():
-                # Error is too large for one or more x; decrease step size.
-                dt = dt / 2
-                new_x = half_step_x # Reject? Check again?
-            elif (abs(step_x - dble_step_x) / abs(step_x) < dx_min).all():
-                # Larger error is acceptable for all x; increase step size.
-                dt = dt * 2
-                new_x = dble_step_x
-            else:
-                new_x = step_x 
+            # Truncation error is within desired bounds. Take higher precision solution.
+            new_x = step_x_2
+
+#        print(dt)
 
         x = new_x
-        t = t + dt
+        t = t + 2*dt
 
         xout.append(np.array(x))
         tout.append(t)
-
 
     if verbose:
         end = time.time()
@@ -145,6 +141,8 @@ def interpolate(t, x):
 
 if __name__ == '__main__':
 
+    from scipy.integrate import solve_ivp
+
     def _integrator(t, x, args=None):
         (x2, x1) = x
 
@@ -154,5 +152,20 @@ if __name__ == '__main__':
        # print(t, x1)
         return np.array([x1, x2])
 
-    sol = rk(_integrator, [-1000, 0], [1., 0.], t_eval=np.linspace(-1000, 0, 100), verbose=True)
+    def solution(t):
+        return np.exp(t+999.)
+  
+    ivp = solve_ivp(_integrator, [-999, 0], [1., 1.])
+    sol = rk(_integrator, [-999, 0], [1., 1.], verbose=True)
+    fracerr = True
+    if fracerr:
+        plt.plot(ivp.t, np.abs(ivp.y[1]-solution(ivp.t))/solution(ivp.t), marker='o', ms=2, alpha=0.25, label='scipy')
+        plt.plot(sol.t, [np.abs(x-solution(float(sol.t[i])))/solution(float(sol.t[i])) for i, x in enumerate(sol.x[1])], marker='o', ms=2, alpha=0.25, label='rk')
+    else:
+        plt.plot(ivp.t, np.log10(ivp.y[1]), marker='o', ms=2, alpha=0.25, label='scipy')
+        plt.plot(sol.t, [m.log10(x) for x in sol.x[1]], marker='o', ms=2, alpha=0.25, label='rk')
+        plt.plot(sol.t, solution(sol.t), marker='o', ms=2, alpha=0.25, label='solution')
+    plt.legend()
+    plt.xlabel('t')
+    plt.ylabel('y')
     pdb.set_trace()

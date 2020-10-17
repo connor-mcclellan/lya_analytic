@@ -16,6 +16,9 @@ def _integrator(x, y, args=None):
     return np.array([y1, y2])
 
 
+def solution(t):
+    return np.log10(np.e) * (t + 1000)
+
 #sol = m.odefun(_integrator, -1000, [1., 0.], verbose=True, tol=m.mpf('1e600')) # Tol is arbitrarily high --- otherwise it takes FOREVER to obtain solutions
 
 #x_eval = np.linspace(-1000, -200)
@@ -32,15 +35,17 @@ def _integrator(x, y, args=None):
 #except:
 ax = plt.subplot(111)
 
-for tol in np.logspace(0, -2, 1):
-    start = time.time()
-    sol = rk(_integrator, [-1000, 0], [0., 1.], dx_max=tol, dx_min=tol, verbose=True)
-    end = time.time()
-    logx = np.array([m.log10(val) for val in sol.x[1]])
-    pickle.dump(np.array([sol.t, logx]), open('./plotting/{:.1f}s_tol{}_no_eval.p'.format(end-start, tol), 'wb'))
 
-ivp = solve_ivp(_integrator, [-1000, 0], [0., 1.])
-pickle.dump(np.array([ivp.t, np.log10(ivp.y[1])]), open('./plotting/scipy.integrate.solve_ivp.p', 'wb'))
+
+for tol in np.logspace(0, -2, 3):
+    start = time.time()
+    sol = rk(_integrator, [-999, 0], [0., 1.], dx_max=tol, dx_min=tol, verbose=True)
+    end = time.time()
+    logx = np.array([np.abs(m.log10(val) - solution(sol.t[i]))/solution(sol.t[i]) for i, val in enumerate(sol.x[1])])
+    pickle.dump(np.array([sol.t, logx]), open('./plotting/tol{}_{:.1f}s_fracerr.p'.format(tol, end-start), 'wb'))
+
+ivp = solve_ivp(_integrator, [-999, 0], [0., 1.])
+pickle.dump(np.array([ivp.t, np.abs(np.log10(ivp.y[1]) - solution(ivp.t))/solution(ivp.t)]), open('./plotting/scipy.integrate.solve_ivp_fracerr.p', 'wb'))
 #ax.plot(ivp.t, np.log10(ivp.y[1]), marker='o', ms=2, alpha=0.5, label='scipy.integrate.solve_ivp')
 #plt.legend()
 #ax.plot(sol.t, logx, marker='o', ms=2, alpha=0.5, label='{:.1f}s, tol={}'.format(end-start, tol))
