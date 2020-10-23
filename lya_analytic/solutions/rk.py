@@ -41,22 +41,22 @@ def rk(f, bounds, ivs, t_eval=None, dt=1., dx_max=1e-3, dx_min=1e-6, args=None, 
     while (t < bounds[1]):
 
         # Calculate double step
-        k1 = sign*f(t, x, args=args)
-        k2 = sign*f(t + dt, x + dt * k1, args=args)
-        k3 = sign*f(t + dt, x + dt * k2, args=args)
-        k4 = sign*f(t + 2 * dt, x + 2 * dt * k3, args=args)
+        k1 = sign*f(t, x, args)
+        k2 = sign*f(t + dt, x + dt * k1, args)
+        k3 = sign*f(t + dt, x + dt * k2, args)
+        k4 = sign*f(t + 2 * dt, x + 2 * dt * k3, args)
         dble_step_x = x + dt / 3 * (k1 + 2 * k2 + 2 * k3 + k4)
 
         # Calculate two normal steps
-        k2 = sign*f(t + dt / 2, x + dt * k1 / 2, args=args)
-        k3 = sign*f(t + dt / 2, x + dt * k2 / 2, args=args)
-        k4 = sign*f(t + dt, x + dt * k3, args=args)
+        k2 = sign*f(t + dt / 2, x + dt * k1 / 2, args)
+        k3 = sign*f(t + dt / 2, x + dt * k2 / 2, args)
+        k4 = sign*f(t + dt, x + dt * k3, args)
         step_x = x + dt / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
 
-        k1 = sign*f(t, step_x, args=args)
-        k2 = sign*f(t + dt / 2, step_x + dt * k1 / 2, args=args)
-        k3 = sign*f(t + dt / 2, step_x + dt * k2 / 2, args=args)
-        k4 = sign*f(t + dt, step_x + dt * k3, args=args)
+        k1 = sign*f(t, step_x, args)
+        k2 = sign*f(t + dt / 2, step_x + dt * k1 / 2, args)
+        k3 = sign*f(t + dt / 2, step_x + dt * k2 / 2, args)
+        k4 = sign*f(t + dt, step_x + dt * k3, args)
         step_x_2 = step_x + dt / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
 
  #       print(dt, np.abs(step_x_2 - dble_step_x)/np.abs(step_x_2))
@@ -65,7 +65,7 @@ def rk(f, bounds, ivs, t_eval=None, dt=1., dx_max=1e-3, dx_min=1e-6, args=None, 
             # Error is too large for one or more x; decrease step size.
             dt = dt / 2
             continue
-        elif (np.abs(step_x_2 - dble_step_x)< np.abs(step_x_2)*dx_min).all():
+        elif (np.abs(step_x_2 - dble_step_x) <= np.abs(step_x_2)*dx_min).all():
             # Larger error is acceptable for all x; increase step size.
             dt = dt * 2
             continue
@@ -74,7 +74,7 @@ def rk(f, bounds, ivs, t_eval=None, dt=1., dx_max=1e-3, dx_min=1e-6, args=None, 
             new_x = step_x_2
 
 #        print(dt)
-
+#        print(t, dt, step_x_2, dble_step_x)
         x = new_x
         t = t + 2*dt
 

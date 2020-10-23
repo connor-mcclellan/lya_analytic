@@ -1,12 +1,15 @@
 from __future__ import print_function
 import numpy as np
 from scipy.integrate import solve_ivp
+from scipy.interpolate import interp1d
 from scipy.linalg import solve
 
 try:
     from util import voigtx_fast, Line, Params
+    from rk import rk
 except:
     from solutions.util import voigtx_fast, Line, Params
+    from solutions.rk import rk
 
 import time
 import pdb
@@ -46,13 +49,34 @@ class BoundaryValue(object):
         if bounds[0] > bounds[1]:
             sigma_eval = np.flip(sigma_eval)
 
-        sol = solve_ivp(_mean_intensity, bounds, ivs, atol=atol, rtol=rtol, args=(self, ), t_eval=sigma_eval)
+        sol = rk(_mean_intensity, bounds, ivs, args=self, dx_max=1e-1, dx_min=1e-4, verbose=True)
+#        sol = solve_ivp(_mean_intensity, bounds, ivs, args=(self, ), t_eval=sigma_eval, rtol=rtol, atol=atol)
 
-        #while len(sol.t) == 1:
-        #    atol = atol * 10.
-        #    rtol = rtol * 10.
-        #    sol = solve_ivp(_mean_intensity, bounds, ivs, atol=atol, rtol=rtol,
-        #                    args=(self, ), t_eval=sigma_eval)
+        #### BEGIN DEBUG CONVERGENCE TEST #####
+        sol1 = rk(_mean_intensity, bounds, ivs, args=self, dx_max=1e-2, dx_min=1e-5, verbose=True)
+
+        start = time.time()
+        sci = solve_ivp(_mean_intensity, bounds, ivs, args=(self, ), rtol=rtol, atol=atol)
+        end = time.time()
+        print('Scipy done in {:.2f} s'.format(end-start))
+
+        # Longer solution should be "correct"
+        long_sol = rk(_mean_intensity, bounds, ivs, args=self, dx_max=1e-4, dx_min=1e-10, verbose=True)
+        long_interp = interp1d(long_sol.t, long_sol.x[2])
+
+        import matplotlib.pyplot as plt
+        def plotdiff(sol, label):
+            t = np.array(sol.t, dtype=float)
+            plt.scatter(sol.t[:-1], np.abs(sol.x[2][:-1]-long_interp(t[:-1]))/long_interp(t[:-1]), label=label, alpha=0.5, s=2)
+
+        plotdiff(sol, 'rk (1e-1, 1e-4)')
+        plotdiff(sol1, 'rk (1e-2, 1e-5)')
+        plt.scatter(sci.t, np.abs(sci.y[2]-long_interp(sci.t))/long_interp(sci.t), label='scipy', alpha=0.5, s=2)
+#        plt.yscale('log')
+        plt.title('Fractional Difference with rk (1e-4, 1e-10)')
+        plt.legend()
+        pdb.set_trace()
+        #### END DEBUG CONVERGENCE TEST #####
 
         end = time.time()
         if self.verbose:
@@ -187,38 +211,20 @@ class BoundaryValue(object):
 
 
 def _mean_intensity(sigma, dependent, *args):
-    global Jrealarray, sigmaarray
 
-#    rescale = 1e-300
     (x2, y2, x1, y1) = dependent
     (obj, ) = args
-
-#    x1 = rescale * x1
-#    y1 = rescale * y1
-
-## DEBUG
-#    print('sigma={:.2E}  x1={:.2E}  y1={:.2E}, phi={:.2E}'.format(sigma, x1, y1, obj.p.phi(sigma)))
-
-#    try:
-#        Jrealarray.append(x1)
-#        sigmaarray.append(sigma)
-#    except:
-#        Jrealarray = [x1]
-#        sigmaarray = [sigma]
-
-#    if (sigma > -1):
-#        pdb.set_trace()
 
     # x2 = d(J_real)/d(sigma)
     # y2 = d(J_imag)/d(sigma)
     # x1 = J_real
     # y1 = J_imag
 
-    return [(obj.p.delta * obj.kappa_n / obj.p.k)**2. * x1 + 3. * obj.omega * obj.p.delta**2. * obj.p.phi(sigma) / obj.p.k / c * y1,  # dx2_dsigma
-            (obj.p.delta * obj.kappa_n / obj.p.k)**2. * y1 - 3. * obj.omega * obj.p.delta**2. * obj.p.phi(sigma) / obj.p.k / c * x1,  # dy2_dsigma
+    return np.array([(obj.p.delta * obj.kappa_n / obj.p.k)**2. * x1 + 3. * obj.omega * obj.p.delta**2. * obj.p.phi(float(sigma)) / obj.p.k / c * y1,  # dx2_dsigma
+            (obj.p.delta * obj.kappa_n / obj.p.k)**2. * y1 - 3. * obj.omega * obj.p.delta**2. * obj.p.phi(float(sigma)) / obj.p.k / c * x1,  # dy2_dsigma
             x2,  # dx1_dsigma = x2
             y2  # dy1_dsigma = y2
-           ]
+           ])
 
 if __name__ == '__main__':
 
