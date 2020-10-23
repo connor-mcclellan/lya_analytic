@@ -123,13 +123,12 @@ def interpolate(t, x):
             if t_eval == t[-1]:
                 return x[-1]
 
-        # TODO: Fix jigsaw error for low number of points, high number of evals
-
         x_hi = x[ind]
         x_lo = x[ind-1]
         t_hi = t[ind]
         t_lo = t[ind-1]
-        x_eval = (x_hi - x_lo)/(t_hi - t_lo)*(t_eval-t[0]) + x[0]
+        delta = (t_eval - t_lo)/(t_hi - t_lo)
+        x_eval = x_hi * delta + x_lo * (1. - delta)
 
         # Add in right endpoint, if excluded earlier
         if endpoint_flag:
