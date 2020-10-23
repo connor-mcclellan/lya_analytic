@@ -29,13 +29,13 @@ class BoundaryValue(object):
         self.kappa_n = self.n * np.pi / self.p.R
         if self.verbose:
             print('\nn = {}    omega = {}    sigma_s = {}'.format(self.n, self.omega, self.p.sigma_source))
-            print('process        part      domain      rtol, atol        time')
+            print('process        part      domain      dxmax, dxmin      time')
             print('-----------------------------------------------------------')
 
     def integrate_J(self, bounds, ivs):
 
         start = time.time()
-        atol, rtol = (3e-10, 3e-10)
+        dxmax, dxmin = (1e-2, 1e-6)
         sigma_eval = self.p.sigma_grid[(self.p.sigma_grid <= np.max(bounds)) & (self.p.sigma_grid >= np.min(bounds))]
 
         # Check to see if omega term dominates; it shouldn't out on the wing, because then there would be oscillations
@@ -49,38 +49,39 @@ class BoundaryValue(object):
         if bounds[0] > bounds[1]:
             sigma_eval = np.flip(sigma_eval)
 
-        sol = rk(_mean_intensity, bounds, ivs, args=self, dx_max=1e-1, dx_min=1e-4, verbose=True)
+        sol = rk(_mean_intensity, bounds, ivs, args=self, t_eval=sigma_eval, dx_max=dxmax, dx_min=dxmin, verbose=True)
+
+        #sol_noeval = rk(_mean_intensity, bounds, ivs, args=self, dx_max=1e-1, dx_min=1e-4, verbose=True)
 #        sol = solve_ivp(_mean_intensity, bounds, ivs, args=(self, ), t_eval=sigma_eval, rtol=rtol, atol=atol)
 
         #### BEGIN DEBUG CONVERGENCE TEST #####
-        sol1 = rk(_mean_intensity, bounds, ivs, args=self, dx_max=1e-2, dx_min=1e-5, verbose=True)
-
-        start = time.time()
-        sci = solve_ivp(_mean_intensity, bounds, ivs, args=(self, ), rtol=rtol, atol=atol)
-        end = time.time()
-        print('Scipy done in {:.2f} s'.format(end-start))
+#        sol1 = rk(_mean_intensity, bounds, ivs, args=self, t_eval=sigma_eval, dx_max=1e-2, dx_min=1e-5, verbose=True)
+#
+ #       start = time.time()
+ #       sci = solve_ivp(_mean_intensity, bounds, ivs, t_eval=sigma_eval, args=(self, ), rtol=rtol, atol=atol)
+ #       end = time.time()
+ #       print('Scipy done in {:.2f} s'.format(end-start))#
 
         # Longer solution should be "correct"
-        long_sol = rk(_mean_intensity, bounds, ivs, args=self, dx_max=1e-4, dx_min=1e-10, verbose=True)
-        long_interp = interp1d(long_sol.t, long_sol.x[2])
+        #long_sol = rk(_mean_intensity, bounds, ivs, args=self, t_eval=sigma_eval, dx_max=1e-4, dx_min=1e-10, verbose=True)
 
-        import matplotlib.pyplot as plt
-        def plotdiff(sol, label):
-            t = np.array(sol.t, dtype=float)
-            plt.scatter(sol.t[:-1], np.abs(sol.x[2][:-1]-long_interp(t[:-1]))/long_interp(t[:-1]), label=label, alpha=0.5, s=2)
-
-        plotdiff(sol, 'rk (1e-1, 1e-4)')
-        plotdiff(sol1, 'rk (1e-2, 1e-5)')
-        plt.scatter(sci.t, np.abs(sci.y[2]-long_interp(sci.t))/long_interp(sci.t), label='scipy', alpha=0.5, s=2)
+        #import matplotlib.pyplot as plt
+        #def plotdiff(sol, label):
+        #    t = np.array(sol.t, dtype=float)
+        #    plt.scatter(sol.t[:-1], np.abs(sol.x[2][:-1]-long_sol.x[2][:-1])/long_sol.x[2][:-1], label=label, alpha=0.5, s=2)
+        #pdb.set_trace()
+        #plotdiff(sol, 'rk (1e-1, 1e-4)')
+        #plotdiff(sol1, 'rk (1e-2, 1e-5)')
+        #plt.scatter(sci.t, np.abs(sci.y[2]-long_sol.x[2])/long_sol.x[2], label='scipy', alpha=0.5, s=2)
 #        plt.yscale('log')
-        plt.title('Fractional Difference with rk (1e-4, 1e-10)')
-        plt.legend()
-        pdb.set_trace()
+        #plt.title('Fractional Difference with rk (1e-4, 1e-10)')
+        #plt.legend()
+        #pdb.set_trace()
         #### END DEBUG CONVERGENCE TEST #####
 
         end = time.time()
         if self.verbose:
-            print('    [{}, {}]'.format(rtol, atol), end='', flush=True)
+            print('    [{}, {}]'.format(dxmax, dxmin), end='', flush=True)
             print('{:9.3f} s'.format(end - start))
 
         return sol
@@ -97,6 +98,7 @@ class BoundaryValue(object):
         solution = self.integrate_J(bounds, ivs)
         at_source = (solution.t == self.p.sigma_source)
 
+        # TODO: Change to x
         self.a = solution.y[2][at_source]  # J_real
         self.c = solution.y[3][at_source]  # J_imag
         self.e = solution.y[0][at_source]  # d(J_real)/d(sigma)

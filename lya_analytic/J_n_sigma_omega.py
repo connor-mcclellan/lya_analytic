@@ -18,15 +18,15 @@ pool = Pool(processes=1)
 # Physical parameters
 lya = Line(1215.6701, 0.4164, 6.265e8)
 p = Params(line=lya, temp=1e4, tau0=1e7, num_dens=1701290465.5139434, 
-           energy=1., R=1e11, sigma_source=0., n_points=1e5)
+           energy=1., R=1e11, sigma_source=0., n_points=1e4)
 
 # Diffusion time
 tdiff = p.R / c * (p.a * p.tau0)**(1./3) # Diffusion time
 dt = 0.1*tdiff/4.#TODO: Do a run with dt = 0.1*tdiff/4
 
 # Number of omega points in grid
-N_omegas = 64 # TODO: Do a run with 512 omegas, with dt = 0.1*tdiff/4. Reduce sigma max if needed
-N_ns = 4
+N_omegas = 128 # TODO: Do a run with 512 omegas, with dt = 0.1*tdiff/4. Reduce sigma max if needed
+N_ns = 8
 
 # Create grids
 omega_grid = np.linspace(0, 2*np.pi/dt, N_omegas)
@@ -50,8 +50,8 @@ def save_queue(result):
 # Calculate J_n_sigma_omega for all grid points
 for i in range(len(omega_grid)):
     for j in range(len(n_grid)):
-        process(n_grid, omega_grid, sigma_grid, i, j, p, fname)
-#        result = pool.apply_async(process, args=(n_grid, omega_grid, sigma_grid, i, j, p, fname), callback=save_queue)
+#        process(n_grid, omega_grid, sigma_grid, i, j, p, fname)
+        result = pool.apply_async(process, args=(n_grid, omega_grid, sigma_grid, i, j, p, fname), callback=save_queue)
 pool.close()
 pool.join()
 pb.close()
