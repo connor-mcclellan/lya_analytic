@@ -1,7 +1,6 @@
 from __future__ import print_function
 import numpy as np
 from scipy.integrate import solve_ivp
-from scipy.interpolate import interp1d
 from scipy.linalg import solve
 
 try:
@@ -98,11 +97,10 @@ class BoundaryValue(object):
         solution = self.integrate_J(bounds, ivs)
         at_source = (solution.t == self.p.sigma_source)
 
-        # TODO: Change to x
-        self.a = solution.y[2][at_source]  # J_real
-        self.c = solution.y[3][at_source]  # J_imag
-        self.e = solution.y[0][at_source]  # d(J_real)/d(sigma)
-        self.g = solution.y[1][at_source]  # d(J_imag)/d(sigma)
+        self.a = solution.x[2][at_source]  # J_real
+        self.c = solution.x[3][at_source]  # J_imag
+        self.e = solution.x[0][at_source]  # d(J_real)/d(sigma)
+        self.g = solution.x[1][at_source]  # d(J_imag)/d(sigma)
 
         return solution
 
@@ -118,10 +116,10 @@ class BoundaryValue(object):
         solution = self.integrate_J(bounds, ivs)
         at_source = (solution.t == self.p.sigma_source)
 
-        self.A = solution.y[2][at_source]  # J_real
-        self.C = solution.y[3][at_source]  # J_imag
-        self.E = solution.y[0][at_source]  # d(J_real)/d(sigma)
-        self.G = solution.y[1][at_source]  # d(J_imag)/d(sigma)
+        self.A = solution.x[2][at_source]  # J_real
+        self.C = solution.x[3][at_source]  # J_imag
+        self.E = solution.x[0][at_source]  # d(J_real)/d(sigma)
+        self.G = solution.x[1][at_source]  # d(J_imag)/d(sigma)
 
         return solution
 
@@ -137,10 +135,10 @@ class BoundaryValue(object):
         solution = self.integrate_J(bounds, ivs)
         at_source = (solution.t == self.p.sigma_source)
 
-        self.b = solution.y[2][at_source]  # J_real
-        self.d = solution.y[3][at_source]  # J_imag
-        self.f = solution.y[0][at_source]  # d(J_real)/d(sigma)
-        self.h = solution.y[1][at_source]  # d(J_imag)/d(sigma)
+        self.b = solution.x[2][at_source]  # J_real
+        self.d = solution.x[3][at_source]  # J_imag
+        self.f = solution.x[0][at_source]  # d(J_real)/d(sigma)
+        self.h = solution.x[1][at_source]  # d(J_imag)/d(sigma)
 
         return solution
 
@@ -156,20 +154,21 @@ class BoundaryValue(object):
         solution = self.integrate_J(bounds, ivs)
         at_source = (solution.t == self.p.sigma_source)
 
-        self.B = solution.y[2][at_source]  # J_real
-        self.D = solution.y[3][at_source]  # J_imag
-        self.F = solution.y[0][at_source]  # d(J_real)/d(sigma)
-        self.H = solution.y[1][at_source]  # d(J_imag)/d(sigma)
+        self.B = solution.x[2][at_source]  # J_real
+        self.D = solution.x[3][at_source]  # J_imag
+        self.F = solution.x[0][at_source]  # d(J_real)/d(sigma)
+        self.H = solution.x[1][at_source]  # d(J_imag)/d(sigma)
 
         return solution
 
     def solve_coeff_matrix(self):
 
         start = time.time()
+        #TODO: How do we make this take mpf floats? Doesn't seem possible.
         matrix = np.array([[self.a, self.b, -self.A, -self.B],
                            [self.c, self.d, -self.C, -self.D],
                            [-self.e, -self.f, self.E, self.F],
-                           [self.g, self.h, -self.G, -self.H]])
+                           [self.g, self.h, -self.G, -self.H]], dtype=float)
 
         solution_vector = np.array([0.,
                                     0.,
@@ -197,10 +196,10 @@ class BoundaryValue(object):
         
         # Centerpoint is duplicated --- remove it from one of the arrays with [:-1] before combining 
         sigma = np.concatenate((left_real.t[:-1], right_real.t))
-        J_real = np.concatenate((J_1_real * left_real.y[2][:-1], J_2_real * right_real.y[2]))
-        J_imag = np.concatenate((J_1_imag * left_imag.y[3][:-1], J_2_imag * right_imag.y[3]))
-        J_prime_real = np.concatenate((J_1_real * left_real.y[0][:-1], J_2_real * right_real.y[0]))
-        J_prime_imag = np.concatenate((J_1_imag * left_imag.y[1][:-1], J_2_imag * right_imag.y[1]))
+        J_real = np.concatenate((J_1_real * left_real.x[2][:-1], J_2_real * right_real.x[2]))
+        J_imag = np.concatenate((J_1_imag * left_imag.x[3][:-1], J_2_imag * right_imag.x[3]))
+        J_prime_real = np.concatenate((J_1_real * left_real.x[0][:-1], J_2_real * right_real.x[0]))
+        J_prime_imag = np.concatenate((J_1_imag * left_imag.x[1][:-1], J_2_imag * right_imag.x[1]))
 
         sort = sigma.argsort()
         sigma = sigma[sort]
@@ -220,7 +219,7 @@ def _mean_intensity(sigma, dependent, *args):
     # x2 = d(J_real)/d(sigma)
     # y2 = d(J_imag)/d(sigma)
     # x1 = J_real
-    # y1 = J_imag
+    # y1 = J_imag    
 
     return np.array([(obj.p.delta * obj.kappa_n / obj.p.k)**2. * x1 + 3. * obj.omega * obj.p.delta**2. * obj.p.phi(float(sigma)) / obj.p.k / c * y1,  # dx2_dsigma
             (obj.p.delta * obj.kappa_n / obj.p.k)**2. * y1 - 3. * obj.omega * obj.p.delta**2. * obj.p.phi(float(sigma)) / obj.p.k / c * x1,  # dy2_dsigma

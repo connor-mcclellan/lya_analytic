@@ -36,7 +36,7 @@ n_grid = np.arange(1, N_ns+1, 1)
 sigma_grid = p.sigma_grid
 
 # Create output hdf5 file
-fname = '/LyraShared/bcm2vn/outputs/lya_analytic/n{}_sigma{}_omega{}_highfreq_lorprofile.hdf5'.format(N_ns, len(sigma_grid), N_omegas)
+fname = '/LyraShared/bcm2vn/outputs/lya_analytic/n{}_sigma{}_omega{}_rk.hdf5'.format(N_ns, len(sigma_grid), N_omegas)
 #fname = './outputs/n{}_widesigma{}_logomega{}.hdf5'.format(N_ns, len(sigma_grid), N_omegas)
 
 pb = tqdm(total=len(omega_grid)*len(n_grid))
@@ -50,8 +50,8 @@ def save_queue(result):
 # Calculate J_n_sigma_omega for all grid points
 for i in range(len(omega_grid)):
     for j in range(len(n_grid)):
-#        process(n_grid, omega_grid, sigma_grid, i, j, p, fname)
-        result = pool.apply_async(process, args=(n_grid, omega_grid, sigma_grid, i, j, p, fname), callback=save_queue)
+        process(n_grid, omega_grid, sigma_grid, i, j, p, fname)
+#        result = pool.apply_async(process, args=(n_grid, omega_grid, sigma_grid, i, j, p, fname), callback=save_queue)
 pool.close()
 pool.join()
 pb.close()

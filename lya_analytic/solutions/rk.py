@@ -23,10 +23,14 @@ def rk(f, bounds, ivs, t_eval=None, dt=1., dx_max=1e-3, dx_min=1e-6, args=None, 
     dx_min = m.mpf(dx_min)
 
     if bounds[0] > bounds[1]:
-        bounds = np.flip(bounds)
-        sign = m.mpf('-1')
+        dt = m.mpf('-1') * dt
+        leftward = True
+        def conditional(bounds, t, dt):
+            return (t > min(bounds)-2*dt)
     else:
-        sign = m.mpf('1')
+        leftward = False
+        def conditional(bounds, t, dt):
+            return (t < max(bounds)-2*dt)
 
     t = bounds[0]
     x = ivs
@@ -38,28 +42,27 @@ def rk(f, bounds, ivs, t_eval=None, dt=1., dx_max=1e-3, dx_min=1e-6, args=None, 
         print('Integrating between {} and {}... '.format(*[str(b) for b in bounds]))
         start = time.time()
 
-    while (t < bounds[1]):
+
+    while conditional(bounds, t, dt):
 
         # Calculate double step
-        k1 = sign*f(t, x, args)
-        k2 = sign*f(t + dt, x + dt * k1, args)
-        k3 = sign*f(t + dt, x + dt * k2, args)
-        k4 = sign*f(t + 2 * dt, x + 2 * dt * k3, args)
+        k1 = f(t, x, args)
+        k2 = f(t + dt, x + dt * k1, args)
+        k3 = f(t + dt, x + dt * k2, args)
+        k4 = f(t + 2 * dt, x + 2 * dt * k3, args)
         dble_step_x = x + dt / 3 * (k1 + 2 * k2 + 2 * k3 + k4)
 
         # Calculate two normal steps
-        k2 = sign*f(t + dt / 2, x + dt * k1 / 2, args)
-        k3 = sign*f(t + dt / 2, x + dt * k2 / 2, args)
-        k4 = sign*f(t + dt, x + dt * k3, args)
+        k2 = f(t + dt / 2, x + dt * k1 / 2, args)
+        k3 = f(t + dt / 2, x + dt * k2 / 2, args)
+        k4 = f(t + dt, x + dt * k3, args)
         step_x = x + dt / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
 
-        k1 = sign*f(t, step_x, args)
-        k2 = sign*f(t + dt / 2, step_x + dt * k1 / 2, args)
-        k3 = sign*f(t + dt / 2, step_x + dt * k2 / 2, args)
-        k4 = sign*f(t + dt, step_x + dt * k3, args)
+        k1 = f(t, step_x, args)
+        k2 = f(t + dt / 2, step_x + dt * k1 / 2, args)
+        k3 = f(t + dt / 2, step_x + dt * k2 / 2, args)
+        k4 = f(t + dt, step_x + dt * k3, args)
         step_x_2 = step_x + dt / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
-
- #       print(dt, np.abs(step_x_2 - dble_step_x)/np.abs(step_x_2))
 
         if (np.abs(step_x_2 - dble_step_x) > np.abs(step_x_2)*dx_max).any():
             # Error is too large for one or more x; decrease step size.
@@ -71,36 +74,54 @@ def rk(f, bounds, ivs, t_eval=None, dt=1., dx_max=1e-3, dx_min=1e-6, args=None, 
             continue
         else:
             # Truncation error is within desired bounds. Take higher precision solution.
-            new_x = step_x_2
-
-#        print(dt)
-#        print(t, dt, step_x_2, dble_step_x)
-        x = new_x
-        t = t + 2*dt
-
-        xout.append(np.array(x))
-        tout.append(t)
+            x = step_x_2
+            xout.append(np.array(x))
+            t += 2 * dt
+            tout.append(t)
 
     if verbose:
         end = time.time()
         print('Done in {:.1f} s.'.format(end-start))
 
-    tout = np.array(tout)
-    xout = np.array(xout)
+    # Ensure last step matches boundary
+    dt = bounds[1] - t
+    k1 = f(t, x, args)
+    k2 = f(t + dt / 2, x + dt * k1 / 2, args)
+    k3 = f(t + dt / 2, x + dt * k2 / 2, args)
+    k4 = f(t + dt, x + dt * k3, args)
+    step_x = x + dt / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
+    tout.append(bounds[1])
+    xout.append(np.array(step_x))
+
+    if leftward:
+        # Flip arrays
+        tout = np.flip(np.array(tout))
+        xout = np.flip(np.array(xout), axis=0)
+    else:
+        tout = np.array(tout)
+        xout = np.array(xout)
 
     if t_eval is not None:
         if verbose:
             start = time.time()
             print('Interpolating solution at desired points...')
 
+        if leftward:
+            # Flip t_eval array for rightward interpolation
+            t_eval = np.flip(t_eval)
+
         x_eval = []
         for coldata in xout.T:
             xinterp = interpolate(tout, coldata)
             x_eval.append(xinterp(t_eval))
-
         if verbose:
             end = time.time()
             print('Done in {:.1f} s.'.format(end-start))
+
+        if leftward:
+            # Flip arrays back to the direction they were inputted
+            x_eval = np.flip(x_eval, axis=1)
+            t_eval = np.flip(t_eval)
     else:
         t_eval, x_eval = tout, xout.T
     return Solution(np.array(t_eval), np.array(x_eval))
