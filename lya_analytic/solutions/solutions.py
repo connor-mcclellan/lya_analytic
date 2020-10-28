@@ -1,4 +1,4 @@
-from util import Line, read_bin, voigtx_fast, beta
+from util import Line, read_bin, voigtx_fast, Params
 from scipy import linalg
 from scipy.special import spherical_in
 import astropy.units as u
@@ -26,7 +26,7 @@ def monte_carlo(x, bins=64):
     return bincenters, n * norm, err * norm
 
 
-def hsp_analytic(x, line, temp=1e4, radius=1e11,
+def hsp_analytic(x, line, p, temp=1e4, radius=1e11,
                  L=1., tau0=1e7, xi=0.0, normed=True):
 
     # Quantities derived from constants
@@ -37,9 +37,9 @@ def hsp_analytic(x, line, temp=1e4, radius=1e11,
     a = line.gamma / (4.0 * np.pi * delta)
     print('a: ', a)
     phix = voigtx_fast(a, x)
-    sigma = beta * x**3. / a
+    sigma = p.beta * x**3. / a
     sigma0 = line.strength / (np.sqrt(np.pi) * delta)
-    sigmai = beta * xi**3. / a
+    sigmai = p.beta * xi**3. / a
     numden = tau0 / (sigma0 * radius)
     kx = numden * line.strength / delta
     z = (sigma - sigmai) / (kx * radius)
@@ -58,27 +58,27 @@ def hsp_analytic(x, line, temp=1e4, radius=1e11,
     return Hsp_analytic
 
 
-def h_bc(x, line, temp=1e4, radius=1e11, L=1., tau0=1e7, xi=0.0, **kwargs):
+def h_bc(x, line, p, temp=1e4, radius=1e11, L=1., tau0=1e7, xi=0.0, **kwargs):
 
     # Quantities derived from line constants
     vth = np.sqrt(2.0 * c.k_B.cgs.value * temp / c.m_p.cgs.value)
     delta = line.nu0 * vth / c.c.cgs.value
     a = line.gamma / (4.0 * np.pi * delta)
     phix = voigtx_fast(a, x)
-    sigma = beta * x**3. / a
+    sigma = p.beta * x**3. / a
     sigma0 = line.strength / (np.sqrt(np.pi) * delta)
     numden = tau0 / (sigma0 * radius)
     kx = numden * line.strength / delta
 
     # Frequency and wavenumber variables
     n = len(x)
-    dsigma = 2.0 * (beta * np.max(x)**3. / a) / (n - 1)
+    dsigma = 2.0 * (p.beta * np.max(x)**3. / a) / (n - 1)
     ds = 2.0 * np.pi / (n * dsigma)
     smax = ds * (n - 1) / 2.
     s = -smax + ds * np.arange(n)
     print('s: ', s)
     # Set up matrix equation solution vector
-    b = np.sqrt(3.0) * hsp_analytic(x, line, **kwargs)
+    b = np.sqrt(3.0) * hsp_analytic(x, line, p, **kwargs)
     print('b: ', b)
 
     # Bessel functions, derivative of bessel functions, ratio between them
@@ -121,16 +121,11 @@ if __name__ == '__main__':
 
     # Set up line and get data from bin files
     lya = Line(1215.6701, 0.4164, 6.265e8)
-    mu, x, time = read_bin(
-        '../tau0_10000000.0_xinit_0.0_temp_10000.0_probabs_0.0/')
+    p = Params(line=lya, temp=1e4, tau0=1e7, num_dens=1701290465.5139434, 
+           energy=1., R=1e11, sigma_source=0., n_points=1e4)
+    mu, x, time = read_bin('../data/1m_tau0_10000000.0_xinit_0.0_temp_10000.0_probabs_0.0/')
 
-    radius = 1e11
-    temp = 1e4
-    L = 1.
-
-    vth = np.sqrt(2.0 * c.k_B.cgs.value * temp / c.m_p.cgs.value)
-    delta = lya.nu0 * vth / c.c.cgs.value
-    norm = 4.0 * np.pi * radius**2. * delta * 4.0 * np.pi / L
+    norm = 4.0 * np.pi * p.R**2. * p.delta * 4.0 * np.pi / p.energy
     print('norm: ', norm)
 
     # Set up matplotlib figure
@@ -147,7 +142,8 @@ if __name__ == '__main__':
         xbins,
         hsp_analytic(
             xbins,
-            lya) * norm,
+            lya,
+            p) * norm,
         'g-',
         linewidth=1,
         alpha=0.5,
@@ -158,7 +154,8 @@ if __name__ == '__main__':
         xbins,
         h_bc(
             xbins,
-            lya) * norm,
+            lya, 
+            p) * norm,
         'c-',
         linewidth=1,
         alpha=0.5,

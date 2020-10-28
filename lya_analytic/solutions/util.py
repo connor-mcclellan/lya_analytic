@@ -28,20 +28,27 @@ class Params(object):
         self.line = line
         self.temp = temp
         self.tau0 = tau0
-        self.num_dens = num_dens
         self.energy = energy
         self.R = R
         self.sigma_source = sigma_source
         self.n_points = n_points
 
+
+
         # Constants
         self.beta = np.sqrt(2.0 / 3.0) * np.pi / 3.0
 
         # Derived quantities
-        self.k = self.num_dens * np.pi * esu**2. * \
-                 self.line.osc_strength / m_e / c  # eq A2
         self.vth = np.sqrt(2.0 * k_B * self.temp / m_p)
         self.delta = self.line.nu0 * self.vth / c
+        self.sigma0 = self.line.strength / (np.sqrt(np.pi) * self.delta)
+        if num_dens is not None:
+            self.num_dens = num_dens
+        else:
+            self.num_dens = self.tau0 / (self.sigma0 * self.R)
+        self.k = self.num_dens * np.pi * esu**2. * \
+                 self.line.osc_strength / m_e / c  # eq A2
+        self.kx = self.num_dens * self.line.strength / self.delta
         self.a = self.line.gamma / (4.0 * np.pi * self.delta)
 #        self.sigma_max = self.tau0 * (1.12 * self.R / c)**(3./2.) * (self.a * self.tau0)**(1./2.) # Eq. 46 in Phil's notes --- must multiply by omega**(3/2)
         self.sigma_max = 50.*self.tau0
@@ -102,6 +109,7 @@ def read_bin(path):
         f.close()
 
         # Add new data to array if the arrays already exists, or create them
+
         try:
             mu = np.append(mu, new_mu[new_mu > 0.])
             x = np.append(x, new_x[new_mu > 0.])

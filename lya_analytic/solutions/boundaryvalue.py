@@ -208,7 +208,8 @@ class BoundaryValue(object):
         J_prime_real = J_prime_real[sort]
         J_prime_imag = J_prime_imag[sort]
 
-        return np.array([sigma, J_real, J_imag, J_prime_real, J_prime_imag])
+        # TODO: Loss of mpf format here. Can't store object arrays in hdf5 format later on
+        return np.array([sigma, J_real, J_imag, J_prime_real, J_prime_imag], dtype=float)
 
 
 def _mean_intensity(sigma, dependent, *args):
