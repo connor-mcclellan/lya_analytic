@@ -149,9 +149,9 @@ def residual_plot(xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, e
     ax1.legend(bbox_to_anchor=(1.01, 1), loc='upper left', fontsize='x-small', frameon=False)
     ax1.grid(linestyle='--', alpha=0.25)
 
-    ax2.plot(xc, np.abs(hp_interp(xc)/phix_xc - count)/count, '.', label=r'$H_{\rm d} - \rm MC$', alpha=1, c="#d73027", linewidth=1, marker='^', markersize=1)
-    ax2.plot(xc, np.abs(hsp_interp(xc)/phix_xc - count)/count, '.', label=r'$H_{0} - \rm MC$', alpha=1, c="#4575b4", linewidth=1, marker='s', markersize=1)
-    ax2.plot(xc, np.abs((hsp_interp(xc) + hh_interp(xc))/phix_xc - count)/count, '.', label=r'$H_{\rm 0 + bc} - \rm MC$', alpha=1, c="#91bfdb", linewidth=1, marker='o', markersize=1)
+    ax2.plot(xc, np.abs(hp_interp(xc)/phix_xc - count)/count, '.', label=r'$|H_{\rm d} - \rm MC|/\rm MC$', alpha=1, c="#d73027", linewidth=1, marker='^', markersize=1)
+    ax2.plot(xc, np.abs(hsp_interp(xc)/phix_xc - count)/count, '.', label=r'$|H_{0} - \rm MC|/\rm MC$', alpha=1, c="#4575b4", linewidth=1, marker='s', markersize=1)
+    ax2.plot(xc, np.abs((hsp_interp(xc) + hh_interp(xc))/phix_xc - count)/count, '.', label=r'$|H_{\rm 0 + bc} - \rm MC|/\rm MC$', alpha=1, c="#91bfdb", linewidth=1, marker='o', markersize=1)
     ax2.grid(linestyle='--', alpha=0.25)
     ax2.set_xlabel(r'$x$')
     ax2.set_ylabel('Fractional Error')
@@ -161,7 +161,7 @@ def residual_plot(xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, e
     plt.subplots_adjust(top=0.88,
 bottom=0.11,
 left=0.11,
-right=0.82,
+right=0.78,
 hspace=0.0,
 wspace=0.2)
 
