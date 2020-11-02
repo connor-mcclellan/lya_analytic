@@ -130,5 +130,13 @@ def voigtx_fast(a, x):
 def tanf(x, tau):
     return np.tan(x) - x / (1. - 1.5 * tau)
 
+def scinot(num):
+    ''' 
+    Formats numbers in scientific notation for LaTeX.
+    '''
+    numstrs = '{:.1E}'.format(num).split('E+')
+    return r'${} \times 10^{{{}}}$'.format(numstrs[0], int(numstrs[1]))
+
+
 def j0(kappa, r):
     return np.sin(kappa*r)/(kappa*r)

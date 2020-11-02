@@ -4,7 +4,7 @@ from scipy.interpolate import interp1d
 import math
 import numpy as np
 import astropy.constants as c
-from solutions.util import read_bin, voigtx_fast, Line, Params
+from solutions.util import read_bin, voigtx_fast, Line, Params, scinot
 from solutions import ftsoln
 from solutions import fits
 from solutions.prob_ct_tau import prob_ct_tau
@@ -128,37 +128,48 @@ def bin_x(x, n, mytitle, filename, tau0, xinit, temp, radius, L, delta, a, p):
     return (xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, err, x0, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp)
 
 
-def residual_plot(xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, err, x0, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp):
+def residual_plot(xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, err, x0, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, logscale=False):
+
 
     fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, gridspec_kw={'height_ratios': [3, 1]}, figsize=(6, 8))
     ax1.plot(xuniform, hp_xuniform, '--', label=r'$H_{\rm d}$', alpha=1, c="#d73027", linewidth=1)
     ax1.plot(xuniform, hsp_xuniform, '-.', label=r'$H_0$', alpha=1, c="#4575b4", linewidth=1)
-    ax1.plot(xuniform, hh_xuniform, ':', label=r'$H_{\rm bc}$', alpha=1, c="#fc8d59", linewidth=1)
     ax1.plot(xuniform, hsp_xuniform + hh_xuniform, '-', label=r'$H_{\rm 0+bc}$', alpha=1, c="#91bfdb", linewidth=1)
 #    plt.plot(xuniform, np.exp(-np.sqrt(np.pi) * sigma_xuniform / tau0), label=r'exp$(-\sqrt{\pi}\sigma / \tau_0)$')
     ax1.errorbar(xc, count, yerr=err, fmt='.', label="MC", alpha=0.75,
-        ms=2., 
+        ms=3., 
         c='k',
         elinewidth=0.25,
         capsize=0.5)
-    ax1.set_xlim((-x0, x0))
-#    plt.xlim((0., x0))
-    ax1.set_ylim((ymin-0.005, ymax))
-    ax1.set_title(mytitle)
+    ax1.set_xlim((min(xc)-2, max(xc)+2))
+
+
+    ax1.text(1.03, 1, mytitle, transform=ax1.transAxes, ha='left', va='top')
     ax1.set_ylabel(r'$P(x)$')
-    ax1.legend(bbox_to_anchor=(1.01, 1), loc='upper left', fontsize='x-small', frameon=False)
     ax1.grid(linestyle='--', alpha=0.25)
 
-    ax2.plot(xc, np.abs(hp_interp(xc)/phix_xc - count)/count, '.', label=r'$|H_{\rm d} - \rm MC|/\rm MC$', alpha=1, c="#d73027", linewidth=1, marker='^', markersize=1)
-    ax2.plot(xc, np.abs(hsp_interp(xc)/phix_xc - count)/count, '.', label=r'$|H_{0} - \rm MC|/\rm MC$', alpha=1, c="#4575b4", linewidth=1, marker='s', markersize=1)
-    ax2.plot(xc, np.abs((hsp_interp(xc) + hh_interp(xc))/phix_xc - count)/count, '.', label=r'$|H_{\rm 0 + bc} - \rm MC|/\rm MC$', alpha=1, c="#91bfdb", linewidth=1, marker='o', markersize=1)
+    ax2.plot(xc, np.abs(hp_interp(xc)/phix_xc - count)/count, '.', label=r'$|H_{\rm d} - \rm MC|/\rm MC$', alpha=1, c="#d73027", linewidth=1, marker='^', markersize=2)
+    ax2.plot(xc, np.abs(hsp_interp(xc)/phix_xc - count)/count, '.', label=r'$|H_{0} - \rm MC|/\rm MC$', alpha=1, c="#4575b4", linewidth=1, marker='s', markersize=2)
+    ax2.plot(xc, np.abs((hsp_interp(xc) + hh_interp(xc))/phix_xc - count)/count, '.', label=r'$|H_{\rm 0 + bc} - \rm MC|/\rm MC$', alpha=1, c="#91bfdb", linewidth=1, marker='o', markersize=2)
     ax2.grid(linestyle='--', alpha=0.25)
     ax2.set_xlabel(r'$x$')
     ax2.set_ylabel('Fractional Error')
-    ax2.set_ylim((-0.1, 1))
     ax2.legend(bbox_to_anchor=(0.99, 1), loc='upper left', fontsize='x-small', frameon=False)
 
-    plt.subplots_adjust(top=0.88,
+    if logscale:
+        ax1.plot(xuniform, np.abs(hh_xuniform), ':', label=r'$|H_{\rm bc}|$', alpha=1, c="#fc8d59", linewidth=1)
+        ax2.set_ylim((0.001, 100))
+        ax1.set_ylim((0.00000001, 0.1))
+        ax2.set_yscale('log')
+        ax1.set_yscale('log')
+    else:
+        ax1.plot(xuniform, hh_xuniform, ':', label=r'$H_{\rm bc}$', alpha=1, c="#fc8d59", linewidth=1)
+        ax2.set_ylim((-0.1, 1))
+        ax1.set_ylim((ymin-0.005, ymax))
+
+    ax1.legend(bbox_to_anchor=(1.01, 0.8), loc='upper left', fontsize='x-small', frameon=False)
+
+    plt.subplots_adjust(top=0.97,
 bottom=0.11,
 left=0.11,
 right=0.78,
@@ -277,8 +288,7 @@ if __name__ == '__main__':
     delta = lya.nu0 * vth / c.c.cgs.value
     a = lya.gamma / (4.0 * np.pi * delta)
     
-    mytitle = r'$\tau_0=$' + str(tau0) + r', $x_{\rm init}=$' + str(xinit) \
-              + r', $ T=$' + str(temp) + r', $p_{\rm abs}=$' + str(prob_abs)
+    mytitle = r'$\tau_0=${}'.format(scinot(tau0))+'\n'+r'$x_{{\rm init}}={:.1f}$'.format(xinit)+'\n'+'$T=${}'.format(scinot(temp))
 
 
     #mu, x, time = read_bin(data_dir)
