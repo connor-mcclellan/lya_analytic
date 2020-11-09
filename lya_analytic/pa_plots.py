@@ -125,107 +125,73 @@ def bin_x(x, n, mytitle, filename, tau0, xinit, temp, radius, L, delta, a, p):
 #    plt.savefig("./plots/1m_x_pdf_subtracted.pdf", format='pdf')
 #    plt.close()
 
-    return (xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, err, x0, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp)
+    return (xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp)
 
 
-def residual_plot(xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, err, x0, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, logscale=False):
+def residual_plot(xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, logscale=False):
 
 
-    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, gridspec_kw={'height_ratios': [3, 1]}, figsize=(6, 8))
+    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, sharex=True, gridspec_kw={'height_ratios': [3, 1]}, figsize=(7, 5))
+
+
+    # Top left panel: linear-scale solutions
     ax1.plot(xuniform, hp_xuniform, '--', label=r'$H_{\rm d}$', alpha=1, c="#d73027", linewidth=1)
     ax1.plot(xuniform, hsp_xuniform, '-.', label=r'$H_0$', alpha=1, c="#4575b4", linewidth=1)
     ax1.plot(xuniform, hsp_xuniform + hh_xuniform, '-', label=r'$H_{\rm 0+bc}$', alpha=1, c="#91bfdb", linewidth=1)
-#    plt.plot(xuniform, np.exp(-np.sqrt(np.pi) * sigma_xuniform / tau0), label=r'exp$(-\sqrt{\pi}\sigma / \tau_0)$')
-    ax1.errorbar(xc, count, yerr=err, fmt='.', label="MC", alpha=0.75,
-        ms=3., 
-        c='k',
-        elinewidth=0.25,
-        capsize=0.5)
+    ax1.errorbar(xc, count, yerr=err, fmt='.', label="MC", alpha=0.75, ms=3., c='k', elinewidth=0.25, capsize=0.5)
     ax1.set_xlim((min(xc)-2, max(xc)+2))
-
-
-    ax1.text(1.03, 1, mytitle, transform=ax1.transAxes, ha='left', va='top')
     ax1.set_ylabel(r'$P(x)$')
     ax1.grid(linestyle='--', alpha=0.25)
+    ax1.set_ylim((ymin-0.005, ymax))
+    ax1.plot(xuniform, hh_xuniform, ':', label=r'$H_{\rm bc}$', alpha=1, c="#fc8d59", linewidth=1)
 
-    ax2.plot(xc, np.abs(hp_interp(xc)/phix_xc - count)/count, '.', label=r'$|H_{\rm d} - \rm MC|/\rm MC$', alpha=1, c="#d73027", linewidth=1, marker='^', markersize=2)
-    ax2.plot(xc, np.abs(hsp_interp(xc)/phix_xc - count)/count, '.', label=r'$|H_{0} - \rm MC|/\rm MC$', alpha=1, c="#4575b4", linewidth=1, marker='s', markersize=2)
-    ax2.plot(xc, np.abs((hsp_interp(xc) + hh_interp(xc))/phix_xc - count)/count, '.', label=r'$|H_{\rm 0 + bc} - \rm MC|/\rm MC$', alpha=1, c="#91bfdb", linewidth=1, marker='o', markersize=2)
+    # Top right panel: log-scale solutions
+    ax2.plot(xuniform, hp_xuniform, '--', label=r'$H_{\rm d}$', alpha=1, c="#d73027", linewidth=1)
+    ax2.plot(xuniform, hsp_xuniform, '-.', label=r'$H_0$', alpha=1, c="#4575b4", linewidth=1)
+    ax2.plot(xuniform, hsp_xuniform + hh_xuniform, '-', label=r'$H_{\rm 0+bc}$', alpha=1, c="#91bfdb", linewidth=1)
+    ax2.errorbar(xc, count, yerr=err, fmt='.', label="MC", alpha=0.75, ms=3., c='k', elinewidth=0.25, capsize=0.5)
+    ax2.set_xlim((min(xc)-2, max(xc)+2))
+    ax2.text(1.23, 1, mytitle, transform=ax2.transAxes, ha='left', va='top')
+    ax2.plot(xuniform, np.abs(hh_xuniform), ':', label=r'$H_{\rm bc}$', alpha=1, c="#fc8d59", linewidth=1)
+    ax2.legend(bbox_to_anchor=(1.20, 0.8), loc='upper left', fontsize='x-small', frameon=False)
+    ax2.set_ylim((0.00000001, 0.1))
+    ax2.set_yscale('log')
     ax2.grid(linestyle='--', alpha=0.25)
-    ax2.set_xlabel(r'$x$')
-    ax2.set_ylabel('Fractional Error')
-    ax2.legend(bbox_to_anchor=(0.99, 1), loc='upper left', fontsize='x-small', frameon=False)
+    ax2.yaxis.tick_right()
 
-    if logscale:
-        ax1.plot(xuniform, np.abs(hh_xuniform), ':', label=r'$|H_{\rm bc}|$', alpha=1, c="#fc8d59", linewidth=1)
-        ax2.set_ylim((0.001, 100))
-        ax1.set_ylim((0.00000001, 0.1))
-        ax2.set_yscale('log')
-        ax1.set_yscale('log')
-    else:
-        ax1.plot(xuniform, hh_xuniform, ':', label=r'$H_{\rm bc}$', alpha=1, c="#fc8d59", linewidth=1)
-        ax2.set_ylim((-0.1, 1))
-        ax1.set_ylim((ymin-0.005, ymax))
+    # Bottom left panel: linear-scale residuals
+    ax3.set_ylim((-0.1, 1))
+    ax3.plot(xc, np.abs(hp_interp(xc)/phix_xc - count)/count, '.', label=r'$|H_{\rm d} - \rm MC|/\rm MC$', alpha=1, c="#d73027", linewidth=1, marker='^', markersize=2)
+    ax3.plot(xc, np.abs(hsp_interp(xc)/phix_xc - count)/count, '.', label=r'$|H_{0} - \rm MC|/\rm MC$', alpha=1, c="#4575b4", linewidth=1, marker='s', markersize=2)
+    ax3.plot(xc, np.abs((hsp_interp(xc) + hh_interp(xc))/phix_xc - count)/count, '.', label=r'$|H_{\rm 0 + bc} - \rm MC|/\rm MC$', alpha=1, c="#91bfdb", linewidth=1, marker='o', markersize=2)
+    ax3.grid(linestyle='--', alpha=0.25)
+    ax3.set_xlabel(r'$x$')
+    ax3.set_ylabel('Fractional Error')
 
-    ax1.legend(bbox_to_anchor=(1.01, 0.8), loc='upper left', fontsize='x-small', frameon=False)
+    # Bottom right panel: log-scale residuals
+    ax4.set_ylim((0.001, 100))
+    ax4.plot(xc, np.abs(hp_interp(xc)/phix_xc - count)/count, '.', label=r'$|H_{\rm d} - \rm MC|/\rm MC$', alpha=1, c="#d73027", linewidth=1, marker='^', markersize=2)
+    ax4.plot(xc, np.abs(hsp_interp(xc)/phix_xc - count)/count, '.', label=r'$|H_{0} - \rm MC|/\rm MC$', alpha=1, c="#4575b4", linewidth=1, marker='s', markersize=2)
+    ax4.plot(xc, np.abs((hsp_interp(xc) + hh_interp(xc))/phix_xc - count)/count, '.', label=r'$|H_{\rm 0 + bc} - \rm MC|/\rm MC$', alpha=1, c="#91bfdb", linewidth=1, marker='o', markersize=2)
+    ax4.set_yscale('log')
+    ax4.grid(linestyle='--', alpha=0.25)
+    ax4.legend(bbox_to_anchor=(1.16, 1), loc='upper left', fontsize='x-small', frameon=False)
+    ax4.yaxis.tick_right()
+    ax4.set_xlabel(r'$x$')
 
-    plt.subplots_adjust(top=0.97,
+    plt.suptitle('Probability Distribution Agreement with Monte Carlo')
+    plt.subplots_adjust(top=0.915,
 bottom=0.11,
 left=0.11,
-right=0.78,
+right=0.75,
 hspace=0.0,
-wspace=0.2)
+wspace=0.0)
 
-    plt.show()
-    #plt.savefig("./plots/"+filename+"/x_pdf_residual.pdf", format='pdf')
+    #plt.show()
+#    plt.savefig("./plots/"+filename+"/pdf_xinit{:.1f}.pdf".format(xinit), format='pdf')
+    plt.savefig("./plots/pdf_xinit{:.1f}.pdf".format(xinit), format='pdf')
     plt.close()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-    #plt.savefig("./plots/"+filename+"/x_pdf.pdf", format='pdf')
-    plt.close()
-
-#    ymax1 = np.amax((Hp_ft) * norm)
-#    ymax2 = np.amax((Hsp_ft) * norm)
-#    ymax3 = np.amax((Hh_ft) * norm)
-#    ymax4 = np.amax(count)
-#    ymax = max([ymax1, ymax2, ymax3, ymax4]) * 1.1
-#    ymin = ymax * 1.e-3
-
- #   plt.figure()
- #   plt.plot(xuniform, hp_xuniform, label=r'$H_{\rm d}$', alpha=1)
- #   plt.plot(xuniform, hsp_xuniform, label=r'$H_0$', alpha=1)
- #   plt.plot(xuniform, np.abs(hh_xuniform), label=r'$|H_{\rm bc}|$', alpha=1)
- #   plt.plot(xuniform, hsp_xuniform + hh_xuniform, label=r'$H_0+H_{\rm bc}$', alpha=1)
-#    plt.plot(xuniform, np.exp(-np.sqrt(np.pi) * sigma_xuniform / tau0), label=r'exp$(-\sqrt{\pi}\sigma / \tau_0)$')
- #   plt.errorbar(xc, count, yerr=err, fmt='.', label="Monte Carlo")
- #   plt.xlim((-x0, x0))
-#    plt.xlim((0., x0))
-#    plt.ylim((ymin, ymax))
-#    plt.yscale('log')
-#    plt.title(mytitle)
-#    plt.legend(loc='best')
-#    plt.xlabel(r'$x$', fontsize=15)
-#    plt.ylabel(r'$P(x)$', fontsize=15)
-#    plt.show()
-#    plt.savefig("./plots/"+filename+"/x_pdf_log.pdf", format='pdf')
-#    plt.close()
-
- #   solutions = np.array([xuniform, hp_xuniform, hsp_xuniform, hh_xuniform])
- #   montecarlo = np.array([xc, count, err])
-
-  #  return solutions, montecarlo
 
 def bin_time(t, n):
 
@@ -272,12 +238,12 @@ def multiplot_time(tc, t0, tau0):
 
 if __name__ == '__main__':
 
-    filename = '1M tau0_10000000.0_xinit_0.0_temp_10000.0_probabs_0.0'
+    filename = '1M tau0_10000000.0_xinit_12.0_temp_10000.0_probabs_0.0'
     data_dir = '/home/connor/Documents/999x/9999/lya_analytic/data/'+filename+'/'
-    Path("./plots/"+filename).mkdir(parents=True, exist_ok=True)
+#    Path("./plots/"+filename).mkdir(parents=True, exist_ok=True)
 
 
-    generate_new = False
+    generate_new = True
 
     lya = Line(1215.6701, 0.4164, 6.265e8)
     p = Params(line=lya, temp=1e4, tau0=1e7, num_dens=1701290465.5139434, 
@@ -289,7 +255,7 @@ if __name__ == '__main__':
     a = lya.gamma / (4.0 * np.pi * delta)
     
     mytitle = r'$\tau_0=${}'.format(scinot(tau0))+'\n'+r'$x_{{\rm init}}={:.1f}$'.format(xinit)+'\n'+'$T=${}'.format(scinot(temp))
-
+    
 
     #mu, x, time = read_bin(data_dir)
     #soln, mc = bin_x(x, 64, mytitle, filename, tau0, xinit, temp, radius, L, delta, a, p)
@@ -297,10 +263,10 @@ if __name__ == '__main__':
     if generate_new:
         mu, x, time = np.load(data_dir + 'mu_x_time.npy')  
         binx_output = bin_x(x, 64, mytitle, filename, tau0, xinit, temp, radius, L, delta, a, p)
-        pickle.dump(binx_output, open('binx_output.p', 'wb'))
+        pickle.dump(binx_output, open('binx_output_xinit{:.1f}.p'.format(xinit), 'wb'))
         residual_plot(*binx_output)
     else:
-        binx_output = pickle.load(open('binx_output.p', 'rb'))
+        binx_output = pickle.load(open('binx_output_xinit{:.1f}.p'.format(xinit), 'rb'))
         residual_plot(*binx_output)
     # Test convergence of solution
 #    print('RMS Deviation: ', rms_error(mc, soln))
@@ -331,3 +297,4 @@ if __name__ == '__main__':
 #    plt.show()
 #    plt.savefig("./plots/"+filename+"/1m_time_pdf.pdf", format='pdf')
 #    plt.close()
+
