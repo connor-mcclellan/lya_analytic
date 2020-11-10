@@ -164,16 +164,20 @@ class BoundaryValue(object):
     def solve_coeff_matrix(self):
 
         start = time.time()
-        #TODO: How do we make this take mpf floats? Doesn't seem possible.
         matrix = np.array([[self.a, self.b, -self.A, -self.B],
                            [self.c, self.d, -self.C, -self.D],
                            [-self.e, -self.f, self.E, self.F],
-                           [self.g, self.h, -self.G, -self.H]], dtype=float)
-
+                           [self.g, self.h, -self.G, -self.H]])
+        scales = np.mean(np.abs(matrix), axis=1)
+        matrix = np.array([row/scales[i] for i, row in enumerate(matrix)], dtype=float)
         solution_vector = np.array([0.,
                                     0.,
-                                    -np.sqrt(6.) / 8. * self.n**2. * self.p.energy / self.p.k / self.p.R**3.,
-                                    0.])
+                                    -np.sqrt(6.) / 8. * self.n**2. * self.p.energy / self.p.k / self.p.R**3./scales[2],
+                                    0.], dtype=float)
+
+
+        print('Matrix eqn scales: ', scales)
+
         # Solve the matrix equation
         J_1_real, J_1_imag, J_2_real, J_2_imag = solve(matrix, solution_vector)
         end = time.time()
@@ -193,7 +197,7 @@ class BoundaryValue(object):
         if self.verbose:
             print('solve matrix   ', end='', flush=True)
         J_1_real, J_1_imag, J_2_real, J_2_imag = self.solve_coeff_matrix()
-        
+        print("J's: ", J_1_real, J_1_imag, J_2_real, J_2_imag)
         # Centerpoint is duplicated --- remove it from one of the arrays with [:-1] before combining 
         sigma = np.concatenate((left_real.t[:-1], right_real.t))
         J_real = np.concatenate((J_1_real * left_real.x[2][:-1], J_2_real * right_real.x[2]))
@@ -208,7 +212,6 @@ class BoundaryValue(object):
         J_prime_real = J_prime_real[sort]
         J_prime_imag = J_prime_imag[sort]
 
-        # TODO: Loss of mpf format here. Can't store object arrays in hdf5 format later on
         return np.array([sigma, J_real, J_imag, J_prime_real, J_prime_imag], dtype=float)
 
 
