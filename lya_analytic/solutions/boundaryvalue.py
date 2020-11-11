@@ -175,6 +175,8 @@ class BoundaryValue(object):
                                     -np.sqrt(6.) / 8. * self.n**2. * self.p.energy / self.p.k / self.p.R**3./scales[2],
                                     0.], dtype=float)
 
+        print('n: ', self.n)
+        print('omega: ', self.omega)
         print(matrix)
 
         # Solve the matrix equation
