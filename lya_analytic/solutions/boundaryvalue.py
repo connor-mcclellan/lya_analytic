@@ -175,8 +175,7 @@ class BoundaryValue(object):
                                     -np.sqrt(6.) / 8. * self.n**2. * self.p.energy / self.p.k / self.p.R**3./scales[2],
                                     0.], dtype=float)
 
-
-        print('Matrix eqn scales: ', scales)
+        print(matrix)
 
         # Solve the matrix equation
         J_1_real, J_1_imag, J_2_real, J_2_imag = solve(matrix, solution_vector)
@@ -230,7 +229,6 @@ def _mean_intensity(sigma, dependent, *args):
             x2,  # dx1_dsigma = x2
             y2  # dy1_dsigma = y2
            ])
-
 if __name__ == '__main__':
 
     # Create params object
@@ -251,9 +249,9 @@ if __name__ == '__main__':
 
     print('\nSOLUTIONS')
     print('=========')
-    for n in range(1, 6):
-        
-        bv = BoundaryValue(n, 0., p)
+    for n in range(7, 8):
+        print('n: ', n)
+        bv = BoundaryValue(n, 1.12, p)
         J = bv.solve()
 #        plot = ax1.plot(J[0], J[1], '-', alpha=0.5, label='n={}'.format(n))
 #        ax1.plot(J[0], J[2], '--', c=plot[-1].get_color(), alpha=0.5)
