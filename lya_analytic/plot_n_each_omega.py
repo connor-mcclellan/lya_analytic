@@ -6,7 +6,7 @@ import matplotlib
 matplotlib.rcParams['text.usetex'] = True
 from solutions.util import Line, Params
 
-data = h5py.File('./outputs/Jnso/n8_sigma10000_omega128_rk.hdf5', 'r')
+data = h5py.File('./outputs/Jnso/n8_sigma10000_omega64_rk_debug.hdf5', 'r')
 c = 29979245800.0
 
 
@@ -21,7 +21,7 @@ tdiff = p.R / c * (p.a * p.tau0)**(1./3) # Diffusion time
 dt = 0.1*tdiff/4.#TODO: Do a run with dt = 0.1*tdiff/4
 
 # Number of omega points in grid
-N_omegas = 128 # TODO: Do a run with 512 omegas, with dt = 0.1*tdiff/4. Reduce sigma max if needed
+N_omegas = 64 # TODO: Do a run with 512 omegas, with dt = 0.1*tdiff/4. Reduce sigma max if needed
 N_ns = 8
 
 # Create grids
@@ -30,15 +30,6 @@ omega = np.linspace(0, 2*np.pi/dt, N_omegas)
 #omega_grid = np.insert(omega_grid, 0, 0.)
 n = np.arange(1, N_ns+1, 1)
 sigma = p.sigma_grid
-
-
-
-
-
-
-
-
-
 
 
 
