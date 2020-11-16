@@ -114,7 +114,7 @@ def one_s_value(n,s,p):
 
   # Create grids
   leftgrid = np.linspace(sigma_left, min(p.sigmas, 0), nleft)
-  middlegrid = np.linspace(0, p.sigmas, nmiddle)
+  middlegrid = np.linspace(p.sigmas, 0, nmiddle)
   rightgrid = np.linspace(sigma_right, max(0, p.sigmas), nright)
 
   kappan=n*np.pi/p.radius
@@ -190,15 +190,18 @@ def one_s_value(n,s,p):
   Jmiddle = Jmiddle * scale_right if p.sigmas > 0. else Jmiddle * scale_left
   dJmiddle = dJmiddle * scale_right if p.sigmas > 0. else Jmiddle * scale_left
 
-  # combine left and right in one array
-  sigma=leftgrid
-  sigma=np.append(sigma,rightgrid[::-1])
-  a1=Jleft
-  a2=Jright[:][::-1]
-  J=np.append(a1,a2)
-  a1=dJleft[:]
-  a2=dJright[:][::-1]
-  dJ=np.append(a1,a2)
+  # reorder middle grid for consistency
+  if p.sigmas > 0.:
+      middlegrid = middlegrid[::-1]
+      Jmiddle = Jmiddle[::-1]
+      dJmiddle = dJmiddle[::-1]
+
+  # combine left, middle, and right in one array
+  # TODO: The duplicated values in sigma may have discontinuities in dJ or J.
+  # These are multivalued functions at the boundaries. Which value to take?
+  sigma=np.concatenate((leftgrid, middlegrid, rightgrid))
+  J = np.concatenate((Jleft, Jmiddle, Jright[::-1]))
+  dJ = np.concatenate((dJleft, dJmiddle, dJright[::-1]))
 
   return sigma,J,dJ
 
