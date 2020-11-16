@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import odeint
 from constants import fundconst,lymanalpha
+from rk import rk
 import warnings
 import pdb
 
@@ -41,12 +42,16 @@ class parameters:
 def line_profile(sigma,p):					# units of Hz^{-1}
   x=(np.abs(sigma)/p.c1)**(1.0/3.0)
   #line_profile = ( np.exp(-x**2)/np.sqrt(np.pi) + p.a/np.pi/(0.01+x**2) ) / p.Delta		# doppler and natural
-  line_profile = p.a/np.pi/x**2/p.Delta								# just natural. don't use sigma=0!
+
+  # TODO: What is going on with this line profile? 
+  #line_profile = p.a/np.pi/x**2/p.Delta								# just natural. don't use sigma=0!
+
+  line_profile = p.a. / np.pi / (0.01 + x**2) / p.Delta
   return line_profile
 
-'''
-def func(sigma, y):
-  global n, s, p
+
+def func(sigma, y, args):
+  n, s, p = args
   J = y[0]
   dJ = y[1]
   phi=line_profile(sigma,p)
@@ -58,8 +63,8 @@ def func(sigma, y):
   dydsigma[0]=dJ
   dydsigma[1]= (term1+term2) * J
   return dydsigma
-'''
 
+'''
 def func(y,sigma,n,s,p):
   J = y[0]
   dJ = y[1]
@@ -72,10 +77,11 @@ def func(y,sigma,n,s,p):
   dydsigma[0]=dJ
   dydsigma[1]= (term1+term2) * J
   return dydsigma
+'''
 
 def integrate(sigma, y_start, n, s, p):
-  sol = odeint(func, y_start, sigma, rtol=relative_tol, atol=absolute_tol, args=(n,s,p))
-  #sol = rk(func, [sigma[0], sigma[-1]], y_start, t_eval=sigma)
+  #sol = odeint(func, y_start, sigma, rtol=relative_tol, atol=absolute_tol, args=(n,s,p))
+  sol = rk(func, [sigma[0], sigma[-1]], y_start, t_eval=sigma, args=(n, s, p))
   return sol
 
 def one_s_value(n,s,p):
@@ -96,7 +102,7 @@ def one_s_value(n,s,p):
 
   # Determine how many points belong in each integration range
   delimiters = sorted(np.array([sigma_left, p.sigmas, 0., sigma_right]))
-  naive_array = np.linspace(sigma_left, sigma_right-1e-1, p.nsigma)
+  naive_array = np.linspace(sigma_left, sigma_right-1e-3, p.nsigma)
   inds = np.digitize(naive_array, delimiters)
 
   nleft, nmiddle, nright = [len(inds[inds==i]) for i in range(1, 4)]
@@ -135,7 +141,6 @@ def one_s_value(n,s,p):
   D=dJright[-1]
 
   # middle integration
-  
   # If source > 0, integrate leftward from source to 0, matching at source
   if p.sigmas > 0.:
 
@@ -150,8 +155,8 @@ def one_s_value(n,s,p):
       dJmiddle=sol[:, 1]
 
       # Set coefficients of matrix equation at 0
-      C = Jmiddle([-1])
-      D = dJmiddle([-1])
+      C = Jmiddle[-1]
+      D = dJmiddle[-1]
 
   # If source < 0, integrate rightward from source to 0, matching at source
   elif p.sigmas < 0.:
@@ -167,13 +172,15 @@ def one_s_value(n,s,p):
       dJmiddle=sol[:, 1]
 
       # Set coefficients of matrix equation at 0
-      A = Jmiddle([-1])
-      B = dJmiddle([-1])
+      A = Jmiddle[-1]
+      B = dJmiddle[-1]
 
   # If source = 0, do nothing
   else:
-      pass
+      Jmiddle = np.nan
+      dJmiddle = np.nan
 
+  pdb.set_trace()
   # solution of the matrix equation
   scale_right = - 1.0/(D-B*(C/A)) * np.sqrt(6.0)/8.0 * n**2 * p.energy/(p.k*p.radius**3)
   scale_left = C/A * scale_right
@@ -181,6 +188,9 @@ def one_s_value(n,s,p):
   dJleft = dJleft * scale_left
   Jright = Jright * scale_right
   dJright = dJright * scale_right
+  Jmiddle = Jmiddle * scale_right if p.sigmas > 0. else Jmiddle * scale_left
+  dJmiddle = dJmiddle * scale_right if p.sigmas > 0. else Jmiddle * scale_left
+  
 
   # combine left and right in one array
   sigma=leftgrid
