@@ -3,6 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import odeint
 from constants import fundconst,lymanalpha
+import warnings
+import pdb
 
 # max number of solutions at each n
 nsolnmax=20                                          # maximum number of solutions for each n.
@@ -42,6 +44,7 @@ def line_profile(sigma,p):					# units of Hz^{-1}
   line_profile = p.a/np.pi/x**2/p.Delta								# just natural. don't use sigma=0!
   return line_profile
 
+'''
 def func(sigma, y):
   global n, s, p
   J = y[0]
@@ -55,9 +58,24 @@ def func(sigma, y):
   dydsigma[0]=dJ
   dydsigma[1]= (term1+term2) * J
   return dydsigma
+'''
+
+def func(y,sigma,n,s,p):
+  J = y[0]
+  dJ = y[1]
+  phi=line_profile(sigma,p)
+  kappan=n*np.pi/p.radius
+  wavenum = kappan * p.Delta / p.k
+  term1 = wavenum**2 
+  term2 = 3.0*s*p.Delta**2*phi/(fc.clight*p.k)
+  dydsigma=np.zeros(2)
+  dydsigma[0]=dJ
+  dydsigma[1]= (term1+term2) * J
+  return dydsigma
 
 def integrate(sigma, y_start, n, s, p):
-  sol = rk(func, [sigma[0], sigma[-1]], y_start, t_eval=sigma)
+  sol = odeint(func, y_start, sigma, rtol=relative_tol, atol=absolute_tol, args=(n,s,p))
+  #sol = rk(func, [sigma[0], sigma[-1]], y_start, t_eval=sigma)
   return sol
 
 def one_s_value(n,s,p):
@@ -73,21 +91,25 @@ def one_s_value(n,s,p):
   term1 = wavenum**2
   term2 = 3.0*s*p.Delta**2*phi/(fc.clight*p.k)
   if np.abs(term2/term1) > 1.0:
-    print("problem: term2/term1 at the edge=",term2/term1)
+    warnings.warn("term2/term1 at the edge={}".format(term2/term1))
     quit()
 
-  # make the grids (assuming sigmas=0, otherwise we need three segments)
-  # # # EDITS HERE FOR THREE SEGMENT CODE
-  # Roughly the same spacing in sigma for each segment is a goal
-  nleft=np.int( p.nsigma * (p.sigmas-1.e3-sigma_left)/(sigma_right-sigma_left) )
-  nright=np.int( p.nsigma * (sigma_right-p.sigmas-1.e3)/(sigma_right-sigma_left) )
-  if nright+nleft<p.nsigma:
-    nleft=nleft+(p.nsigma-nleft-nright)
-  if nright+nleft != p.nsigma:
-    print('nright+nleft not equal to p.nsigma')
-    quit()
-  leftgrid=np.linspace(sigma_left,p.sigmas-1.e3,nleft)
-  rightgrid=np.linspace(sigma_right,p.sigmas+1.e3,nright)
+  # Determine how many points belong in each integration range
+  delimiters = sorted(np.array([sigma_left, p.sigmas, 0., sigma_right]))
+  naive_array = np.linspace(sigma_left, sigma_right-1e-1, p.nsigma)
+  inds = np.digitize(naive_array, delimiters)
+
+  nleft, nmiddle, nright = [len(inds[inds==i]) for i in range(1, 4)]
+  if nmiddle < 3 and p.sigmas != 0.:
+      warnings.warn('Middle grid is critically undersampled. Replacing with minimum of 3 points.')
+      nmiddle = 3
+      nright -= 2  # Make room for the new points
+      nleft -= 1
+
+  # Create grids
+  leftgrid = np.linspace(sigma_left, min(p.sigmas, 0), nleft)
+  middlegrid = np.linspace(0, p.sigmas, nmiddle)
+  rightgrid = np.linspace(sigma_right, max(0, p.sigmas), nright)
 
   kappan=n*np.pi/p.radius
   wavenum = kappan*p.Delta/p.k # used for initial conditions
@@ -100,9 +122,9 @@ def one_s_value(n,s,p):
   Jleft=sol[:,0]
   dJleft=sol[:,1]
   A=Jleft[-1]
-  B = dJleft[-1]
+  B=dJleft[-1]
 
-  # left integration
+  # leftward integration
   J=1.0
   dJ=-wavenum*J
   y_start=np.array( (J,dJ) )
@@ -111,6 +133,46 @@ def one_s_value(n,s,p):
   dJright=sol[:,1]
   C=Jright[-1]
   D=dJright[-1]
+
+  # middle integration
+  
+  # If source > 0, integrate leftward from source to 0, matching at source
+  if p.sigmas > 0.:
+
+      # Match initial conditions at source (leftward integration)
+      J = Jright[-1]
+      dJ = dJright[-1]
+      y_start = np.array((J, dJ))
+
+      # Find solution in middle region
+      sol = integrate(middlegrid, y_start, n, s, p)
+      Jmiddle=sol[:, 0]
+      dJmiddle=sol[:, 1]
+
+      # Set coefficients of matrix equation at 0
+      C = Jmiddle([-1])
+      D = dJmiddle([-1])
+
+  # If source < 0, integrate rightward from source to 0, matching at source
+  elif p.sigmas < 0.:
+
+      # Match initial conditions at 0 (rightward integration)
+      J = Jleft[-1]
+      dJ = dJleft[-1]
+      y_start = np.array((J, dJ))
+
+      # Find solution in middle region
+      sol = integrate(middlegrid, y_start, n, s, p)
+      Jmiddle=sol[:, 0]
+      dJmiddle=sol[:, 1]
+
+      # Set coefficients of matrix equation at 0
+      A = Jmiddle([-1])
+      B = dJmiddle([-1])
+
+  # If source = 0, do nothing
+  else:
+      pass
 
   # solution of the matrix equation
   scale_right = - 1.0/(D-B*(C/A)) * np.sqrt(6.0)/8.0 * n**2 * p.energy/(p.k*p.radius**3)
@@ -179,7 +241,7 @@ def solve(s1,s2,s3,n,p):
       f2=fr
   
   if i==100:
-    print("too many iterations in solve")
+    warnings.warn("too many iterations in solve")
     quit()
 
   print()
@@ -234,7 +296,7 @@ def main():
   radius=1.e11
   alpha_abs=0.0
   prob_dest=0.0
-  xsource=0.0
+  xsource=2.0
   nmax=6+1
   nsigma=512
   nomega=1024
