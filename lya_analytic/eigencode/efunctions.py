@@ -46,10 +46,10 @@ def line_profile(sigma,p):					# units of Hz^{-1}
   # TODO: What is going on with this line profile? 
   #line_profile = p.a/np.pi/x**2/p.Delta								# just natural. don't use sigma=0!
 
-  line_profile = p.a. / np.pi / (0.01 + x**2) / p.Delta
+  line_profile = p.a / np.pi / (0.01 + x**2) / p.Delta
   return line_profile
 
-
+'''
 def func(sigma, y, args):
   n, s, p = args
   J = y[0]
@@ -63,8 +63,8 @@ def func(sigma, y, args):
   dydsigma[0]=dJ
   dydsigma[1]= (term1+term2) * J
   return dydsigma
-
 '''
+
 def func(y,sigma,n,s,p):
   J = y[0]
   dJ = y[1]
@@ -77,11 +77,11 @@ def func(y,sigma,n,s,p):
   dydsigma[0]=dJ
   dydsigma[1]= (term1+term2) * J
   return dydsigma
-'''
+
 
 def integrate(sigma, y_start, n, s, p):
-  #sol = odeint(func, y_start, sigma, rtol=relative_tol, atol=absolute_tol, args=(n,s,p))
-  sol = rk(func, [sigma[0], sigma[-1]], y_start, t_eval=sigma, args=(n, s, p))
+  sol = odeint(func, y_start, sigma, rtol=relative_tol, atol=absolute_tol, args=(n,s,p))
+  #sol = rk(func, [sigma[0], sigma[-1]], y_start, t_eval=sigma, args=(n, s, p))
   return sol
 
 def one_s_value(n,s,p):
@@ -180,7 +180,6 @@ def one_s_value(n,s,p):
       Jmiddle = np.nan
       dJmiddle = np.nan
 
-  pdb.set_trace()
   # solution of the matrix equation
   scale_right = - 1.0/(D-B*(C/A)) * np.sqrt(6.0)/8.0 * n**2 * p.energy/(p.k*p.radius**3)
   scale_left = C/A * scale_right
@@ -190,7 +189,6 @@ def one_s_value(n,s,p):
   dJright = dJright * scale_right
   Jmiddle = Jmiddle * scale_right if p.sigmas > 0. else Jmiddle * scale_left
   dJmiddle = dJmiddle * scale_right if p.sigmas > 0. else Jmiddle * scale_left
-  
 
   # combine left and right in one array
   sigma=leftgrid
