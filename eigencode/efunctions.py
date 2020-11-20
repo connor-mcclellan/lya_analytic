@@ -102,7 +102,9 @@ def one_s_value(n,s,p):
 
   # Determine how many points belong in each integration range
   delimiters = sorted(np.array([sigma_left, p.sigmas, 0., sigma_right]))
-  naive_array = np.linspace(sigma_left, sigma_right-1e-3, p.nsigma)
+
+  # One extra sigma because a single duplicated datapoint will be removed later
+  naive_array = np.linspace(sigma_left, sigma_right-1e-3, p.nsigma+1)
   inds = np.digitize(naive_array, delimiters)
 
   nleft, nmiddle, nright = [len(inds[inds==i]) for i in range(1, 4)]
