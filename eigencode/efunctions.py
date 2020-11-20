@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import odeint
 from constants import fundconst,lymanalpha
-from rk import rk
+#from rk import rk
 import warnings
 import pdb
 
@@ -114,7 +114,7 @@ def one_s_value(n,s,p):
 
   # Create grids
   leftgrid = np.linspace(sigma_left, min(p.sigmas, 0), nleft)
-  middlegrid = np.linspace(p.sigmas, 0, nmiddle)
+  middlegrid = np.linspace(0, p.sigmas, nmiddle)
   rightgrid = np.linspace(sigma_right, max(0, p.sigmas), nright)
 
   kappan=n*np.pi/p.radius
@@ -141,27 +141,10 @@ def one_s_value(n,s,p):
   D=dJright[-1]
 
   # middle integration
-  # If source > 0, integrate leftward from source to 0, matching at source
+  # If source > 0, integrate rightward from 0 to source, matching at 0
   if p.sigmas > 0.:
 
-      # Match initial conditions at source (leftward integration)
-      J = Jright[-1]
-      dJ = dJright[-1]
-      y_start = np.array((J, dJ))
-
-      # Find solution in middle region
-      sol = integrate(middlegrid, y_start, n, s, p)
-      Jmiddle=sol[:, 0]
-      dJmiddle=sol[:, 1]
-
-      # Set coefficients of matrix equation at 0
-      C = Jmiddle[-1]
-      D = dJmiddle[-1]
-
-  # If source < 0, integrate rightward from source to 0, matching at source
-  elif p.sigmas < 0.:
-
-      # Match initial conditions at 0 (rightward integration)
+      # Match initial conditions at 0 (leftward integration)
       J = Jleft[-1]
       dJ = dJleft[-1]
       y_start = np.array((J, dJ))
@@ -175,6 +158,23 @@ def one_s_value(n,s,p):
       A = Jmiddle[-1]
       B = dJmiddle[-1]
 
+  # If source < 0, integrate leftward from 0 to source, matching at 0
+  elif p.sigmas < 0.:
+
+      # Match initial conditions at 0 (rightward integration)
+      J = Jright[-1]
+      dJ = dJright[-1]
+      y_start = np.array((J, dJ))
+
+      # Find solution in middle region
+      sol = integrate(middlegrid, y_start, n, s, p)
+      Jmiddle=sol[:, 0]
+      dJmiddle=sol[:, 1]
+
+      # Set coefficients of matrix equation at 0
+      C = Jmiddle[-1]
+      D = dJmiddle[-1]
+
   # If source = 0, do nothing
   else:
       Jmiddle = np.nan
@@ -187,19 +187,42 @@ def one_s_value(n,s,p):
   dJleft = dJleft * scale_left
   Jright = Jright * scale_right
   dJright = dJright * scale_right
-  Jmiddle = Jmiddle * scale_right if p.sigmas > 0. else Jmiddle * scale_left
-  dJmiddle = dJmiddle * scale_right if p.sigmas > 0. else Jmiddle * scale_left
+  Jmiddle = Jmiddle * scale_left if p.sigmas > 0. else Jmiddle * scale_right
+  dJmiddle = dJmiddle * scale_left if p.sigmas > 0. else Jmiddle * scale_right
 
-  # reorder middle grid for consistency
-  if p.sigmas > 0.:
+  # offset to sigma source points
+  offset = 1e-3
+
+
+  if p.sigmas < 0.:
+
+      # reorder middle grid for consistency
       middlegrid = middlegrid[::-1]
       Jmiddle = Jmiddle[::-1]
       dJmiddle = dJmiddle[::-1]
 
+      # Offset must be applied to the last point of Jleft and first of Jmiddle
+      middlegrid[0] += offset
+      leftgrid[-1] -= offset
+
+      # Remove duplicated point at 0
+      Jright = Jright[:-1]
+      dJright = dJright[:-1]
+      rightgrid = rightgrid[:-1]
+
+  else:
+      # Offset must be applied to last point of Jmiddle and last of Jright
+      middlegrid[-1] -= offset
+      rightgrid[-1] += offset
+
+      # Remove duplicated point at 0
+      Jleft = Jleft[:-1]
+      dJleft = dJleft[:-1]
+      leftgrid = leftgrid[:-1]
+      
+
   # combine left, middle, and right in one array
-  # TODO: The duplicated values in sigma may have discontinuities in dJ or J.
-  # These are multivalued functions at the boundaries. Which value to take?
-  sigma=np.concatenate((leftgrid, middlegrid, rightgrid))
+  sigma=np.concatenate((leftgrid, middlegrid, rightgrid[::-1]))
   J = np.concatenate((Jleft, Jmiddle, Jright[::-1]))
   dJ = np.concatenate((dJleft, dJmiddle, dJright[::-1]))
 
