@@ -13,6 +13,7 @@ import matplotlib
 matplotlib.rc('text', usetex=True)
 matplotlib.rc('font', **{'family': 'serif',
                          'serif': ['Computer Modern Roman']})
+from matplotlib.ticker import LogFormatterExponent
 from pathlib import Path
 import pickle
 
@@ -130,66 +131,71 @@ def bin_x(x, n, mytitle, filename, tau0, xinit, temp, radius, L, delta, a, p):
 
 def residual_plot(xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, logscale=False):
 
+    color = plt.cm.coolwarm(np.arange(4)/3)
+    alpha = 0.9
 
-    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, sharex=True, gridspec_kw={'height_ratios': [3, 1]}, figsize=(7, 5))
-
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True, gridspec_kw={'height_ratios': [2, 2, 1]}, figsize=(7, 5))
 
     # Top left panel: linear-scale solutions
-    ax1.plot(xuniform, hp_xuniform, '--', label=r'$H_{\rm d}$', alpha=1, c="#d73027", linewidth=1)
-    ax1.plot(xuniform, hsp_xuniform, '-.', label=r'$H_0$', alpha=1, c="#4575b4", linewidth=1)
-    ax1.plot(xuniform, hsp_xuniform + hh_xuniform, '-', label=r'$H_{\rm 0+bc}$', alpha=1, c="#91bfdb", linewidth=1)
+    ax1.plot(xuniform, hp_xuniform, '--', label=r'$H_{\rm d}$', alpha=alpha, c=color[0], linewidth=1)
+    ax1.plot(xuniform, hsp_xuniform + hh_xuniform, '-', label=r'$H_{\rm 0+bc}$', alpha=alpha, c=color[1], linewidth=1)
+    ax1.plot(xuniform, hsp_xuniform, '-.', label=r'$H_0$', alpha=alpha, c=color[2], linewidth=1)
     ax1.errorbar(xc, count, yerr=err, fmt='.', label="MC", alpha=0.75, ms=3., c='k', elinewidth=0.25, capsize=0.5)
     ax1.set_xlim((min(xc)-2, max(xc)+2))
     ax1.set_ylabel(r'$P(x)$')
     ax1.grid(linestyle='--', alpha=0.25)
     ax1.set_ylim((ymin-0.005, ymax))
-    ax1.plot(xuniform, hh_xuniform, ':', label=r'$H_{\rm bc}$', alpha=1, c="#fc8d59", linewidth=1)
+    ax1.plot(xuniform, hh_xuniform, ':', label=r'$H_{\rm bc}$', alpha=alpha, c=color[3], linewidth=1)
+    ax1.legend(bbox_to_anchor=(1.04, 0.8), loc='upper left', fontsize='x-small', frameon=False)
 
     # Top right panel: log-scale solutions
-    ax2.plot(xuniform, hp_xuniform, '--', label=r'$H_{\rm d}$', alpha=1, c="#d73027", linewidth=1)
-    ax2.plot(xuniform, hsp_xuniform, '-.', label=r'$H_0$', alpha=1, c="#4575b4", linewidth=1)
-    ax2.plot(xuniform, hsp_xuniform + hh_xuniform, '-', label=r'$H_{\rm 0+bc}$', alpha=1, c="#91bfdb", linewidth=1)
+    ax2.plot(xuniform, hp_xuniform, '--', label=r'$H_{\rm d}$', alpha=alpha, c=color[0], linewidth=1)
+    ax2.plot(xuniform, hsp_xuniform + hh_xuniform, '-', label=r'$H_{\rm 0+bc}$', alpha=alpha, c=color[1], linewidth=1)
+    ax2.plot(xuniform, hsp_xuniform, '-.', label=r'$H_0$', alpha=alpha, c=color[2], linewidth=1)
     ax2.errorbar(xc, count, yerr=err, fmt='.', label="MC", alpha=0.75, ms=3., c='k', elinewidth=0.25, capsize=0.5)
     ax2.set_xlim((min(xc)-2, max(xc)+2))
-    ax2.text(1.23, 1, mytitle, transform=ax2.transAxes, ha='left', va='top')
-    ax2.plot(xuniform, np.abs(hh_xuniform), ':', label=r'$H_{\rm bc}$', alpha=1, c="#fc8d59", linewidth=1)
-    ax2.legend(bbox_to_anchor=(1.20, 0.8), loc='upper left', fontsize='x-small', frameon=False)
-    ax2.set_ylim((0.00000001, 0.1))
+#    ax2.text(1.23, 1, mytitle, transform=ax2.transAxes, ha='left', va='top')
+    ax2.plot(xuniform, np.abs(hh_xuniform), ':', label=r'$H_{\rm bc}$', alpha=alpha, c=color[3], linewidth=1)
+    ax2.set_ylim((0.00000005, 0.1))
+    ax2.set_ylabel('$\log{P(x)}$')
     ax2.set_yscale('log')
     ax2.grid(linestyle='--', alpha=0.25)
-    ax2.yaxis.tick_right()
+    ax2.yaxis.set_major_formatter(LogFormatterExponent())
+#    ax2.yaxis.tick_right()
 
     # Bottom left panel: linear-scale residuals
-    ax3.set_ylim((-0.1, 1))
-    ax3.plot(xc, np.abs(hp_interp(xc)/phix_xc - count)/count, '.', label=r'$|H_{\rm d} - \rm MC|/\rm MC$', alpha=1, c="#d73027", linewidth=1, marker='^', markersize=2)
-    ax3.plot(xc, np.abs(hsp_interp(xc)/phix_xc - count)/count, '.', label=r'$|H_{0} - \rm MC|/\rm MC$', alpha=1, c="#4575b4", linewidth=1, marker='s', markersize=2)
-    ax3.plot(xc, np.abs((hsp_interp(xc) + hh_interp(xc))/phix_xc - count)/count, '.', label=r'$|H_{\rm 0 + bc} - \rm MC|/\rm MC$', alpha=1, c="#91bfdb", linewidth=1, marker='o', markersize=2)
+#    ax3.set_ylim((-0.1, 1))
+    ax3.plot(xc, hp_interp(xc)/phix_xc - count, '.', label=r'$H_{\rm d} - \rm MC$', alpha=alpha, c=color[0], linewidth=1, marker='^', markersize=2)
+    ax3.plot(xc, (hsp_interp(xc) + hh_interp(xc))/phix_xc - count, '.', label=r'$H_{\rm 0 + bc} - \rm MC$', alpha=alpha, c=color[1], linewidth=1, marker='s', markersize=2)
+    ax3.plot(xc, hsp_interp(xc)/phix_xc - count, '.', label=r'$H_{0} - \rm MC$', alpha=alpha, c=color[2], linewidth=1, marker='o', markersize=2)
+
     ax3.grid(linestyle='--', alpha=0.25)
     ax3.set_xlabel(r'$x$')
-    ax3.set_ylabel('Fractional Error')
+    ax3.set_ylabel('Residuals')
+    ax3.legend(bbox_to_anchor=(1.0, 1), loc='upper left', fontsize='x-small', frameon=False)
 
     # Bottom right panel: log-scale residuals
-    ax4.set_ylim((0.001, 100))
-    ax4.plot(xc, np.abs(hp_interp(xc)/phix_xc - count)/count, '.', label=r'$|H_{\rm d} - \rm MC|/\rm MC$', alpha=1, c="#d73027", linewidth=1, marker='^', markersize=2)
-    ax4.plot(xc, np.abs(hsp_interp(xc)/phix_xc - count)/count, '.', label=r'$|H_{0} - \rm MC|/\rm MC$', alpha=1, c="#4575b4", linewidth=1, marker='s', markersize=2)
-    ax4.plot(xc, np.abs((hsp_interp(xc) + hh_interp(xc))/phix_xc - count)/count, '.', label=r'$|H_{\rm 0 + bc} - \rm MC|/\rm MC$', alpha=1, c="#91bfdb", linewidth=1, marker='o', markersize=2)
-    ax4.set_yscale('log')
-    ax4.grid(linestyle='--', alpha=0.25)
-    ax4.legend(bbox_to_anchor=(1.16, 1), loc='upper left', fontsize='x-small', frameon=False)
-    ax4.yaxis.tick_right()
-    ax4.set_xlabel(r'$x$')
+#    ax4.set_ylim((0.001, 100))
+#    ax4.plot(xc, hp_interp(xc)/phix_xc - count, '.', label=r'$|H_{\rm d} - \rm MC|/\rm MC$', alpha=alpha, c=color[0], linewidth=1, marker='^', markersize=2)
+#    ax4.plot(xc, hsp_interp(xc)/phix_xc - count, '.', label=r'$|H_{0} - \rm MC|/\rm MC$', alpha=alpha, c=color[1], linewidth=1, marker='s', markersize=2)
+#    ax4.plot(xc, (hsp_interp(xc) + hh_interp(xc))/phix_xc - count, '.', label=r'$|H_{\rm 0 + bc} - \rm MC|/\rm MC$', alpha=alpha, c=color[2], linewidth=1, marker='o', markersize=2)
+#    ax4.set_yscale('log')
+#    ax4.grid(linestyle='--', alpha=0.25)
 
-    plt.suptitle('Probability Distribution Agreement with Monte Carlo')
+#    ax4.yaxis.tick_right()
+#    ax4.set_xlabel(r'$x$')
+
+#    ax4.axis('off')
     plt.subplots_adjust(top=0.915,
 bottom=0.11,
 left=0.11,
-right=0.75,
-hspace=0.0,
+right=0.80,
+hspace=0.1,
 wspace=0.0)
 
-    #plt.show()
+    plt.show()
 #    plt.savefig("./plots/"+filename+"/pdf_xinit{:.1f}.pdf".format(xinit), format='pdf')
-    plt.savefig("./plots/pdf_xinit{:.1f}.pdf".format(xinit), format='pdf')
+#    plt.savefig("./plots/pdf_xinit{:.1f}.pdf".format(xinit), format='pdf')
     plt.close()
 
 
@@ -239,11 +245,11 @@ def multiplot_time(tc, t0, tau0):
 if __name__ == '__main__':
 
     filename = '1M tau0_10000000.0_xinit_12.0_temp_10000.0_probabs_0.0'
-    data_dir = '/home/connor/Documents/999x/9999/lya_analytic/data/'+filename+'/'
+    data_dir = '/home/connor/Documents/lya_analytic/data/'+filename+'/'
 #    Path("./plots/"+filename).mkdir(parents=True, exist_ok=True)
 
 
-    generate_new = True
+    generate_new = False
 
     lya = Line(1215.6701, 0.4164, 6.265e8)
     p = Params(line=lya, temp=1e4, tau0=1e7, num_dens=1701290465.5139434, 
