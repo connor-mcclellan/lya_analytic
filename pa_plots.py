@@ -132,13 +132,13 @@ def bin_x(x, n, mytitle, filename, tau0, xinit, temp, radius, L, delta, a, p):
 def residual_plot(xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, logscale=False):
 
 #    color = plt.cm.coolwarm(np.arange(4)/3)
-    color = ['c', 'm', 'orange', 'red']
+    color = ['b', 'r', 'orange', 'purple', 'gray']
     alpha = 0.7
 
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True, gridspec_kw={'height_ratios': [2, 2, 1]}, figsize=(7, 5))
 
     # Top left panel: linear-scale solutions
-    ax1.axvline(xinit, c='limegreen', lw=1, alpha=0.5)
+    ax1.axvline(xinit, c=color[4], lw=1, alpha=0.5)
     ax1.plot(xuniform, hp_xuniform, '--', label=r'$H_{\rm d}$', alpha=alpha, c=color[0], linewidth=1)
     ax1.plot(xuniform, hsp_xuniform + hh_xuniform, '-', label=r'$H_{\rm 0+bc}$', alpha=alpha, c=color[1], linewidth=1)
     ax1.plot(xuniform, hsp_xuniform, '-.', label=r'$H_0$', alpha=alpha, c=color[2], linewidth=1)
@@ -157,7 +157,7 @@ def residual_plot(xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, e
     ax2.plot(xuniform, hsp_xuniform + hh_xuniform, '-', label=r'$H_{\rm 0+bc}$', alpha=alpha, c=color[1], linewidth=1)
     ax2.plot(xuniform, hsp_xuniform, '-.', label=r'$H_0$', alpha=alpha, c=color[2], linewidth=1)
     ax2.errorbar(xc, count, yerr=err, fmt='.', label="MC", alpha=0.75, ms=3., c='k', elinewidth=0.25, capsize=0.5)
-    ax2.axvline(xinit, c='limegreen', lw=1, alpha=0.5)
+    ax2.axvline(xinit, c=color[4], lw=1, alpha=0.5)
     ax2.set_xlim((min(xc)-2, max(xc)+2))
 #    ax2.text(1.23, 1, mytitle, transform=ax2.transAxes, ha='left', va='top')
     ax2.plot(xuniform, np.abs(hh_xuniform), ':', label=r'$H_{\rm bc}$', alpha=alpha, c=color[3], linewidth=1)
@@ -170,7 +170,7 @@ def residual_plot(xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, e
 
     # Bottom left panel: linear-scale residuals
 #    ax3.set_ylim((-0.1, 1))
-    ax3.axvline(xinit, c='limegreen', lw=1, alpha=0.5)
+    ax3.axvline(xinit, c=color[4], lw=1, alpha=0.5)
     ax3.plot(xc, hp_interp(xc)/phix_xc - count, '.', label=r'$H_{\rm d} - \rm MC$', alpha=alpha, c=color[0], linewidth=1, marker='^', markersize=2)
     ax3.plot(xc, (hsp_interp(xc) + hh_interp(xc))/phix_xc - count, '.', label=r'$H_{\rm 0 + bc} - \rm MC$', alpha=alpha, c=color[1], linewidth=1, marker='s', markersize=2)
     ax3.plot(xc, hsp_interp(xc)/phix_xc - count, '.', label=r'$H_{0} - \rm MC$', alpha=alpha, c=color[2], linewidth=1, marker='o', markersize=2)
@@ -250,7 +250,7 @@ def multiplot_time(tc, t0, tau0):
 
 if __name__ == '__main__':
 
-    filename = '1M tau0_10000000.0_xinit_12.0_temp_10000.0_probabs_0.0'
+    filename = '1M tau0_10000000.0_xinit_0.0_temp_10000.0_probabs_0.0'
     data_dir = '/home/connor/Documents/lya_analytic/data/'+filename+'/'
 #    Path("./plots/"+filename).mkdir(parents=True, exist_ok=True)
 

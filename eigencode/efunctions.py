@@ -335,7 +335,7 @@ def main():
   xsource=2.0
   nmax=6+1
   nsigma=512
-  nomega=1024
+  nomega=10
   p = parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax)
   tdiff = (p.radius/fc.clight)*(p.a*p.tau0)**0.333
 
