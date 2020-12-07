@@ -144,7 +144,7 @@ def residual_plot(xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, e
     ax1.plot(xuniform, hsp_xuniform, '-.', label=r'$H_0$', alpha=alpha, c=color[2], linewidth=1)
     ax1.errorbar(xc, count, yerr=err, fmt='.', label="MC", alpha=0.75, ms=3., c='k', elinewidth=0.25, capsize=0.5)
 
-    ax1.text(xinit+0.5, 0.01, r'x$_{\rm init}$', rotation=90, fontsize=8)
+    ax1.text(xinit+0.5, 0.03, r'x$_{\rm init}$', rotation=90, fontsize=8)
     ax1.set_xlim((min(xc)-2, max(xc)+2))
     ax1.set_ylabel(r'$P(x)$')
     ax1.grid(linestyle='--', alpha=0.25)
@@ -199,9 +199,9 @@ right=0.80,
 hspace=0.1,
 wspace=0.0)
 
-    plt.show()
+#    plt.show()
 #    plt.savefig("./plots/"+filename+"/pdf_xinit{:.1f}.pdf".format(xinit), format='pdf')
-#    plt.savefig("./plots/pdf_xinit{:.1f}.pdf".format(xinit), format='pdf')
+    plt.savefig("./plots/pdf_xinit{:.1f}.pdf".format(xinit), format='pdf')
     plt.close()
 
 
@@ -250,7 +250,7 @@ def multiplot_time(tc, t0, tau0):
 
 if __name__ == '__main__':
 
-    filename = '1M tau0_10000000.0_xinit_0.0_temp_10000.0_probabs_0.0'
+    filename = '1M tau0_10000000.0_xinit_6.0_temp_10000.0_probabs_0.0'
     data_dir = '/home/connor/Documents/lya_analytic/data/'+filename+'/'
 #    Path("./plots/"+filename).mkdir(parents=True, exist_ok=True)
 

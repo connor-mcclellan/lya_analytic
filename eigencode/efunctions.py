@@ -50,6 +50,7 @@ def line_profile(sigma,p):					# units of Hz^{-1}
   return line_profile
 
 '''
+# Differential equation for 'infegrate'
 def func(sigma, y, args):
   n, s, p = args
   J = y[0]
@@ -65,6 +66,7 @@ def func(sigma, y, args):
   return dydsigma
 '''
 
+# Differential equation for odeint
 def func(y,sigma,n,s,p):
   J = y[0]
   dJ = y[1]
