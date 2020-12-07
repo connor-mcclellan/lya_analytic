@@ -214,7 +214,7 @@ def one_s_value(n,s,p):
       dJright = dJright[:-1]
       rightgrid = rightgrid[:-1]
 
-  else:
+  elif p.sigmas > 0.:
       # Offset must be applied to last point of Jmiddle and last of Jright
       middlegrid[-1] -= offset
       rightgrid[-1] += offset
@@ -224,12 +224,21 @@ def one_s_value(n,s,p):
       dJleft = dJleft[:-1]
       leftgrid = leftgrid[:-1]
       
+  else:
+      # Source is at 0
+      rightgrid[-1] += offset
+      leftgrid[-1] -= offset
+
 
   # combine left, middle, and right in one array
-  sigma=np.concatenate((leftgrid, middlegrid, rightgrid[::-1]))
-  J = np.concatenate((Jleft, Jmiddle, Jright[::-1]))
-  dJ = np.concatenate((dJleft, dJmiddle, dJright[::-1]))
-
+  try:
+      sigma=np.concatenate((leftgrid, middlegrid, rightgrid[::-1]))
+      J = np.concatenate((Jleft, Jmiddle, Jright[::-1]))
+      dJ = np.concatenate((dJleft, dJmiddle, dJright[::-1]))
+  except:
+      sigma=np.concatenate((leftgrid, rightgrid[::-1]))
+      J = np.concatenate((Jleft, Jright[::-1]))
+      dJ = np.concatenate((dJleft, dJright[::-1]))
   return sigma,J,dJ
 
 
@@ -296,9 +305,11 @@ def sweep(s,p):
 
   Jsoln=np.zeros((p.nmax,nsolnmax,p.nsigma))
   ssoln=np.zeros((p.nmax,nsolnmax))
-  for n in range(1,p.nmax):
+#  for n in range(1,p.nmax):
+  for n in range(2,3):
     print ("n=",n)
-    nsoln=-1
+#    nsoln=-1
+    nsoln=9
     norm=np.zeros(s.size)
     for i in range(s.size):
       sigma,J,dJ=one_s_value(n,s[i],p)
@@ -334,14 +345,14 @@ def main():
   radius=1.e11
   alpha_abs=0.0
   prob_dest=0.0
-  xsource=2.0
+  xsource=0.0
   nmax=6+1
   nsigma=512
   nomega=10
   p = parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax)
   tdiff = (p.radius/fc.clight)*(p.a*p.tau0)**0.333
 
-  s = np.arange(0.02,-15.0,-0.01)
+  s = np.arange(-1.86,-1.89,-0.01)
   sigma,ssoln,Jsoln=sweep(s,p)
 
   output_data = np.array([energy,temp,tau0,radius,alpha_abs,prob_dest,xsource,nmax,nsigma,nomega,tdiff,sigma,ssoln,Jsoln])
