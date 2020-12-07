@@ -249,6 +249,7 @@ def solve(s1,s2,s3,n,p):
   err=1.e20 # initialize error to be something huge
   i=0
   while err>1.e-6:
+#    print(i, err, s1, s2, s3)
     i=i+1
     sigma,J1,dJ1=one_s_value(n,s1,p)
     sigma,J2,dJ2=one_s_value(n,s2,p)
@@ -260,7 +261,6 @@ def solve(s1,s2,s3,n,p):
 
     # s is the imaginary part of frequency omega
     # J of sigma is the spectrum at all frequency points sigma
-
     #print i,err,s1,s2,s3,f1,f2,f3
     sl=0.5*(s1+s2) # s between s1 and s2
     sigma,Jl,dJl=one_s_value(n,sl,p)
@@ -271,7 +271,6 @@ def solve(s1,s2,s3,n,p):
 
 # three sets of three points --- one of those sets will have a maximal response in the center
 # find that maximum response
-
     if fl>f1 and fl>f2:
       s3=s2
       f3=f2
@@ -282,15 +281,17 @@ def solve(s1,s2,s3,n,p):
       f1=fl
       s3=sr
       f3=fr
-    elif fr>f2 and fr>f1:
+    elif fr>f2 and fr>f3:
       s1=s2
       f1=f2
       s2=sr
       f2=fr
-  
-  if i==100:
-    warnings.warn("too many iterations in solve")
-    quit()
+
+    # This is where it was looping indefinitely --- needed to be inside while loop
+    if i==100:
+      warnings.warn("too many iterations in solve")
+      pdb.set_trace()
+      quit()
 
   print()
   # choose middle point to be eigenfrequency
@@ -344,7 +345,7 @@ def main():
   radius=1.e11
   alpha_abs=0.0
   prob_dest=0.0
-  xsource=0.0
+  xsource=2.0
   nmax=6+1
   nsigma=512
   nomega=10
