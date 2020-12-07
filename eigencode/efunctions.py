@@ -225,9 +225,10 @@ def one_s_value(n,s,p):
       leftgrid = leftgrid[:-1]
       
   else:
-      # Source is at 0
-      rightgrid[-1] += offset
-      leftgrid[-1] -= offset
+      # Remove duplicated point at 0
+      Jright = Jright[:-1]
+      dJright = dJright[:-1]
+      rightgrid = rightgrid[:-1]
 
 
   # combine left, middle, and right in one array
@@ -305,11 +306,9 @@ def sweep(s,p):
 
   Jsoln=np.zeros((p.nmax,nsolnmax,p.nsigma))
   ssoln=np.zeros((p.nmax,nsolnmax))
-#  for n in range(1,p.nmax):
-  for n in range(2,3):
+  for n in range(1,p.nmax):
     print ("n=",n)
-#    nsoln=-1
-    nsoln=9
+    nsoln=-1
     norm=np.zeros(s.size)
     for i in range(s.size):
       sigma,J,dJ=one_s_value(n,s[i],p)
@@ -352,7 +351,7 @@ def main():
   p = parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax)
   tdiff = (p.radius/fc.clight)*(p.a*p.tau0)**0.333
 
-  s = np.arange(-1.86,-1.89,-0.01)
+  s = np.arange(0.02,-15.0,-0.01)
   sigma,ssoln,Jsoln=sweep(s,p)
 
   output_data = np.array([energy,temp,tau0,radius,alpha_abs,prob_dest,xsource,nmax,nsigma,nomega,tdiff,sigma,ssoln,Jsoln])
