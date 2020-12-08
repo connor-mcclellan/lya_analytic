@@ -249,7 +249,7 @@ def solve(s1,s2,s3,n,p):
   err=1.e20 # initialize error to be something huge
   i=0
   while err>1.e-6:
-#    print(i, err, s1, s2, s3)
+    print(i, err, s1, s2, s3)
     i=i+1
     sigma,J1,dJ1=one_s_value(n,s1,p)
     sigma,J2,dJ2=one_s_value(n,s2,p)
@@ -286,7 +286,20 @@ def solve(s1,s2,s3,n,p):
       f1=f2
       s2=sr
       f2=fr
-
+    elif f3 == max([f1, fl, f2, fr, f3]):
+      spacing=s3-s2
+      s1=s2
+      s2=s3
+      s3=s3+spacing
+      f1=f2
+      f2=f3
+    elif f1 == max([f1, fl, f2, fr, f3]):
+      spacing=s2-s1
+      s3=s2
+      s2=s1
+      s1=s1-spacing
+      f3=f2
+      f2=f1
     # This is where it was looping indefinitely --- needed to be inside while loop
     if i==100:
       warnings.warn("too many iterations in solve")
