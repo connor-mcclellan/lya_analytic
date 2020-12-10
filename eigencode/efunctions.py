@@ -286,6 +286,7 @@ def solve(s1,s2,s3,n,p):
       f1=f2
       s2=sr
       f2=fr
+    # exit and say something has gone bad
     elif f3 == max([f1, fl, f2, fr, f3]):
       spacing=s3-s2
       s1=s2
