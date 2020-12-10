@@ -248,6 +248,7 @@ def solve(s1,s2,s3,n,p):
   # three frequencies s1, s2, s3
   err=1.e20 # initialize error to be something huge
   i=0
+  refine_pts = []
   while err>1.e-6:
     print(i, err, s1, s2, s3)
     i=i+1
@@ -268,10 +269,10 @@ def solve(s1,s2,s3,n,p):
     sr=0.5*(s2+s3) # s between s2 and s3
     sigma,Jr,dJr=one_s_value(n,sr,p)
     fr = np.sum(np.abs(Jr))
-
+    refine_pts.append((s2, f2))
 # three sets of three points --- one of those sets will have a maximal response in the center
 # find that maximum response
-    if fl>f1 and fl>f2:
+    if fl>f1 and fl>f2 and fl>fr:
       s3=s2
       f3=f2
       s2=sl
@@ -281,27 +282,17 @@ def solve(s1,s2,s3,n,p):
       f1=fl
       s3=sr
       f3=fr
-    elif fr>f2 and fr>f3:
+    elif fr>f2 and fr>f3 and fr>fl:
       s1=s2
       f1=f2
       s2=sr
       f2=fr
     # exit and say something has gone bad
-    elif f3 == max([f1, fl, f2, fr, f3]):
-      spacing=s3-s2
-      s1=s2
-      s2=s3
-      s3=s3+spacing
-      f1=f2
-      f2=f3
-    elif f1 == max([f1, fl, f2, fr, f3]):
-      spacing=s2-s1
-      s3=s2
-      s2=s1
-      s1=s1-spacing
-      f3=f2
-      f2=f1
-    # This is where it was looping indefinitely --- needed to be inside while loop
+    elif f3 == max([f1, fl, f2, fr, f3]) or f1 == max([f1, fl, f2, fr, f3]):
+      warnings.warn("peak is outside of refinement window")
+      pdb.set_trace()
+      quit()
+
     if i==100:
       warnings.warn("too many iterations in solve")
       pdb.set_trace()
