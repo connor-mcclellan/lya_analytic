@@ -253,6 +253,7 @@ def solve(s1,s2,s3,n,p):
   refine_log = []
   while err>1.e-6:
     print(i, err, s1, s2, s3)
+    print('before: s1={} s2={} s3={}'.format(s1, s2, s3))
     i=i+1
     sigma,J1,dJ1=one_s_value(n,s1,p)
     sigma,J2,dJ2=one_s_value(n,s2,p)
@@ -273,30 +274,33 @@ def solve(s1,s2,s3,n,p):
     fr = np.sum(np.abs(Jr))
     refine_pts.append([s1, sl, s2, sr, s3])
     refine_res.append([f1, fl, f2, fr, f3])
-    refine_log.append([i, err])
+    refine_log.append([i-1, err])
+
 # three sets of three points --- one of those sets will have a maximal response in the center
 # find that maximum response
-    if fl>f1 and fl>f2 and fl>fr:
+    iflag = -1
+    if fl>f1 and fl>f2:
       s3=s2
-      f3=f2
       s2=sl
-      f2=fl
+      iflag = 0
     elif f2>fl and f2>fr:
       s1=sl
-      f1=fl
       s3=sr
-      f3=fr
-    elif fr>f2 and fr>f3 and fr>fl:
+      iflag = 1
+    elif fr>f2 and fr>f3:
       s1=s2
-      f1=f2
       s2=sr
-      f2=fr
+      iflag = 2
     # exit and say something has gone bad
     elif f3 == max([f1, fl, f2, fr, f3]) or f1 == max([f1, fl, f2, fr, f3]):
       warnings.warn("peak is outside of refinement window")
       plot_refinement(refine_pts, refine_res, refine_log)
       pdb.set_trace()
       quit()
+
+    print('after: f1={:.2E} fl={:.2E} f2={:.2E} fr={:.2E} f3={:.2E}'.format(f1, fl, f2, fr, f3))
+    print('after: s1={} s2={} s3={}'.format(s1, s2, s3))
+    print('iflag={}'.format(iflag))
 
     if i==100:
       warnings.warn("too many iterations in solve")
@@ -313,14 +317,14 @@ def solve(s1,s2,s3,n,p):
 
 
 def plot_refinement(refine_pts, refine_res, refine_log):
-    for j, pt_o in enumerate(refine_pts):
-      for i, pt in enumerate(refine_pts):
+    for j in range(len(refine_pts)):
+      for i in range(len(refine_pts)):
           if j != i:
-              plt.plot(pt, refine_res[i], marker='|', label="i={}  err={:.1E}".format(*refine_log[i]), alpha=0.1)
-      plt.plot(pt_o, refine_res[j], marker='|', label="j={}  err={:.1E}".format(*refine_log[j]), alpha=1)
+              plt.plot(refine_pts[i], refine_res[i], marker='|', label="i={}  err={:.1E}".format(*refine_log[i]), alpha=0.1)
+      plt.plot(refine_pts[j], refine_res[j], marker='|', label="j={}  err={:.1E}".format(*refine_log[j]), alpha=1)
       plt.legend(prop={'size': 6})
-      plt.ylim((min(np.ndarray.flatten(np.array(refine_res))), max(np.ndarray.flatten(np.array(refine_res)))))
-      plt.xlim((min(pt_o)-0.1*(max(pt_o)-min(pt_o)), max(pt_o)+0.1*(max(pt_o)-min(pt_o))))
+      plt.ylim((min(np.ndarray.flatten(np.array(refine_res))), 10*max(np.ndarray.flatten(np.array(refine_res)))))
+      plt.xlim((min(refine_pts[j])-0.1*(max(refine_pts[j])-min(refine_pts[j])), max(refine_pts[j])+0.1*(max(refine_pts[j])-min(refine_pts[j]))))
       plt.yscale('log')
       plt.show()
 
