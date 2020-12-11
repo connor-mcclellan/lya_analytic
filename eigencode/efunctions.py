@@ -249,6 +249,8 @@ def solve(s1,s2,s3,n,p):
   err=1.e20 # initialize error to be something huge
   i=0
   refine_pts = []
+  refine_res = []
+  refine_log = []
   while err>1.e-6:
     print(i, err, s1, s2, s3)
     i=i+1
@@ -269,7 +271,9 @@ def solve(s1,s2,s3,n,p):
     sr=0.5*(s2+s3) # s between s2 and s3
     sigma,Jr,dJr=one_s_value(n,sr,p)
     fr = np.sum(np.abs(Jr))
-    refine_pts.append((s2, f2))
+    refine_pts.append([s1, sl, s2, sr, s3])
+    refine_res.append([f1, fl, f2, fr, f3])
+    refine_log.append([i, err])
 # three sets of three points --- one of those sets will have a maximal response in the center
 # find that maximum response
     if fl>f1 and fl>f2 and fl>fr:
@@ -290,6 +294,7 @@ def solve(s1,s2,s3,n,p):
     # exit and say something has gone bad
     elif f3 == max([f1, fl, f2, fr, f3]) or f1 == max([f1, fl, f2, fr, f3]):
       warnings.warn("peak is outside of refinement window")
+      plot_refinement(refine_pts, refine_res, refine_log)
       pdb.set_trace()
       quit()
 
@@ -305,6 +310,21 @@ def solve(s1,s2,s3,n,p):
   Jres = (J3-J1)*(s3-sres)*(s1-sres)/(s1-s3)
   # Slighly better estimate than using just J2 --- derivation in notes
   return sigma,sres,Jres
+
+
+def plot_refinement(refine_pts, refine_res, refine_log):
+    for j, pt_o in enumerate(refine_pts):
+      for i, pt in enumerate(refine_pts):
+          if j != i:
+              plt.plot(pt, refine_res[i], marker='|', label="i={}  err={:.1E}".format(*refine_log[i]), alpha=0.1)
+      plt.plot(pt_o, refine_res[j], marker='|', label="j={}  err={:.1E}".format(*refine_log[j]), alpha=1)
+      plt.legend(prop={'size': 6})
+      plt.ylim((min(np.ndarray.flatten(np.array(refine_res))), max(np.ndarray.flatten(np.array(refine_res)))))
+      plt.xlim((min(pt_o)-0.1*(max(pt_o)-min(pt_o)), max(pt_o)+0.1*(max(pt_o)-min(pt_o))))
+      plt.yscale('log')
+      plt.show()
+
+
 
 def sweep(s,p):
   # loop over n and s=-i\omega. when you find a maximum in the size of the response, call the solve function
