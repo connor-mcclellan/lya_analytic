@@ -263,6 +263,9 @@ def solve(s1,s2,s3,n,p):
     f3 = np.sum(np.abs(J3))
     err=np.abs((s3-s1)/s2) # error is fractional difference between eigenfrequencies
 
+    if i in [13, 14, 15]:
+      pdb.set_trace()
+
     # s is the imaginary part of frequency omega
     # J of sigma is the spectrum at all frequency points sigma
     #print i,err,s1,s2,s3,f1,f2,f3
@@ -299,20 +302,21 @@ def solve(s1,s2,s3,n,p):
     # exit and say something has gone bad
     elif f3 == max([f1, fl, f2, fr, f3]) or f1 == max([f1, fl, f2, fr, f3]):
       warnings.warn("peak is outside of refinement window")
-      plot_refinement(refine_pts, refine_res, refine_log, notes=annotation[iflag])
+#      plot_refinement(refine_pts, refine_res, refine_log, notes=annotation[iflag])
       pdb.set_trace()
       quit()
 
     print('after: f1={:.2E} fl={:.2E} f2={:.2E} fr={:.2E} f3={:.2E}'.format(f1, fl, f2, fr, f3))
     print('after: s1={} s2={} s3={}'.format(s1, s2, s3))
     print('iflag={}'.format(iflag))
-    plot_refinement(refine_pts, refine_res, refine_log, notes=annotation[iflag])
+#    plot_refinement(refine_pts, refine_res, refine_log, notes=annotation[iflag])
 
     if i==100:
       warnings.warn("too many iterations in solve")
       pdb.set_trace()
       quit()
 
+  pdb.set_trace()
   print()
   # choose middle point to be eigenfrequency
   sres=s2
