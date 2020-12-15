@@ -275,7 +275,12 @@ def solve(s1,s2,s3,n,p):
     refine_pts.append([s1, sl, s2, sr, s3])
     refine_res.append([f1, fl, f2, fr, f3])
     refine_log.append([i-1, err])
-
+    annotation = [
+        'CASE 0 : fl>f1, fl>f2          Setting s3=s2, s2=sl...',
+        'CASE 1 : f2>fl, f2>fr          Setting s1=sl, s3=sr...',
+        'CASE 2 : fr>f2, fr>f3          Setting s1=s2, s2=sr...',
+        'CASE -1: No condition satisfied'
+    ]
 # three sets of three points --- one of those sets will have a maximal response in the center
 # find that maximum response
     iflag = -1
@@ -294,13 +299,14 @@ def solve(s1,s2,s3,n,p):
     # exit and say something has gone bad
     elif f3 == max([f1, fl, f2, fr, f3]) or f1 == max([f1, fl, f2, fr, f3]):
       warnings.warn("peak is outside of refinement window")
-      plot_refinement(refine_pts, refine_res, refine_log)
+      plot_refinement(refine_pts, refine_res, refine_log, notes=annotation[iflag])
       pdb.set_trace()
       quit()
 
     print('after: f1={:.2E} fl={:.2E} f2={:.2E} fr={:.2E} f3={:.2E}'.format(f1, fl, f2, fr, f3))
     print('after: s1={} s2={} s3={}'.format(s1, s2, s3))
     print('iflag={}'.format(iflag))
+    plot_refinement(refine_pts, refine_res, refine_log, notes=annotation[iflag])
 
     if i==100:
       warnings.warn("too many iterations in solve")
@@ -316,12 +322,20 @@ def solve(s1,s2,s3,n,p):
   return sigma,sres,Jres
 
 
-def plot_refinement(refine_pts, refine_res, refine_log):
-    for j in range(len(refine_pts)):
+def plot_refinement(refine_pts, refine_res, refine_log, notes=None):
+    #for j in range(len(refine_pts)):
+      j = len(refine_pts)-1
       for i in range(len(refine_pts)):
           if j != i:
-              plt.plot(refine_pts[i], refine_res[i], marker='|', label="i={}  err={:.1E}".format(*refine_log[i]), alpha=0.1)
+              plt.plot(refine_pts[i], refine_res[i], marker='|', label="i={}  err={:.1E}".format(*refine_log[i]), alpha=0.2)
       plt.plot(refine_pts[j], refine_res[j], marker='|', label="j={}  err={:.1E}".format(*refine_log[j]), alpha=1)
+      for k, txt in enumerate(['s1', 'sl', 's2', 'sr', 's3']):
+          plt.annotate(txt, (refine_pts[j][k], refine_res[j][k]))
+          plt.annotate('{}={}'.format(txt, refine_pts[j][k]), (0.8, 0.5-0.05*k), xycoords='axes fraction')
+
+      if notes is not None:
+          plt.annotate(notes, (0.05, 1.05), xycoords='axes fraction')
+
       plt.legend(prop={'size': 6})
       plt.ylim((min(np.ndarray.flatten(np.array(refine_res))), 10*max(np.ndarray.flatten(np.array(refine_res)))))
       plt.xlim((min(refine_pts[j])-0.1*(max(refine_pts[j])-min(refine_pts[j])), max(refine_pts[j])+0.1*(max(refine_pts[j])-min(refine_pts[j]))))
