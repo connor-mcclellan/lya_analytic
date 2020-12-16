@@ -150,8 +150,8 @@ def one_s_value(n,s,p, debug=False):
     leftgrid[-1] -= offset
     rightgrid[-1] += offset
 
-  if debug:
-    pdb.set_trace()
+#  if debug:
+#    pdb.set_trace()
 
   # rightward integration
   J=1.0
@@ -329,7 +329,7 @@ def solve(s1,s2,s3,n,p):
     print('after: f1={:.2E} fl={:.2E} f2={:.2E} fr={:.2E} f3={:.2E}'.format(f1, fl, f2, fr, f3))
     print('after: s1={} s2={} s3={}'.format(s1, s2, s3))
     print('iflag={}'.format(iflag))
-#    plot_refinement(refine_pts, refine_res, refine_log, notes=annotation[iflag])
+    plot_refinement(refine_pts, refine_res, refine_log, notes=annotation[iflag])
 
     if i==100:
       warnings.warn("too many iterations in solve")
