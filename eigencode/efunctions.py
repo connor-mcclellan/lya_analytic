@@ -86,13 +86,13 @@ def integrate(sigma, y_start, n, s, p):
   #sol = rk(func, [sigma[0], sigma[-1]], y_start, t_eval=sigma, args=(n, s, p))
   return sol
 
-def one_s_value(n,s,p):
+def one_s_value(n,s,p, debug=False):
   # solve for response given n and s
 
   sigma_left = -80.0*p.tau0
   sigma_right = 80.0*p.tau0
 
-  # check if sigma endpoints ok
+  # check if sigma endpoints are ok
   phi=line_profile(sigma_left,p)
   kappan=n*np.pi/p.radius
   wavenum = kappan * p.Delta / p.k
@@ -102,27 +102,56 @@ def one_s_value(n,s,p):
     warnings.warn("term2/term1 at the edge={}".format(term2/term1))
     quit()
 
-  # Determine how many points belong in each integration range
+  # Determine the integration ranges
   delimiters = sorted(np.array([sigma_left, p.sigmas, 0., sigma_right]))
 
-  # One extra sigma because a single duplicated datapoint will be removed later
+  # Build an array that's evenly spaced between leftmost and rightmost sigma
+  # Add one extra sigma because a single duplicated datapoint will be removed later
+  # The -1e-3 is to ensure the last data point, which is equal to sigma_right,
+  # does not end up in a bin all by itself
   naive_array = np.linspace(sigma_left, sigma_right-1e-3, p.nsigma+1)
+
+  # Bin this evenly-spaced array into the integration ranges we found earlier
+  # These are the indices that specify which bin the data points fall into:
   inds = np.digitize(naive_array, delimiters)
 
+  # Count how many points have fallen into each integration range
   nleft, nmiddle, nright = [len(inds[inds==i]) for i in range(1, 4)]
+
+  # For a nonzero source, make sure that the middle grid has enough points
   if nmiddle < 3 and p.sigmas != 0.:
       warnings.warn('Middle grid is critically undersampled. Replacing with minimum of 3 points.')
-      nmiddle = 3
-      nright -= 2  # Make room for the new points
-      nleft -= 1
+      nmiddle += 3
+      nright -= 1  # Make room for the new points
+      nleft -= 2
 
-  # Create grids
+  ### Create grids
+  # Leftgrid goes from sigma_left to whichever is smaller: source, or 0
+  # Its values will be ordered from small to large --- increasingly
   leftgrid = np.linspace(sigma_left, min(p.sigmas, 0), nleft)
+  # Middle grid goes from 0 to source
+  # Its values are either ordered increasingly or decreasingly, depending  
+  # on whether source>0 or source<0, respectively
   middlegrid = np.linspace(0, p.sigmas, nmiddle)
+  # Right grid goes from sigma_right to whichever is larger: source, or 0
+  # Its values are always ordered decreasingly
   rightgrid = np.linspace(sigma_right, max(0, p.sigmas), nright)
 
-  kappan=n*np.pi/p.radius
-  wavenum = kappan*p.Delta/p.k # used for initial conditions
+  # Set an offset applied about source
+  # This helps resolve the dJ discontinuity better
+  offset = 1e-3
+  if p.sigmas < 0.:
+    middlegrid[-1] += offset
+    leftgrid[-1] -= offset
+  elif p.sigmas > 0.:
+    middlegrid[-1] -= offset
+    rightgrid[-1] += offset
+  else:
+    leftgrid[-1] -= offset
+    rightgrid[-1] += offset
+
+  if debug:
+    pdb.set_trace()
 
   # rightward integration
   J=1.0
@@ -131,7 +160,7 @@ def one_s_value(n,s,p):
   sol = integrate(leftgrid,y_start,n,s,p)
   Jleft=sol[:,0]
   dJleft=sol[:,1]
-  A=Jleft[-1]
+  A=Jleft[-1]    # Set matrix coefficient equal to Jleft's rightmost value
   B=dJleft[-1]
 
   # leftward integration
@@ -141,11 +170,12 @@ def one_s_value(n,s,p):
   sol = integrate(rightgrid,y_start,n,s,p)
   Jright=sol[:,0]
   dJright=sol[:,1]
-  C=Jright[-1]
+  C=Jright[-1]   # Set matrix coefficient equal to Jright's leftmost value
   D=dJright[-1]
 
   # middle integration
   # If source > 0, integrate rightward from 0 to source, matching at 0
+  # Middlegrid is ordered increasingly, starting at 0 and going to source
   if p.sigmas > 0.:
 
       # Match initial conditions at 0 (leftward integration)
@@ -158,11 +188,12 @@ def one_s_value(n,s,p):
       Jmiddle=sol[:, 0]
       dJmiddle=sol[:, 1]
 
-      # Set coefficients of matrix equation at 0
-      A = Jmiddle[-1]
+      # Set coefficients of matrix equation at the source
+      A = Jmiddle[-1]    # Overwrite previous matrix coefficients
       B = dJmiddle[-1]
 
   # If source < 0, integrate leftward from 0 to source, matching at 0
+  # Middlegrid is ordered decreasingly, starting at zero and going to source
   elif p.sigmas < 0.:
 
       # Match initial conditions at 0 (rightward integration)
@@ -175,8 +206,8 @@ def one_s_value(n,s,p):
       Jmiddle=sol[:, 0]
       dJmiddle=sol[:, 1]
 
-      # Set coefficients of matrix equation at 0
-      C = Jmiddle[-1]
+      # Set coefficients of matrix equation at the source
+      C = Jmiddle[-1]   # Overwrite previous matrix coefficients
       D = dJmiddle[-1]
 
   # If source = 0, do nothing
@@ -194,20 +225,11 @@ def one_s_value(n,s,p):
   Jmiddle = Jmiddle * scale_left if p.sigmas > 0. else Jmiddle * scale_right
   dJmiddle = dJmiddle * scale_left if p.sigmas > 0. else Jmiddle * scale_right
 
-  # offset to sigma source points
-  offset = 1e-3
-
-
   if p.sigmas < 0.:
-
-      # reorder middle grid for consistency
+      # reorder middle grid to be increasing, starting from source & going to 0
       middlegrid = middlegrid[::-1]
       Jmiddle = Jmiddle[::-1]
       dJmiddle = dJmiddle[::-1]
-
-      # Offset must be applied to the last point of Jleft and first of Jmiddle
-      middlegrid[0] += offset
-      leftgrid[-1] -= offset
 
       # Remove duplicated point at 0
       Jright = Jright[:-1]
@@ -215,10 +237,6 @@ def one_s_value(n,s,p):
       rightgrid = rightgrid[:-1]
 
   elif p.sigmas > 0.:
-      # Offset must be applied to last point of Jmiddle and last of Jright
-      middlegrid[-1] -= offset
-      rightgrid[-1] += offset
-
       # Remove duplicated point at 0
       Jleft = Jleft[:-1]
       dJleft = dJleft[:-1]
@@ -251,20 +269,22 @@ def solve(s1,s2,s3,n,p):
   refine_pts = []
   refine_res = []
   refine_log = []
+
+  debug = False
+
   while err>1.e-6:
     print(i, err, s1, s2, s3)
     print('before: s1={} s2={} s3={}'.format(s1, s2, s3))
-    i=i+1
+    if i in [13, 14, 15]:
+      debug = True
+
     sigma,J1,dJ1=one_s_value(n,s1,p)
     sigma,J2,dJ2=one_s_value(n,s2,p)
-    sigma,J3,dJ3=one_s_value(n,s3,p)
+    sigma,J3,dJ3=one_s_value(n,s3,p, debug=debug)
     f1 = np.sum(np.abs(J1)) # sum of absolute values of ENTIRE spectrum
     f2 = np.sum(np.abs(J2)) # this is the size of the response!
     f3 = np.sum(np.abs(J3))
     err=np.abs((s3-s1)/s2) # error is fractional difference between eigenfrequencies
-
-    if i in [13, 14, 15]:
-      pdb.set_trace()
 
     # s is the imaginary part of frequency omega
     # J of sigma is the spectrum at all frequency points sigma
@@ -277,7 +297,7 @@ def solve(s1,s2,s3,n,p):
     fr = np.sum(np.abs(Jr))
     refine_pts.append([s1, sl, s2, sr, s3])
     refine_res.append([f1, fl, f2, fr, f3])
-    refine_log.append([i-1, err])
+    refine_log.append([i, err])
     annotation = [
         'CASE 0 : fl>f1, fl>f2          Setting s3=s2, s2=sl...',
         'CASE 1 : f2>fl, f2>fr          Setting s1=sl, s3=sr...',
@@ -315,6 +335,8 @@ def solve(s1,s2,s3,n,p):
       warnings.warn("too many iterations in solve")
       pdb.set_trace()
       quit()
+
+    i=i+1
 
   pdb.set_trace()
   print()
