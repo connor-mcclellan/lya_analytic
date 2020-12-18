@@ -273,14 +273,19 @@ def solve(s1,s2,s3,n,p):
   debug = False
 
   while err>1.e-6:
-    print(i, err, s1, s2, s3)
-    print('before: s1={} s2={} s3={}'.format(s1, s2, s3))
-    if i in [13, 14, 15]:
-      debug = True
+
+
+    #####
+    print(i, err)
+    print('s1={} s2={} s3={}'.format(s1, s2, s3))
+#    if i in [13, 14, 15]:
+#      debug = True
+    #####
+
 
     sigma,J1,dJ1=one_s_value(n,s1,p)
     sigma,J2,dJ2=one_s_value(n,s2,p)
-    sigma,J3,dJ3=one_s_value(n,s3,p, debug=debug)
+    sigma,J3,dJ3=one_s_value(n,s3,p)
     f1 = np.sum(np.abs(J1)) # sum of absolute values of ENTIRE spectrum
     f2 = np.sum(np.abs(J2)) # this is the size of the response!
     f3 = np.sum(np.abs(J3))
@@ -295,15 +300,19 @@ def solve(s1,s2,s3,n,p):
     sr=0.5*(s2+s3) # s between s2 and s3
     sigma,Jr,dJr=one_s_value(n,sr,p)
     fr = np.sum(np.abs(Jr))
-    refine_pts.append([s1, sl, s2, sr, s3])
-    refine_res.append([f1, fl, f2, fr, f3])
-    refine_log.append([i, err])
-    annotation = [
-        'CASE 0 : fl>f1, fl>f2          Setting s3=s2, s2=sl...',
-        'CASE 1 : f2>fl, f2>fr          Setting s1=sl, s3=sr...',
-        'CASE 2 : fr>f2, fr>f3          Setting s1=s2, s2=sr...',
-        'CASE -1: No condition satisfied'
-    ]
+
+    #####
+#    refine_pts.append([s1, sl, s2, sr, s3])
+#    refine_res.append([f1, fl, f2, fr, f3])
+#    refine_log.append([i, err])
+#    annotation = [
+#        'CASE 0 : fl>f1, fl>f2          Setting s3=s2, s2=sl...',
+#        'CASE 1 : f2>fl, f2>fr          Setting s1=sl, s3=sr...',
+#        'CASE 2 : fr>f2, fr>f3          Setting s1=s2, s2=sr...',
+#        'CASE -1: No condition satisfied'
+#    ]
+    #####
+
 # three sets of three points --- one of those sets will have a maximal response in the center
 # find that maximum response
     iflag = -1
@@ -319,17 +328,14 @@ def solve(s1,s2,s3,n,p):
       s1=s2
       s2=sr
       iflag = 2
+
     # exit and say something has gone bad
     elif f3 == max([f1, fl, f2, fr, f3]) or f1 == max([f1, fl, f2, fr, f3]):
       warnings.warn("peak is outside of refinement window")
-#      plot_refinement(refine_pts, refine_res, refine_log, notes=annotation[iflag])
-      pdb.set_trace()
+      print('Fractional error between f2 and f3: {}'.format(np.abs(f3-f2)/f2))
       quit()
 
-    print('after: f1={:.2E} fl={:.2E} f2={:.2E} fr={:.2E} f3={:.2E}'.format(f1, fl, f2, fr, f3))
-    print('after: s1={} s2={} s3={}'.format(s1, s2, s3))
     print('iflag={}'.format(iflag))
-    plot_refinement(refine_pts, refine_res, refine_log, notes=annotation[iflag])
 
     if i==100:
       warnings.warn("too many iterations in solve")
@@ -338,8 +344,8 @@ def solve(s1,s2,s3,n,p):
 
     i=i+1
 
-  pdb.set_trace()
-  print()
+#  plot_refinement(refine_pts, refine_res, refine_log, notes=annotation[iflag])
+
   # choose middle point to be eigenfrequency
   sres=s2
   # Response looks very close to the eigenvector when frequency is close to the eigenfrequency
@@ -364,7 +370,7 @@ def plot_refinement(refine_pts, refine_res, refine_log, notes=None):
 
       plt.legend(prop={'size': 6})
       plt.ylim((min(np.ndarray.flatten(np.array(refine_res))), 10*max(np.ndarray.flatten(np.array(refine_res)))))
-      plt.xlim((min(refine_pts[j])-0.1*(max(refine_pts[j])-min(refine_pts[j])), max(refine_pts[j])+0.1*(max(refine_pts[j])-min(refine_pts[j]))))
+#      plt.xlim((min(refine_pts[j])-0.1*(max(refine_pts[j])-min(refine_pts[j])), max(refine_pts[j])+0.1*(max(refine_pts[j])-min(refine_pts[j]))))
       plt.yscale('log')
       plt.show()
 
