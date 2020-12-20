@@ -290,7 +290,7 @@ def solve(s1,s2,s3,n,p):
     f2 = np.sum(np.abs(J2)) # this is the size of the response!
     f3 = np.sum(np.abs(J3))
     err=np.abs((s3-s1)/s2) # error is fractional difference between eigenfrequencies
-
+    print('Fractional error between f2 and f3: {}'.format(np.abs(f3-f2)/f2))
     # s is the imaginary part of frequency omega
     # J of sigma is the spectrum at all frequency points sigma
     #print i,err,s1,s2,s3,f1,f2,f3
@@ -420,7 +420,7 @@ def main():
   radius=1.e11
   alpha_abs=0.0
   prob_dest=0.0
-  xsource=2.0
+  xsource=0.1
   nmax=6+1
   nsigma=512
   nomega=10
