@@ -302,15 +302,15 @@ def solve(s1,s2,s3,n,p):
     fr = np.sum(np.abs(Jr))
 
     #####
-#    refine_pts.append([s1, sl, s2, sr, s3])
-#    refine_res.append([f1, fl, f2, fr, f3])
-#    refine_log.append([i, err])
-#    annotation = [
-#        'CASE 0 : fl>f1, fl>f2          Setting s3=s2, s2=sl...',
-#        'CASE 1 : f2>fl, f2>fr          Setting s1=sl, s3=sr...',
-#        'CASE 2 : fr>f2, fr>f3          Setting s1=s2, s2=sr...',
-#        'CASE -1: No condition satisfied'
-#    ]
+    refine_pts.append([s1, sl, s2, sr, s3])
+    refine_res.append([f1, fl, f2, fr, f3])
+    refine_log.append([i, err])
+    annotation = [
+        'CASE 0 : fl>f1, fl>f2          Setting s3=s2, s2=sl...',
+        'CASE 1 : f2>fl, f2>fr          Setting s1=sl, s3=sr...',
+        'CASE 2 : fr>f2, fr>f3          Setting s1=s2, s2=sr...',
+        'CASE -1: No condition satisfied'
+    ]
     #####
 
 # three sets of three points --- one of those sets will have a maximal response in the center
@@ -331,6 +331,7 @@ def solve(s1,s2,s3,n,p):
 
     # exit and say something has gone bad
     elif f3 == max([f1, fl, f2, fr, f3]) or f1 == max([f1, fl, f2, fr, f3]):
+      plot_refinement(refine_pts, refine_res, refine_log, notes=annotation[iflag])
       warnings.warn("peak is outside of refinement window")
       print('Fractional error between f2 and f3: {}'.format(np.abs(f3-f2)/f2))
       quit()
@@ -344,7 +345,7 @@ def solve(s1,s2,s3,n,p):
 
     i=i+1
 
-#  plot_refinement(refine_pts, refine_res, refine_log, notes=annotation[iflag])
+  plot_refinement(refine_pts, refine_res, refine_log, notes=annotation[iflag])
 
   # choose middle point to be eigenfrequency
   sres=s2
@@ -420,7 +421,7 @@ def main():
   radius=1.e11
   alpha_abs=0.0
   prob_dest=0.0
-  xsource=0.1
+  xsource=2.0
   nmax=6+1
   nsigma=512
   nomega=10
