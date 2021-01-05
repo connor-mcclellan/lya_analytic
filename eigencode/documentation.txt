@@ -1,0 +1,54 @@
+(Pdb)     sigma,J1,dJ1=one_s_value(n,s1,p,debug=debug)
+s=-0.0350927734375
+Abs sums:    L         M         R      
+             1.182E-30 1.875E-30 1.805E-30
+Total: 4.862004620890772e-30
+
+(Pdb)     sigma,J2,dJ2=one_s_value(n,s2,p,debug=debug)
+s=-0.035093994140625
+Abs sums:    L         M         R      
+             2.433E-30 3.860E-30 3.715E-30
+Total: 1.0007396757382064e-29
+
+(Pdb)     sigma,J3,dJ3=one_s_value(n,s3,p,debug=debug)
+s=-0.03509521484375
+Abs sums:    L         M         R      
+             4.399E-30 6.979E-30 6.717E-30
+Total: 1.8094634244356119e-29
+
+(Pdb) [f1, fl, f2, fr, f3]
+[4.862004620890772e-30, 6.5444507466043e-30, 1.0007396757382064e-29, 2.1253456197881538e-29, 1.8094634244356119e-29]
+
+(Pdb) print(s1, sl, s2, sr, s3)
+-0.0350927734375 -0.0350933837890625 -0.035093994140625 -0.0350946044921875 -0.03509521484375
+
+(Pdb) s1_test=s2
+
+(Pdb) s2_test=sr
+
+(Pdb) s3_test=s3
+
+(Pdb) print(s1_test, s2_test, s3_test)
+-0.035093994140625 -0.0350946044921875 -0.03509521484375
+
+(Pdb) print(f2, fr, f3)
+1.0007396757382064e-29 2.1253456197881538e-29 1.8094634244356119e-29
+
+(Pdb)     sigma,J1,dJ1=one_s_value(n,s1_test,p,debug=debug)
+s=-0.035093994140625
+Abs sums:    L         M         R      
+             2.433E-30 3.860E-30 3.715E-30
+Total: 1.0007396757382064e-29
+
+(Pdb)     sigma,J2,dJ2=one_s_value(n,s2_test,p,debug=debug)
+s=-0.0350946044921875
+Abs sums:    L         M         R      
+             5.168E-30 8.197E-30 7.889E-30
+Total: 2.1253456197881538e-29
+
+(Pdb)     sigma,J3,dJ3=one_s_value(n,s3_test,p,debug=debug)
+s=-0.03509521484375
+Abs sums:    L         M         R      
+             9.836E-30 1.560E-29 1.502E-29
+Total: 4.0453180390639686e-29
+

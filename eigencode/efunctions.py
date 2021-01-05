@@ -248,6 +248,10 @@ def one_s_value(n,s,p, debug=False):
       dJright = dJright[:-1]
       rightgrid = rightgrid[:-1]
 
+  if debug:
+      print("\ns={}".format(s))
+      print("Abs sums:    L         M         R      ")
+      print("             {:.3E} {:.3E} {:.3E}".format(*[np.sum(np.abs(Jdomain)) for Jdomain in [Jleft, Jmiddle, Jright]]))
 
   # combine left, middle, and right in one array
   try:
@@ -258,6 +262,8 @@ def one_s_value(n,s,p, debug=False):
       sigma=np.concatenate((leftgrid, rightgrid[::-1]))
       J = np.concatenate((Jleft, Jright[::-1]))
       dJ = np.concatenate((dJleft, dJright[::-1]))
+  if debug:
+      print('Total:', np.sum(np.abs(J)))
   return sigma,J,dJ
 
 
@@ -278,19 +284,20 @@ def solve(s1,s2,s3,n,p):
     #####
     print(i, err)
     print('s1={} s2={} s3={}'.format(s1, s2, s3))
-#    if i in [13, 14, 15]:
-#      debug = True
+    if i in [13, 14, 15]:
+      debug = True
     #####
 
-
-    sigma,J1,dJ1=one_s_value(n,s1,p)
-    sigma,J2,dJ2=one_s_value(n,s2,p)
-    sigma,J3,dJ3=one_s_value(n,s3,p)
+    if debug:
+        pdb.set_trace()
+    sigma,J1,dJ1=one_s_value(n,s1,p,debug=debug)
+    sigma,J2,dJ2=one_s_value(n,s2,p,debug=debug)
+    sigma,J3,dJ3=one_s_value(n,s3,p,debug=debug)
     f1 = np.sum(np.abs(J1)) # sum of absolute values of ENTIRE spectrum
     f2 = np.sum(np.abs(J2)) # this is the size of the response!
     f3 = np.sum(np.abs(J3))
     err=np.abs((s3-s1)/s2) # error is fractional difference between eigenfrequencies
-    print('Fractional error between f2 and f3: {}'.format(np.abs(f3-f2)/f2))
+#    print('Fractional error between f2 and f3: {}'.format(np.abs(f3-f2)/f2))
     # s is the imaginary part of frequency omega
     # J of sigma is the spectrum at all frequency points sigma
     #print i,err,s1,s2,s3,f1,f2,f3
@@ -336,7 +343,9 @@ def solve(s1,s2,s3,n,p):
       print('Fractional error between f2 and f3: {}'.format(np.abs(f3-f2)/f2))
       quit()
 
-    print('iflag={}'.format(iflag))
+    if debug:
+      pdb.set_trace()
+#    print('iflag={}'.format(iflag))
 
     if i==100:
       warnings.warn("too many iterations in solve")
