@@ -86,7 +86,7 @@ def integrate(sigma, y_start, n, s, p):
   #sol = rk(func, [sigma[0], sigma[-1]], y_start, t_eval=sigma, args=(n, s, p))
   return sol
 
-def one_s_value(n,s,p, debug=False):
+def one_s_value(n,s,p, debug=False, trace=False):
   # solve for response given n and s
 
   sigma_left = -80.0*p.tau0
@@ -139,7 +139,7 @@ def one_s_value(n,s,p, debug=False):
 
   # Set an offset applied about source
   # This helps resolve the dJ discontinuity better
-  offset = 1e-3
+  offset = 1e3
   if p.sigmas < 0.:
     middlegrid[-1] += offset
     leftgrid[-1] -= offset
@@ -184,13 +184,18 @@ def one_s_value(n,s,p, debug=False):
       y_start = np.array((J, dJ))
 
       # Find solution in middle region
+      # THIS IS WHERE THE BUG IS! "sol" is not identical for subsequent solves.
+      # 
       sol = integrate(middlegrid, y_start, n, s, p)
       Jmiddle=sol[:, 0]
-      dJmiddle=sol[:, 1]
+      dJmiddle=sol[:, 1] # DJMIDDLE IS SIGNIFICANTLY DIFFERENT IN SUBSEQUENT CALLS
 
       # Set coefficients of matrix equation at the source
       A = Jmiddle[-1]    # Overwrite previous matrix coefficients
-      B = dJmiddle[-1]
+      B = dJmiddle[-1] # B IS SLIGHTLY DIFFERENT IN SUBSEQUENT CALLS
+
+#      if trace:
+#        pdb.set_trace()
 
   # If source < 0, integrate leftward from 0 to source, matching at 0
   # Middlegrid is ordered decreasingly, starting at zero and going to source
@@ -284,15 +289,18 @@ def solve(s1,s2,s3,n,p):
     #####
     print(i, err)
     print('s1={} s2={} s3={}'.format(s1, s2, s3))
-    if i in [13, 14, 15]:
+    if i in [14, 15]:
       debug = True
     #####
 
-    if debug:
-        pdb.set_trace()
+    ###
     sigma,J1,dJ1=one_s_value(n,s1,p,debug=debug)
+    sigma,J3,dJ3=one_s_value(n,s3,p,debug=debug, trace=debug)
+
+    ###    
     sigma,J2,dJ2=one_s_value(n,s2,p,debug=debug)
-    sigma,J3,dJ3=one_s_value(n,s3,p,debug=debug)
+    sigma,J3,dJ3=one_s_value(n,s3,p,debug=debug, trace=debug)
+
     f1 = np.sum(np.abs(J1)) # sum of absolute values of ENTIRE spectrum
     f2 = np.sum(np.abs(J2)) # this is the size of the response!
     f3 = np.sum(np.abs(J3))
@@ -343,8 +351,8 @@ def solve(s1,s2,s3,n,p):
       print('Fractional error between f2 and f3: {}'.format(np.abs(f3-f2)/f2))
       quit()
 
-    if debug:
-      pdb.set_trace()
+#    if debug:
+#      pdb.set_trace()
 #    print('iflag={}'.format(iflag))
 
     if i==100:
