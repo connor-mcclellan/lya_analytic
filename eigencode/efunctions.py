@@ -42,10 +42,6 @@ class parameters:
 def line_profile(sigma,p):					# units of Hz^{-1}
   x=(np.abs(sigma)/p.c1)**(1.0/3.0)
   #line_profile = ( np.exp(-x**2)/np.sqrt(np.pi) + p.a/np.pi/(0.01+x**2) ) / p.Delta		# doppler and natural
-
-  # TODO: What is going on with this line profile? 
-  #line_profile = p.a/np.pi/x**2/p.Delta								# just natural. don't use sigma=0!
-
   line_profile = p.a / np.pi / (0.01 + x**2) / p.Delta
   return line_profile
 
@@ -87,7 +83,7 @@ def integrate(sigma, y_start, n, s, p):
   return sol
 
 def one_s_value(n,s,p, debug=False, trace=False):
-  # solve for response given n and s
+  '''Solve for response given n and s'''
 
   sigma_left = -80.0*p.tau0
   sigma_right = 80.0*p.tau0
@@ -138,7 +134,8 @@ def one_s_value(n,s,p, debug=False, trace=False):
   rightgrid = np.linspace(sigma_right, max(0, p.sigmas), nright)
 
   # Set an offset applied about source
-  # This helps resolve the dJ discontinuity better
+  # This helps resolve the dJ discontinuity better. If it is not large enough,
+  # the integrator will not be deterministic near the source
   offset = 1e3
   if p.sigmas < 0.:
     middlegrid[-1] += offset
@@ -149,9 +146,6 @@ def one_s_value(n,s,p, debug=False, trace=False):
   else:
     leftgrid[-1] -= offset
     rightgrid[-1] += offset
-
-#  if debug:
-#    pdb.set_trace()
 
   # rightward integration
   J=1.0
@@ -184,18 +178,13 @@ def one_s_value(n,s,p, debug=False, trace=False):
       y_start = np.array((J, dJ))
 
       # Find solution in middle region
-      # THIS IS WHERE THE BUG IS! "sol" is not identical for subsequent solves.
-      # 
       sol = integrate(middlegrid, y_start, n, s, p)
       Jmiddle=sol[:, 0]
-      dJmiddle=sol[:, 1] # DJMIDDLE IS SIGNIFICANTLY DIFFERENT IN SUBSEQUENT CALLS
+      dJmiddle=sol[:, 1]
 
       # Set coefficients of matrix equation at the source
       A = Jmiddle[-1]    # Overwrite previous matrix coefficients
-      B = dJmiddle[-1] # B IS SLIGHTLY DIFFERENT IN SUBSEQUENT CALLS
-
-#      if trace:
-#        pdb.set_trace()
+      B = dJmiddle[-1]
 
   # If source < 0, integrate leftward from 0 to source, matching at 0
   # Middlegrid is ordered decreasingly, starting at zero and going to source
@@ -253,11 +242,6 @@ def one_s_value(n,s,p, debug=False, trace=False):
       dJright = dJright[:-1]
       rightgrid = rightgrid[:-1]
 
-  if debug:
-      print("\ns={}".format(s))
-      print("Abs sums:    L         M         R      ")
-      print("             {:.3E} {:.3E} {:.3E}".format(*[np.sum(np.abs(Jdomain)) for Jdomain in [Jleft, Jmiddle, Jright]]))
-
   # combine left, middle, and right in one array
   try:
       sigma=np.concatenate((leftgrid, middlegrid, rightgrid[::-1]))
@@ -267,8 +251,6 @@ def one_s_value(n,s,p, debug=False, trace=False):
       sigma=np.concatenate((leftgrid, rightgrid[::-1]))
       J = np.concatenate((Jleft, Jright[::-1]))
       dJ = np.concatenate((dJleft, dJright[::-1]))
-  if debug:
-      print('Total:', np.sum(np.abs(J)))
   return sigma,J,dJ
 
 
@@ -277,38 +259,21 @@ def solve(s1,s2,s3,n,p):
   # three frequencies s1, s2, s3
   err=1.e20 # initialize error to be something huge
   i=0
+
   refine_pts = []
   refine_res = []
   refine_log = []
 
-  debug = False
-
   while err>1.e-6:
-
-
-    #####
-    print(i, err)
-    print('s1={} s2={} s3={}'.format(s1, s2, s3))
-    if i in [14, 15]:
-      debug = True
-    #####
-
-    ###
-    sigma,J1,dJ1=one_s_value(n,s1,p,debug=debug)
-    sigma,J3,dJ3=one_s_value(n,s3,p,debug=debug, trace=debug)
-
-    ###    
-    sigma,J2,dJ2=one_s_value(n,s2,p,debug=debug)
-    sigma,J3,dJ3=one_s_value(n,s3,p,debug=debug, trace=debug)
+    sigma,J1,dJ1=one_s_value(n,s1,p)
+    sigma,J2,dJ2=one_s_value(n,s2,p)
+    sigma,J3,dJ3=one_s_value(n,s3,p)
 
     f1 = np.sum(np.abs(J1)) # sum of absolute values of ENTIRE spectrum
     f2 = np.sum(np.abs(J2)) # this is the size of the response!
     f3 = np.sum(np.abs(J3))
     err=np.abs((s3-s1)/s2) # error is fractional difference between eigenfrequencies
-#    print('Fractional error between f2 and f3: {}'.format(np.abs(f3-f2)/f2))
-    # s is the imaginary part of frequency omega
-    # J of sigma is the spectrum at all frequency points sigma
-    #print i,err,s1,s2,s3,f1,f2,f3
+
     sl=0.5*(s1+s2) # s between s1 and s2
     sigma,Jl,dJl=one_s_value(n,sl,p)
     fl = np.sum(np.abs(Jl))
@@ -320,40 +285,19 @@ def solve(s1,s2,s3,n,p):
     refine_pts.append([s1, sl, s2, sr, s3])
     refine_res.append([f1, fl, f2, fr, f3])
     refine_log.append([i, err])
-    annotation = [
-        'CASE 0 : fl>f1, fl>f2          Setting s3=s2, s2=sl...',
-        'CASE 1 : f2>fl, f2>fr          Setting s1=sl, s3=sr...',
-        'CASE 2 : fr>f2, fr>f3          Setting s1=s2, s2=sr...',
-        'CASE -1: No condition satisfied'
-    ]
     #####
 
 # three sets of three points --- one of those sets will have a maximal response in the center
 # find that maximum response
-    iflag = -1
     if fl>f1 and fl>f2:
       s3=s2
       s2=sl
-      iflag = 0
     elif f2>fl and f2>fr:
       s1=sl
       s3=sr
-      iflag = 1
     elif fr>f2 and fr>f3:
       s1=s2
       s2=sr
-      iflag = 2
-
-    # exit and say something has gone bad
-    elif f3 == max([f1, fl, f2, fr, f3]) or f1 == max([f1, fl, f2, fr, f3]):
-      plot_refinement(refine_pts, refine_res, refine_log, notes=annotation[iflag])
-      warnings.warn("peak is outside of refinement window")
-      print('Fractional error between f2 and f3: {}'.format(np.abs(f3-f2)/f2))
-      quit()
-
-#    if debug:
-#      pdb.set_trace()
-#    print('iflag={}'.format(iflag))
 
     if i==100:
       warnings.warn("too many iterations in solve")
@@ -362,7 +306,7 @@ def solve(s1,s2,s3,n,p):
 
     i=i+1
 
-  plot_refinement(refine_pts, refine_res, refine_log, notes=annotation[iflag])
+  plot_refinement(refine_pts, refine_res, refine_log)
 
   # choose middle point to be eigenfrequency
   sres=s2
@@ -372,7 +316,7 @@ def solve(s1,s2,s3,n,p):
   return sigma,sres,Jres
 
 
-def plot_refinement(refine_pts, refine_res, refine_log, notes=None):
+def plot_refinement(refine_pts, refine_res, refine_log):
     #for j in range(len(refine_pts)):
       j = len(refine_pts)-1
       for i in range(len(refine_pts)):
@@ -383,15 +327,10 @@ def plot_refinement(refine_pts, refine_res, refine_log, notes=None):
           plt.annotate(txt, (refine_pts[j][k], refine_res[j][k]))
           plt.annotate('{}={}'.format(txt, refine_pts[j][k]), (0.8, 0.5-0.05*k), xycoords='axes fraction')
 
-      if notes is not None:
-          plt.annotate(notes, (0.05, 1.05), xycoords='axes fraction')
-
       plt.legend(prop={'size': 6})
       plt.ylim((min(np.ndarray.flatten(np.array(refine_res))), 10*max(np.ndarray.flatten(np.array(refine_res)))))
-#      plt.xlim((min(refine_pts[j])-0.1*(max(refine_pts[j])-min(refine_pts[j])), max(refine_pts[j])+0.1*(max(refine_pts[j])-min(refine_pts[j]))))
       plt.yscale('log')
       plt.show()
-
 
 
 def sweep(s,p):
