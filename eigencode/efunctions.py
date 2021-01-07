@@ -85,8 +85,8 @@ def integrate(sigma, y_start, n, s, p):
 def one_s_value(n,s,p, debug=False, trace=False):
   '''Solve for response given n and s'''
 
-  sigma_left = -80.0*p.tau0
-  sigma_right = 80.0*p.tau0
+  sigma_left = -50.0*p.tau0   # Used to be 80
+  sigma_right = 50.0*p.tau0
 
   # check if sigma endpoints are ok
   phi=line_profile(sigma_left,p)
@@ -136,7 +136,7 @@ def one_s_value(n,s,p, debug=False, trace=False):
   # Set an offset applied about source
   # This helps resolve the dJ discontinuity better. If it is not large enough,
   # the integrator will not be deterministic near the source
-  offset = 1e3
+  offset = 7e3
   if p.sigmas < 0.:
     middlegrid[-1] += offset
     leftgrid[-1] -= offset
@@ -166,6 +166,8 @@ def one_s_value(n,s,p, debug=False, trace=False):
   dJright=sol[:,1]
   C=Jright[-1]   # Set matrix coefficient equal to Jright's leftmost value
   D=dJright[-1]
+
+  pdb.set_trace()
 
   # middle integration
   # If source > 0, integrate rightward from 0 to source, matching at 0
@@ -301,12 +303,12 @@ def solve(s1,s2,s3,n,p):
 
     if i==100:
       warnings.warn("too many iterations in solve")
+      plot_refinement(refine_pts, refine_res, refine_log)
       pdb.set_trace()
-      quit()
 
     i=i+1
 
-  plot_refinement(refine_pts, refine_res, refine_log)
+
 
   # choose middle point to be eigenfrequency
   sres=s2
@@ -339,9 +341,11 @@ def sweep(s,p):
 
   Jsoln=np.zeros((p.nmax,nsolnmax,p.nsigma))
   ssoln=np.zeros((p.nmax,nsolnmax))
-  for n in range(1,p.nmax):
+#  for n in range(1,p.nmax):
+  for n in range(6,p.nmax):
     print ("n=",n)
     nsoln=-1
+#    nsoln=7
     norm=np.zeros(s.size)
     for i in range(s.size):
       sigma,J,dJ=one_s_value(n,s[i],p)
@@ -377,18 +381,19 @@ def main():
   radius=1.e11
   alpha_abs=0.0
   prob_dest=0.0
-  xsource=2.0
+  xsource=0.0
   nmax=6+1
   nsigma=512
   nomega=10
   p = parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax)
   tdiff = (p.radius/fc.clight)*(p.a*p.tau0)**0.333
 
+#  s = np.arange(-13.2,-13.4,-0.01)
   s = np.arange(0.02,-15.0,-0.01)
   sigma,ssoln,Jsoln=sweep(s,p)
 
   output_data = np.array([energy,temp,tau0,radius,alpha_abs,prob_dest,xsource,nmax,nsigma,nomega,tdiff,sigma,ssoln,Jsoln])
-  np.save('./eigenmode_data.npy',output_data,allow_pickle=True, fix_imports=True)
+  np.save('./eigenmode_data_xinit0.0_tau1e5.npy',output_data,allow_pickle=True, fix_imports=True)
   
 
 if __name__ == "__main__":
