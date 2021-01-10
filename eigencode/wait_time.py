@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from scipy.integrate import odeint
 from constants import fundconst,lymanalpha
 from efunctions import parameters
+import pdb
 
 # max number of solutions at each n
 nsolnmax=20                                          # maximum number of solutions for each n.
@@ -21,6 +22,7 @@ def get_Pnm(ssoln,sigma,Jsoln,p):
       Pnmsoln[n,i] = np.sqrt(1.5) * p.Delta**2 * (16.0*np.pi**2*p.radius/3.0/p.k/p.energy) \
                      * (-1.0)**(n+1) * np.sum(Jsoln[n,i,:])*dsigma
 
+  pdb.set_trace()
   filename = "damping_times.data"
   fname=open(filename,'w')
   fname.write('%5s\t%5s\t%10s\t%10s\t%10s\t%10s\t%10s\n' % ('n','m','s(Hz)','t(s)','Pnm','-Pnm/snm','cumul prob') )
@@ -334,7 +336,7 @@ def dEdnudt(t,sigma,ssoln,Jsoln,p):
 
 def main():
 
-  array = np.load('./eigenmode_data_xinit2.0.npy',\
+  array = np.load('./eigenmode_data_xinit0.0_tau1e8.npy',\
                   allow_pickle=True, fix_imports=True, )
   energy = array[0]
   temp = array[1]

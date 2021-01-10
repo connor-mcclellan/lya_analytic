@@ -85,8 +85,8 @@ def integrate(sigma, y_start, n, s, p):
 def one_s_value(n,s,p, debug=False, trace=False):
   '''Solve for response given n and s'''
 
-  sigma_left = -50.0*p.tau0   # Used to be 80
-  sigma_right = 50.0*p.tau0
+  sigma_left = -60.0*p.tau0   # Used to be 80
+  sigma_right = 60.0*p.tau0
 
   # check if sigma endpoints are ok
   phi=line_profile(sigma_left,p)
@@ -137,6 +137,10 @@ def one_s_value(n,s,p, debug=False, trace=False):
   # This helps resolve the dJ discontinuity better. If it is not large enough,
   # the integrator will not be deterministic near the source
   offset = 7e3
+  if np.abs(leftgrid[-1]-offset) > np.abs(leftgrid[-2]-leftgrid[-1]):
+      # If offset is larger than bin spacing, split the distance to the end
+      offset = np.abs(leftgrid[-2]-leftgrid[-1])/2.
+
   if p.sigmas < 0.:
     middlegrid[-1] += offset
     leftgrid[-1] -= offset
@@ -166,8 +170,6 @@ def one_s_value(n,s,p, debug=False, trace=False):
   dJright=sol[:,1]
   C=Jright[-1]   # Set matrix coefficient equal to Jright's leftmost value
   D=dJright[-1]
-
-  pdb.set_trace()
 
   # middle integration
   # If source > 0, integrate rightward from 0 to source, matching at 0
@@ -341,8 +343,8 @@ def sweep(s,p):
 
   Jsoln=np.zeros((p.nmax,nsolnmax,p.nsigma))
   ssoln=np.zeros((p.nmax,nsolnmax))
-#  for n in range(1,p.nmax):
-  for n in range(6,p.nmax):
+  for n in range(1,p.nmax):
+#  for n in range(p.nmax-1,p.nmax):
     print ("n=",n)
     nsoln=-1
 #    nsoln=7
@@ -377,7 +379,7 @@ def main():
   # choices
   energy=1.e0
   temp=1.e4
-  tau0=1.e7
+  tau0=1.e8
   radius=1.e11
   alpha_abs=0.0
   prob_dest=0.0
@@ -393,7 +395,7 @@ def main():
   sigma,ssoln,Jsoln=sweep(s,p)
 
   output_data = np.array([energy,temp,tau0,radius,alpha_abs,prob_dest,xsource,nmax,nsigma,nomega,tdiff,sigma,ssoln,Jsoln])
-  np.save('./eigenmode_data_xinit0.0_tau1e5.npy',output_data,allow_pickle=True, fix_imports=True)
+  np.save('./eigenmode_data_xinit0.0_tau1e8.npy',output_data,allow_pickle=True, fix_imports=True)
   
 
 if __name__ == "__main__":
