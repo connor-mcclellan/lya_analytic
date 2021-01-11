@@ -343,7 +343,7 @@ def sweep(s,p):
 
   Jsoln=np.zeros((p.nmax,nsolnmax,p.nsigma))
   ssoln=np.zeros((p.nmax,nsolnmax))
-  for n in range(1,p.nmax):
+  for n in range(1,p.nmax+1):
 #  for n in range(p.nmax-1,p.nmax):
     print ("n=",n)
     nsoln=-1
@@ -358,8 +358,8 @@ def sweep(s,p):
         if nsoln>nsolnmax-1:
           break
         sigma,sres,Jres = solve(s[i-2],s[i-1],s[i],n,p)
-        ssoln[n,nsoln]=sres
-        Jsoln[n,nsoln,:]=Jres
+        ssoln[n-1,nsoln]=sres
+        Jsoln[n-1,nsoln,:]=Jres
   return sigma,ssoln,Jsoln
 
 
