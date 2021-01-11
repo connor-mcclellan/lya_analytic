@@ -366,12 +366,10 @@ def sweep(s,p):
 def get_Pnm(ssoln,sigma,Jsoln,p):
   Pnmsoln=np.zeros((p.nmax,nsolnmax))
   dsigma=sigma[1]-sigma[0]
-  for n in range(1,p.nmax):
+  for n in range(1,p.nmax+1):
     for i in range(nsolnmax):
-      if ssoln[n,i]==0.0:
-        continue
-      Pnmsoln[n,i] = np.sqrt(1.5) * p.Delta**2 * (16.0*np.pi**2*p.radius/3.0/p.k/p.energy) \
-                     * (-1.0)**(n+1) * np.sum(Jsoln[n,i,:])*dsigma
+      Pnmsoln[n-1,i] = np.sqrt(1.5) * p.Delta**2 * (16.0*np.pi**2*p.radius/3.0/p.k/p.energy) \
+                     * (-1.0)**(n+1) * np.sum(Jsoln[n-1,i,:])*dsigma
   return Pnmsoln
 
 def main():

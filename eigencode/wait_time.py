@@ -15,32 +15,30 @@ la=lymanalpha()
 def get_Pnm(ssoln,sigma,Jsoln,p):
   Pnmsoln=np.zeros((p.nmax,nsolnmax))
   dsigma=sigma[1]-sigma[0]
-  for n in range(1,p.nmax):
+  for n in range(1,p.nmax+1):
     for i in range(nsolnmax):
-      if ssoln[n,i]==0.0:
-        continue
-      Pnmsoln[n,i] = np.sqrt(1.5) * p.Delta**2 * (16.0*np.pi**2*p.radius/3.0/p.k/p.energy) \
-                     * (-1.0)**(n+1) * np.sum(Jsoln[n,i,:])*dsigma
+      Pnmsoln[n-1,i] = np.sqrt(1.5) * p.Delta**2 * (16.0*np.pi**2*p.radius/3.0/p.k/p.energy) \
+                     * (-1.0)**(n+1) * np.sum(Jsoln[n-1,i,:])*dsigma
 
   pdb.set_trace()
   filename = "damping_times.data"
   fname=open(filename,'w')
   fname.write('%5s\t%5s\t%10s\t%10s\t%10s\t%10s\t%10s\n' % ('n','m','s(Hz)','t(s)','Pnm','-Pnm/snm','cumul prob') )
   totalprob=0.0
-  for n in range(1,p.nmax):
+  for n in range(1,p.nmax+1):
     for j in range(nsolnmax):
-      if ssoln[n,j]==0.0:
+      if ssoln[n-1,j]==0.0:
         continue
-      totalprob=totalprob - Pnmsoln[n,j]/ssoln[n,j]
-      fname.write('%5d\t%5d\t%10.3e\t%10.3e\t%10.3e\t%10.3e\t%10.3e\n' % (n,j,ssoln[n,j],-1.0/ssoln[n,j],Pnmsoln[n,j],-Pnmsoln[n,j]/ssoln[n,j],totalprob) )
-      #print("n,m,snm,- Pnm/ssm,cumulative_prob=",n,j,ssoln[n,j],- Pnmsoln[n,j]/ssoln[n,j],totalprob)
+      totalprob=totalprob - Pnmsoln[n-1,j]/ssoln[n-1,j]
+      fname.write('%5d\t%5d\t%10.3e\t%10.3e\t%10.3e\t%10.3e\t%10.3e\n' % (n,j,ssoln[n-1,j],-1.0/ssoln[n-1,j],Pnmsoln[n-1,j],-Pnmsoln[n-1,j]/ssoln[n-1,j],totalprob) )
+      #print("n,m,snm,- Pnm/ssm,cumulative_prob=",n,j,ssoln[n,j],- Pnmsoln[n-1,j]/ssoln[n,j],totalprob)
   fname.close()
 
   m=np.arange(0,nsolnmax)
 
   plt.figure()
-  for n in range(1,p.nmax):
-    plt.plot(m,-1.0/ssoln[n,:],label=str(n))
+  for n in range(1,p.nmax+1):
+    plt.plot(m,-1.0/ssoln[n-1,:],label=str(n))
   plt.xlabel('mode number')
   plt.ylabel('decay time(s)')
   plt.legend(loc='best')
@@ -48,8 +46,8 @@ def get_Pnm(ssoln,sigma,Jsoln,p):
   plt.close()
 
   plt.figure()
-  for n in range(1,p.nmax):
-    plt.plot(m,Pnmsoln[n,:],label=str(n))
+  for n in range(1,p.nmax+1):
+    plt.plot(m,Pnmsoln[n-1,:],label=str(n))
   plt.xlabel('mode number')
   plt.ylabel(r'$P_{nm}(s^{-1})$')
   plt.legend(loc='best')
@@ -57,8 +55,8 @@ def get_Pnm(ssoln,sigma,Jsoln,p):
   plt.close()
 
   plt.figure()
-  for n in range(1,p.nmax):
-    plt.plot(m,-Pnmsoln[n,:]/ssoln[n,:],label=str(n))
+  for n in range(1,p.nmax+1):
+    plt.plot(m,-Pnmsoln[n-1,:]/ssoln[n-1,:],label=str(n))
   plt.xlabel('mode number')
   plt.ylabel(r'$-P_{nm}/s_{nm}$')
   plt.legend(loc='best')
@@ -78,7 +76,7 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
     t=times[i]
     for n in range(1,2):
       for m in range(0,1):
-        P[i]=P[i] + Pnmsoln[n,m]*np.exp(ssoln[n,m]*t)
+        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
   plt.plot(times/tlc,tlc*P,label='(1,0)')
 
   P = 0.0*times
@@ -86,7 +84,7 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
     t=times[i]
     for n in range(1,2):
       for m in range(0,2):
-        P[i]=P[i] + Pnmsoln[n,m]*np.exp(ssoln[n,m]*t)
+        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
   plt.plot(times/tlc,tlc*P,label='(1,1)')
 
   P = 0.0*times
@@ -94,7 +92,7 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
     t=times[i]
     for n in range(1,2): 
       for m in range(0,3): 
-        P[i]=P[i] + Pnmsoln[n,m]*np.exp(ssoln[n,m]*t)
+        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
   plt.plot(times/tlc,tlc*P,label='(1,2)')
 
   P = 0.0*times
@@ -102,7 +100,7 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
     t=times[i]
     for n in range(1,2):
       for m in range(0,4):
-        P[i]=P[i] + Pnmsoln[n,m]*np.exp(ssoln[n,m]*t)
+        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
   plt.plot(times/tlc,tlc*P,label='(1,4)')
 
   P = 0.0*times
@@ -110,7 +108,7 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
     t=times[i]
     for n in range(1,2):
       for m in range(0,5):
-        P[i]=P[i] + Pnmsoln[n,m]*np.exp(ssoln[n,m]*t)
+        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
   plt.plot(times/tlc,tlc*P,label='(1,5)')
 
   P = 0.0*times
@@ -118,7 +116,7 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
     t=times[i]
     for n in range(1,2):
       for m in range(0,6):
-        P[i]=P[i] + Pnmsoln[n,m]*np.exp(ssoln[n,m]*t)
+        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
   plt.plot(times/tlc,tlc*P,label='(1,6)')
 
   P = 0.0*times
@@ -126,7 +124,7 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
     t=times[i]
     for n in range(1,2):
       for m in range(0,20):
-        P[i]=P[i] + Pnmsoln[n,m]*np.exp(ssoln[n,m]*t)
+        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
   plt.plot(times/tlc,tlc*P,label='(1,20)')
 
   plt.legend(loc='best')
@@ -146,7 +144,7 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
     t=times[i]
     for n in range(1,3):
       for m in range(0,1):
-        P[i]=P[i] + Pnmsoln[n,m]*np.exp(ssoln[n,m]*t)
+        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
   plt.plot(times/tlc,tlc*P,label='(2,0)')
 
   P = 0.0*times
@@ -154,7 +152,7 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
     t=times[i]
     for n in range(1,3):
       for m in range(0,2):
-        P[i]=P[i] + Pnmsoln[n,m]*np.exp(ssoln[n,m]*t)
+        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
   plt.plot(times/tlc,tlc*P,label='(2,1)')
 
   P = 0.0*times
@@ -162,7 +160,7 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
     t=times[i]
     for n in range(1,3):
       for m in range(0,3):
-        P[i]=P[i] + Pnmsoln[n,m]*np.exp(ssoln[n,m]*t)
+        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
   plt.plot(times/tlc,tlc*P,label='(2,2)')
 
   P = 0.0*times
@@ -170,7 +168,7 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
     t=times[i]
     for n in range(1,3):
       for m in range(0,4):
-        P[i]=P[i] + Pnmsoln[n,m]*np.exp(ssoln[n,m]*t)
+        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
   plt.plot(times/tlc,tlc*P,label='(2,3)')
 
   P = 0.0*times
@@ -178,7 +176,7 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
     t=times[i]
     for n in range(1,3):
       for m in range(0,5):
-        P[i]=P[i] + Pnmsoln[n,m]*np.exp(ssoln[n,m]*t)
+        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
   plt.plot(times/tlc,tlc*P,label='(2,4)')
 
   P = 0.0*times
@@ -186,7 +184,7 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
     t=times[i]
     for n in range(1,3):
       for m in range(0,20):
-        P[i]=P[i] + Pnmsoln[n,m]*np.exp(ssoln[n,m]*t)
+        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
   plt.plot(times/tlc,tlc*P,label='(2,20)')
 
   plt.legend(loc='best')
@@ -205,7 +203,7 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
     t=times[i]
     for n in range(1,4):
       for m in range(0,1):
-        P[i]=P[i] + Pnmsoln[n,m]*np.exp(ssoln[n,m]*t)
+        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
   plt.plot(times/tlc,tlc*P,label='(3,0)')
 
   P = 0.0*times
@@ -213,7 +211,7 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
     t=times[i]
     for n in range(1,4):
       for m in range(0,2):
-        P[i]=P[i] + Pnmsoln[n,m]*np.exp(ssoln[n,m]*t)
+        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
   plt.plot(times/tlc,tlc*P,label='(3,1)')
 
   P = 0.0*times
@@ -221,7 +219,7 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
     t=times[i]
     for n in range(1,4):
       for m in range(0,3):
-        P[i]=P[i] + Pnmsoln[n,m]*np.exp(ssoln[n,m]*t)
+        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
   plt.plot(times/tlc,tlc*P,label='(3,2)')
 
   P = 0.0*times
@@ -229,7 +227,7 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
     t=times[i]
     for n in range(1,4):
       for m in range(0,4):
-        P[i]=P[i] + Pnmsoln[n,m]*np.exp(ssoln[n,m]*t)
+        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
   plt.plot(times/tlc,tlc*P,label='(3,3)')
 
   P = 0.0*times
@@ -237,7 +235,7 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
     t=times[i]
     for n in range(1,4):
       for m in range(0,5):
-        P[i]=P[i] + Pnmsoln[n,m]*np.exp(ssoln[n,m]*t)
+        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
   plt.plot(times/tlc,tlc*P,label='(3,4)')
 
   P = 0.0*times
@@ -245,7 +243,7 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
     t=times[i]
     for n in range(1,4):
       for m in range(0,20):
-        P[i]=P[i] + Pnmsoln[n,m]*np.exp(ssoln[n,m]*t)
+        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
   plt.plot(times/tlc,tlc*P,label='(3,20)')
 
   plt.legend(loc='best')
@@ -262,49 +260,49 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
   P = 0.0*times
   for i in range(times.size):
     t=times[i]
-    for n in range(1,p.nmax):
+    for n in range(1,p.nmax+1):
       for m in range(0,1):
-        P[i]=P[i] + Pnmsoln[n,m]*np.exp(ssoln[n,m]*t)
+        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
   plt.plot(times/tlc,tlc*P,label='(6,0)')
 
   P = 0.0*times
   for i in range(times.size):
     t=times[i]
-    for n in range(1,p.nmax):
+    for n in range(1,p.nmax+1):
       for m in range(0,2):
-        P[i]=P[i] + Pnmsoln[n,m]*np.exp(ssoln[n,m]*t)
+        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
   plt.plot(times/tlc,tlc*P,label='(6,1)')
 
   P = 0.0*times
   for i in range(times.size):
     t=times[i]
-    for n in range(1,p.nmax):
+    for n in range(1,p.nmax+1):
       for m in range(0,3):
-        P[i]=P[i] + Pnmsoln[n,m]*np.exp(ssoln[n,m]*t)
+        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
   plt.plot(times/tlc,tlc*P,label='(6,2)')
 
   P = 0.0*times
   for i in range(times.size):
     t=times[i]
-    for n in range(1,p.nmax):
+    for n in range(1,p.nmax+1):
       for m in range(0,4):
-        P[i]=P[i] + Pnmsoln[n,m]*np.exp(ssoln[n,m]*t)
+        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
   plt.plot(times/tlc,tlc*P,label='(6,3)')
 
   P = 0.0*times
   for i in range(times.size):
     t=times[i]
-    for n in range(1,p.nmax):
+    for n in range(1,p.nmax+1):
       for m in range(0,5):
-        P[i]=P[i] + Pnmsoln[n,m]*np.exp(ssoln[n,m]*t)
+        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
   plt.plot(times/tlc,tlc*P,label='(6,4)')
 
   P = 0.0*times
   for i in range(times.size):
     t=times[i]
-    for n in range(1,p.nmax):
+    for n in range(1,p.nmax+1):
       for m in range(0,20):
-        P[i]=P[i] + Pnmsoln[n,m]*np.exp(ssoln[n,m]*t)
+        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
   plt.plot(times/tlc,tlc*P,label='(6,20)')
 
 
@@ -325,7 +323,7 @@ def dEdnudt(t,sigma,ssoln,Jsoln,p):
   prefactor = 16.0*np.pi**2*p.radius/(3.0*p.k*phi*p.energy)
   wait_time = np.zeros((t.size,sigma.size))
   for i in range(t.size):
-    for n in range(1,p.nmax):
+    for n in range(1,p.nmax+1):
       for j in range(nsolnmax):
         if ssoln[n,j]==0.0:
           continue
