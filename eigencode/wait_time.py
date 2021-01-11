@@ -20,7 +20,6 @@ def get_Pnm(ssoln,sigma,Jsoln,p):
       Pnmsoln[n-1,i] = np.sqrt(1.5) * p.Delta**2 * (16.0*np.pi**2*p.radius/3.0/p.k/p.energy) \
                      * (-1.0)**(n+1) * np.sum(Jsoln[n-1,i,:])*dsigma
 
-  pdb.set_trace()
   filename = "damping_times.data"
   fname=open(filename,'w')
   fname.write('%5s\t%5s\t%10s\t%10s\t%10s\t%10s\t%10s\n' % ('n','m','s(Hz)','t(s)','Pnm','-Pnm/snm','cumul prob') )
@@ -315,6 +314,7 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
   plt.savefig('waittime_vs_time_n=6.pdf')
   plt.close()
 
+  return P
 
 
 def dEdnudt(t,sigma,ssoln,Jsoln,p):
@@ -343,18 +343,22 @@ def main():
   alpha_abs = array[4]
   prob_dest = array[5]
   xsource = array[6]
-  nmax = array[7]
+  nmax = array[7]-1 # REMOVE LATER
   nsigma = array[8]
   nomega = array[9]
   tdiff = array[10]
   sigma = array[11]
-  ssoln = array[12]
-  Jsoln = array[13]
+  ssoln = array[12][1:] # REMOVE LATER
+  Jsoln = array[13][1:] # REMOVE LATER
   p = parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax)
 
   Pnmsoln = get_Pnm(ssoln,sigma,Jsoln,p)
   times = p.radius/fc.clight * np.arange(0.1,140.0,0.1)
   wait_time_dist = wait_time_vs_time(ssoln,Pnmsoln,times,p)
+
+  print('Optical Depth =', tau0)
+  print('Peak at ct/R =', fc.clight/p.radius * times[np.argmax(wait_time_dist)])
+  print('t_c =', 1/(-ssoln[0][0]))
 
 if __name__ == "__main__":
   main()
