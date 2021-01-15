@@ -4,11 +4,6 @@ import matplotlib
 matplotlib.rcParams['text.usetex']=True
 from wait_time import *
 
-data = np.array([
-  [1e5, 1e6, 1e7, 1e8],
-  [1.1, 3.2, 8.0, 16.8],
-  [3.1343, 9.8665, 25.174, 54.448],
-])
 
 filenames = [
   './eigenmode_data_xinit0.0_tau1e5.npy',
@@ -46,7 +41,7 @@ for k, filename in enumerate(filenames):
     data[3][k] = p.a
 
 plt.plot(data[0], data[1], marker='o', alpha=0.5, label='Wait Time Peak')
-plt.plot(data[0], data[2], marker='o', alpha=0.5, label=r'$t_{00} = (-\s_{00})^{-1}$')
+plt.plot(data[0], data[2], marker='o', alpha=0.5, label=r'$t_{10} = -(s_{10})^{-1}$')
 
 plt.plot(data[0], fc.clight/p.radius*(data[0])**(1./3), alpha=0.5, label=r'$t = (a\tau)^{1/3}$', ls='--', c='k')
 plt.plot(data[0], fc.clight/p.radius*(data[0])**(1./2), alpha=0.5, label=r'$t = (a\tau)^{1/2}$', ls=':', c='k')
