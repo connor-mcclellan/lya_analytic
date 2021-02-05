@@ -8,7 +8,7 @@ import warnings
 import pdb
 
 # max number of solutions at each n
-nsolnmax=20                                          # maximum number of solutions for each n.
+nsolnmax=30                                          # maximum number of solutions for each n.
 
 # integration accuracy
 relative_tol=1.e-10 # 1.49012e-8
@@ -382,7 +382,7 @@ def main():
   alpha_abs=0.0
   prob_dest=0.0
   xsource=0.0
-  nmax=6+1
+  nmax=12+1
   nsigma=512
   nomega=10
   p = parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax)
