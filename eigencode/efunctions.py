@@ -393,7 +393,7 @@ def main():
   sigma,ssoln,Jsoln=sweep(s,p)
 
   output_data = np.array([energy,temp,tau0,radius,alpha_abs,prob_dest,xsource,nmax,nsigma,nomega,tdiff,sigma,ssoln,Jsoln])
-  np.save('./eigenmode_data_xinit0.0_tau1e8.npy',output_data,allow_pickle=True, fix_imports=True)
+  np.save('./eigenmode_data_xinit0.0_tau1e8_nmax12_nsolnmax30.npy',output_data,allow_pickle=True, fix_imports=True)
   
 
 if __name__ == "__main__":
