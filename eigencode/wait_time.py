@@ -7,7 +7,7 @@ from efunctions import parameters
 import pdb
 
 # max number of solutions at each n
-nsolnmax=20                                          # maximum number of solutions for each n.
+nsolnmax=30                                          # maximum number of solutions for each n.
 
 fc=fundconst()
 la=lymanalpha()
@@ -255,14 +255,14 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
   plt.close()
 
   plt.figure()
-
+  '''
   P = 0.0*times
   for i in range(times.size):
     t=times[i]
     for n in range(1,p.nmax+1):
       for m in range(0,1):
         P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
-  plt.plot(times/tlc,tlc*P,label='(6,0)')
+  plt.plot(times/tlc,tlc*P,label='(12,0)')
 
   P = 0.0*times
   for i in range(times.size):
@@ -270,7 +270,7 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
     for n in range(1,p.nmax+1):
       for m in range(0,2):
         P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
-  plt.plot(times/tlc,tlc*P,label='(6,1)')
+  plt.plot(times/tlc,tlc*P,label='(12,1)')
 
   P = 0.0*times
   for i in range(times.size):
@@ -278,7 +278,7 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
     for n in range(1,p.nmax+1):
       for m in range(0,3):
         P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
-  plt.plot(times/tlc,tlc*P,label='(6,2)')
+  plt.plot(times/tlc,tlc*P,label='(12,2)')
 
   P = 0.0*times
   for i in range(times.size):
@@ -286,31 +286,48 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
     for n in range(1,p.nmax+1):
       for m in range(0,4):
         P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
-  plt.plot(times/tlc,tlc*P,label='(6,3)')
+  plt.plot(times/tlc,tlc*P,label='(12,3)')
+
 
   P = 0.0*times
   for i in range(times.size):
     t=times[i]
-    for n in range(1,p.nmax+1):
-      for m in range(0,5):
+    for n in range(1,5+1):
+      for m in range(0,30):
         P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
-  plt.plot(times/tlc,tlc*P,label='(6,4)')
+  plt.plot(times/tlc,tlc*P,'--',label='(5,30)', alpha=0.5)
 
   P = 0.0*times
   for i in range(times.size):
     t=times[i]
-    for n in range(1,p.nmax+1):
-      for m in range(0,20):
+    for n in range(1,6+1):
+      for m in range(0,30):
         P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
-  plt.plot(times/tlc,tlc*P,label='(6,20)')
+  plt.plot(times/tlc,tlc*P,'--',label='(6,30)', alpha=0.5)
+  '''
 
+  P = 0.0*times
+  for i in range(times.size):
+    t=times[i]
+    for n in range(1,6+1):
+      for m in range(0,30):
+        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
+  plt.plot(times/tlc,tlc*P,label='(5,30)', alpha=0.5)
+
+  P = 0.0*times
+  for i in range(times.size):
+    t=times[i]
+    for n in range(1,7+1):
+      for m in range(0,30):
+        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
+  plt.plot(times/tlc,tlc*P, '--', label='(6,30)', alpha=0.5)
 
   plt.legend(loc='best')
   plt.yscale('log')
   plt.xlabel(r'$ct/R$',fontsize=15)
   plt.ylabel('$(R/c)\, P(t)$',fontsize=15)
   plt.title('all n=1-6 with increasing m')
-  #plt.show()
+  plt.show()
   plt.savefig('waittime_vs_time_n=6.pdf')
   plt.close()
 
@@ -334,7 +351,7 @@ def dEdnudt(t,sigma,ssoln,Jsoln,p):
 
 def main():
 
-  array = np.load('./eigenmode_data_xinit0.0_tau1e8.npy',\
+  array = np.load('./eigenmode_data_xinit0.0_tau1e8_nmax12_nsolnmax30.npy',\
                   allow_pickle=True, fix_imports=True, )
   energy = array[0]
   temp = array[1]
@@ -343,13 +360,13 @@ def main():
   alpha_abs = array[4]
   prob_dest = array[5]
   xsource = array[6]
-  nmax = array[7]-1 # REMOVE LATER
+  nmax = array[7]
   nsigma = array[8]
   nomega = array[9]
   tdiff = array[10]
   sigma = array[11]
-  ssoln = array[12][1:] # REMOVE LATER
-  Jsoln = array[13][1:] # REMOVE LATER
+  ssoln = array[12]
+  Jsoln = array[13]
   p = parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax)
 
   Pnmsoln = get_Pnm(ssoln,sigma,Jsoln,p)

@@ -85,8 +85,11 @@ def integrate(sigma, y_start, n, s, p):
 def one_s_value(n,s,p, debug=False, trace=False):
   '''Solve for response given n and s'''
 
-  sigma_left = -60.0*p.tau0   # Used to be 80
-  sigma_right = 60.0*p.tau0
+  sigma_left = -50.0*p.tau0   # Used to be 80
+  sigma_right = 50.0*p.tau0
+
+# while np.abs(term2/term1) < 1.0:
+#     increase sigma width by some increment
 
   # check if sigma endpoints are ok
   phi=line_profile(sigma_left,p)
@@ -160,6 +163,7 @@ def one_s_value(n,s,p, debug=False, trace=False):
   dJleft=sol[:,1]
   A=Jleft[-1]    # Set matrix coefficient equal to Jleft's rightmost value
   B=dJleft[-1]
+  pdb.set_trace()
 
   # leftward integration
   J=1.0
@@ -343,8 +347,8 @@ def sweep(s,p):
 
   Jsoln=np.zeros((p.nmax,nsolnmax,p.nsigma))
   ssoln=np.zeros((p.nmax,nsolnmax))
-  for n in range(1,p.nmax+1):
-#  for n in range(p.nmax-1,p.nmax):
+#  for n in range(1,p.nmax+1):
+  for n in range(7,p.nmax):
     print ("n=",n)
     nsoln=-1
 #    nsoln=7
