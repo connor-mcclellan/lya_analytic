@@ -97,12 +97,18 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
       plt.close()
 
 
-def wait_time_freq_dependence(ssoln,sigma,Pnmsoln,times,p,bounds):
+def wait_time_freq_dependence(ssoln,sigma,Pnmsoln,times,p,bounds,bound_type='x'):
     '''
     Produce a wait time distribution with all spatial and frequency eigenmodes,
     split into ranges of frequency. The ranges are constructed between the 
     values of the list argument 'bounds'.
     '''
+
+    if bound_type=='x':
+        bounds = np.array(bounds)**3. * p.c1
+    elif bound_type=='sigma':
+        pass
+
     plt.figure()
     for i in range(len(bounds)-1):
         freq_min = bounds[i]
@@ -156,7 +162,7 @@ def main():
   Pnmsoln = get_Pnm(ssoln,sigma,Jsoln,p)
   times = p.radius/fc.clight * np.arange(0.1,140.0,0.1)
 #  wait_time_dist = wait_time_vs_time(ssoln,Pnmsoln,times,p)
-  wait_time_freq_dependence(ssoln, sigma, Pnmsoln, times, p, [0, 3e8, 6e9])
+  wait_time_freq_dependence(ssoln, sigma, Pnmsoln, times, p, [0, 3e8, 6e9], bound_type='sigma')
 
 #  print('Optical Depth =', tau0)
 #  print('Peak at ct/R =', fc.clight/p.radius * times[np.argmax(wait_time_dist)])
