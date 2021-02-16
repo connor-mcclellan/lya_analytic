@@ -97,6 +97,27 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
       plt.close()
 
 
+def wait_time_freq_dependence(ssoln,sigma,Pnmsoln,times,p,bounds)
+    '''
+    Produce a wait time distribution with all spatial and frequency eigenmodes,
+    split into ranges of frequency. The ranges are constructed between the 
+    values of the list argument 'bounds'.
+    '''
+    plt.figure()
+    for i in range(len(bounds-1)):
+        freq_min = bounds[i]
+        freq_max = bounds[i+1]
+        Pnm_masked = Pnmsoln[:, :, np.logical_and(sigma > freq_min, sigma < freq_max)]
+        Pnm_freqsum = np.sum(Pnm_masked)
+        wait_time_line(ssoln, Pnm_freqsum, times, p, nmax=p.nmax, mmax=nsolnmax)
+    plt.legend(loc='best')
+    plt.yscale('log')
+    plt.xlabel(r'$ct/R$',fontsize=15)
+    plt.ylabel('$(R/c)\, P(t)$',fontsize=15)
+    plt.title('Frequency Dependent Wait Time Distribution')
+    plt.savefig('waittime_vs_time_freq.pdf'.format(nmax))
+    plt.close()   
+
 def dEdnudt(t,sigma,ssoln,Jsoln,p):
   # unnormalized wait time distribution for each separate frequency
   phi = line_profile(sigma,p)
