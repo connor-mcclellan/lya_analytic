@@ -12,25 +12,14 @@ nsolnmax=30                                          # maximum number of solutio
 fc=fundconst()
 la=lymanalpha()
 
-def get_Pnm(ssoln,sigma,Jsoln,p,sigma_bounds=None):
-
-  if sigma_bounds is not None:
-    sig_min, sig_max = sigma_bounds
-    sigma_inds = np.arange(len(sigma))[np.logical_and(sigma <= sig_max, sigma >= sig_min)]
-    sigma_eval = sigma[sigma_inds]
-    dsigma=np.diff(sigma_eval)
-  else:
-    sigma_inds = np.arange(len(sigma))
-    dsigma=np.diff(sigma)
-
-  Pnmsoln=np.zeros((p.nmax,nsolnmax))
-  for k in sigma_inds[1:]:
+def get_Pnm(ssoln,sigma,Jsoln,p):
+  dsigma=np.diff(sigma)
+  Pnmsoln=np.zeros((p.nmax,nsolnmax,len(dsigma)))
+  for k in range(len(dsigma)):
     for n in range(1,p.nmax+1):
       for i in range(nsolnmax):
-  #      Pnmsoln[n-1,i] = np.sqrt(1.5) * p.Delta**2 * (16.0*np.pi**2*p.radius/3.0/p.k/p.energy) \
-  #                     * (-1.0)**(n+1) * np.sum(Jsoln[n-1,i,:])*dsigma
-        Pnmsoln[n-1,i] = np.sqrt(1.5) * p.Delta**2 * (16.0*np.pi**2*p.radius/3.0/p.k/p.energy) \
-                       * (-1.0)**(n+1) * np.sum(Jsoln[n-1,i,k])*dsigma[k-1]
+        Pnmsoln[n-1,i,k] = np.sqrt(1.5) * p.Delta**2 * (16.0*np.pi**2*p.radius/3.0/p.k/p.energy) \
+                           * (-1.0)**(n+1) * Jsoln[n-1,i,k+1] * dsigma[k]
 
   filename = "damping_times.data"
   fname=open(filename,'w')
@@ -58,7 +47,7 @@ def get_Pnm(ssoln,sigma,Jsoln,p,sigma_bounds=None):
 
   plt.figure()
   for n in range(1,p.nmax+1):
-    plt.plot(m,Pnmsoln[n-1,:],label=str(n))
+    plt.plot(m,np.sum(Pnmsoln[n-1,:,:], axis=1),label=str(n))
   plt.xlabel('mode number')
   plt.ylabel(r'$P_{nm}(s^{-1})$')
   plt.legend(loc='best')
@@ -67,7 +56,7 @@ def get_Pnm(ssoln,sigma,Jsoln,p,sigma_bounds=None):
 
   plt.figure()
   for n in range(1,p.nmax+1):
-    plt.plot(m,-Pnmsoln[n-1,:]/ssoln[n-1,:],label=str(n))
+    plt.plot(m,-np.sum(Pnmsoln[n-1,:,:], axis=1)/ssoln[n-1,:],label=str(n))
   plt.xlabel('mode number')
   plt.ylabel(r'$-P_{nm}/s_{nm}$')
   plt.legend(loc='best')
@@ -82,7 +71,7 @@ def wait_time_line(ssoln, Pnmsoln, times, p, freq_bounds=None, nmax=6, mmax=20):
     for i, t in enumerate(times):
         for n in range(1, nmax+1):
             for m in range(0, mmax):
-                P[i] = P[i] + Pnmsoln[n-1,m] * np.exp(ssoln[n-1,m] * t)
+                P[i] += np.sum(Pnmsoln[n-1,m,:]) * np.exp(ssoln[n-1,m] * t)
     plt.plot(times/tlc,tlc*P,label='({},{})'.format(nmax, mmax))
 
 
