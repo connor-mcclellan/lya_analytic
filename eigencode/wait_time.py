@@ -29,8 +29,8 @@ def get_Pnm(ssoln,sigma,Jsoln,p):
     for j in range(nsolnmax):
       if ssoln[n-1,j]==0.0:
         continue
-      totalprob=totalprob - Pnmsoln[n-1,j]/ssoln[n-1,j]
-      fname.write('%5d\t%5d\t%10.3e\t%10.3e\t%10.3e\t%10.3e\t%10.3e\n' % (n,j,ssoln[n-1,j],-1.0/ssoln[n-1,j],Pnmsoln[n-1,j],-Pnmsoln[n-1,j]/ssoln[n-1,j],totalprob) )
+      totalprob=totalprob - np.sum(Pnmsoln[n-1,j,:])/ssoln[n-1,j]
+      fname.write('%5d\t%5d\t%10.3e\t%10.3e\t%10.3e\t%10.3e\t%10.3e\n' % (n,j,ssoln[n-1,j],-1.0/ssoln[n-1,j],np.sum(Pnmsoln[n-1,j,:]),-np.sum(Pnmsoln[n-1,j,:])/ssoln[n-1,j],totalprob) )
       #print("n,m,snm,- Pnm/ssm,cumulative_prob=",n,j,ssoln[n,j],- Pnmsoln[n-1,j]/ssoln[n,j],totalprob)
   fname.close()
 
@@ -67,17 +67,17 @@ def get_Pnm(ssoln,sigma,Jsoln,p):
 
 
 def wait_time_line(ssoln, Pnmsoln, times, p, freq_bounds=None, nmax=6, mmax=20):
+    tlc = p.radius/fc.clight
     P = np.zeros(np.shape(times))
     for i, t in enumerate(times):
         for n in range(1, nmax+1):
             for m in range(0, mmax):
                 P[i] += np.sum(Pnmsoln[n-1,m,:]) * np.exp(ssoln[n-1,m] * t)
     plt.plot(times/tlc,tlc*P,label='({},{})'.format(nmax, mmax))
+    return P
 
 
 def wait_time_vs_time(ssoln,Pnmsoln,times,p):
-
-  tlc = p.radius/fc.clight
 
   m_upper_lims = [1, 2, 3, 4, 5, 6, 20]
   n_upper_lims = [1, 2, 3, p.nmax]
@@ -87,7 +87,7 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
   for k, nmax in enumerate(n_upper_lims):
       plt.figure()
       for mmax in m_upper_lims:
-          wait_time_line(ssoln, Pnmsoln, times, nmax=nmax, mmax=mmax)
+          wait_time_line(ssoln, Pnmsoln, times, p, nmax=nmax, mmax=mmax)
       plt.legend(loc='best')
       plt.yscale('log')
       plt.xlabel(r'$ct/R$',fontsize=15)
@@ -95,7 +95,6 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
       plt.title(titles[k])
       plt.savefig('waittime_vs_time_n={}.pdf'.format(nmax))
       plt.close()
-  return P
 
 
 def dEdnudt(t,sigma,ssoln,Jsoln,p):
