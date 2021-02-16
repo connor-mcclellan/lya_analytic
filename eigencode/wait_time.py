@@ -162,6 +162,7 @@ def main():
   Pnmsoln = get_Pnm(ssoln,sigma,Jsoln,p)
   times = p.radius/fc.clight * np.arange(0.1,140.0,0.1)
 #  wait_time_dist = wait_time_vs_time(ssoln,Pnmsoln,times,p)
+  pdb.set_trace()
   wait_time_freq_dependence(ssoln, sigma, Pnmsoln, times, p, [0, 3e8, 6e9], bound_type='sigma')
 
 #  print('Optical Depth =', tau0)
