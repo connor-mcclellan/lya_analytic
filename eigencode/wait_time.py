@@ -97,26 +97,27 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
       plt.close()
 
 
-def wait_time_freq_dependence(ssoln,sigma,Pnmsoln,times,p,bounds)
+def wait_time_freq_dependence(ssoln,sigma,Pnmsoln,times,p,bounds):
     '''
     Produce a wait time distribution with all spatial and frequency eigenmodes,
     split into ranges of frequency. The ranges are constructed between the 
     values of the list argument 'bounds'.
     '''
     plt.figure()
-    for i in range(len(bounds-1)):
+    for i in range(len(bounds)-1):
         freq_min = bounds[i]
         freq_max = bounds[i+1]
-        Pnm_masked = Pnmsoln[:, :, np.logical_and(sigma > freq_min, sigma < freq_max)]
-        Pnm_freqsum = np.sum(Pnm_masked)
-        wait_time_line(ssoln, Pnm_freqsum, times, p, nmax=p.nmax, mmax=nsolnmax)
+        Pnm_masked = Pnmsoln[:, :, np.logical_and(sigma[1:] > freq_min, sigma[1:] <= freq_max)]
+        wait_time_line(ssoln, Pnm_masked, times, p, nmax=p.nmax, mmax=nsolnmax)
     plt.legend(loc='best')
     plt.yscale('log')
     plt.xlabel(r'$ct/R$',fontsize=15)
     plt.ylabel('$(R/c)\, P(t)$',fontsize=15)
     plt.title('Frequency Dependent Wait Time Distribution')
-    plt.savefig('waittime_vs_time_freq.pdf'.format(nmax))
+    plt.show()
+    plt.savefig('waittime_vs_time_freq.pdf')
     plt.close()   
+
 
 def dEdnudt(t,sigma,ssoln,Jsoln,p):
   # unnormalized wait time distribution for each separate frequency
@@ -130,7 +131,6 @@ def dEdnudt(t,sigma,ssoln,Jsoln,p):
           continue
         wait_time[i,:] = wait_time[i,:] + prefactor * (-1.0)**(n+1) * Jsoln[n,j,:] * np.exp(ssoln[n,j]*t[i])
   return wait_time
-
 
 
 def main():
@@ -155,11 +155,12 @@ def main():
 
   Pnmsoln = get_Pnm(ssoln,sigma,Jsoln,p)
   times = p.radius/fc.clight * np.arange(0.1,140.0,0.1)
-  wait_time_dist = wait_time_vs_time(ssoln,Pnmsoln,times,p)
+#  wait_time_dist = wait_time_vs_time(ssoln,Pnmsoln,times,p)
+  wait_time_freq_dependence(ssoln, sigma, Pnmsoln, times, p, [0, 3e8, 6e9])
 
-  print('Optical Depth =', tau0)
-  print('Peak at ct/R =', fc.clight/p.radius * times[np.argmax(wait_time_dist)])
-  print('t_c =', 1/(-ssoln[0][0]))
+#  print('Optical Depth =', tau0)
+#  print('Peak at ct/R =', fc.clight/p.radius * times[np.argmax(wait_time_dist)])
+#  print('t_c =', 1/(-ssoln[0][0]))
 
 if __name__ == "__main__":
   main()
