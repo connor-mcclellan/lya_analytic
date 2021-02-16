@@ -76,273 +76,36 @@ def get_Pnm(ssoln,sigma,Jsoln,p,sigma_bounds=None):
 
   return Pnmsoln
 
-def wait_time_vs_time(ssoln,Pnmsoln,times,p,intervals):
+
+def wait_time_line(ssoln, Pnmsoln, times, p, freq_bounds=None, nmax=6, mmax=20):
+    P = np.zeros(np.shape(times))
+    for i, t in enumerate(times):
+        for n in range(1, nmax+1):
+            for m in range(0, mmax):
+                P[i] = P[i] + Pnmsoln[n-1,m] * np.exp(ssoln[n-1,m] * t)
+    plt.plot(times/tlc,tlc*P,label='({},{})'.format(nmax, mmax))
+
+
+def wait_time_vs_time(ssoln,Pnmsoln,times,p):
 
   tlc = p.radius/fc.clight
 
-  plt.figure()
+  m_upper_lims = [1, 2, 3, 4, 5, 6, 20]
+  n_upper_lims = [1, 2, 3, p.nmax]
+  titles = ['n=1 and increasing m', 'all n=1-2 with increasing m', 
+            'all n=1-3 with increasing m', 'all n=1-6 with increasing m']
 
-  P = 0.0*times
-  for i in range(times.size):
-    t=times[i]
-    for n in range(1,2):
-      for m in range(0,1):
-        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
-  plt.plot(times/tlc,tlc*P,label='(1,0)')
-
-  P = 0.0*times
-  for i in range(times.size):
-    t=times[i]
-    for n in range(1,2):
-      for m in range(0,2):
-        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
-  plt.plot(times/tlc,tlc*P,label='(1,1)')
-
-  P = 0.0*times
-  for i in range(times.size):
-    t=times[i]
-    for n in range(1,2): 
-      for m in range(0,3): 
-        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
-  plt.plot(times/tlc,tlc*P,label='(1,2)')
-
-  P = 0.0*times
-  for i in range(times.size):
-    t=times[i]
-    for n in range(1,2):
-      for m in range(0,4):
-        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
-  plt.plot(times/tlc,tlc*P,label='(1,4)')
-
-  P = 0.0*times
-  for i in range(times.size):
-    t=times[i]
-    for n in range(1,2):
-      for m in range(0,5):
-        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
-  plt.plot(times/tlc,tlc*P,label='(1,5)')
-
-  P = 0.0*times
-  for i in range(times.size):
-    t=times[i]
-    for n in range(1,2):
-      for m in range(0,6):
-        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
-  plt.plot(times/tlc,tlc*P,label='(1,6)')
-
-  P = 0.0*times
-  for i in range(times.size):
-    t=times[i]
-    for n in range(1,2):
-      for m in range(0,20):
-        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
-  plt.plot(times/tlc,tlc*P,label='(1,20)')
-
-  plt.legend(loc='best')
-  plt.yscale('log')
-  plt.xlabel(r'$ct/R$',fontsize=15)
-  plt.ylabel('$(R/c)\, P(t)$',fontsize=15)
-  plt.title('n=1 and increasing m')
-  #plt.show()
-  plt.savefig('waittime_vs_time_n=1.pdf')
-  plt.close
-    
-
-  plt.figure()
-
-  P = 0.0*times
-  for i in range(times.size):
-    t=times[i]
-    for n in range(1,3):
-      for m in range(0,1):
-        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
-  plt.plot(times/tlc,tlc*P,label='(2,0)')
-
-  P = 0.0*times
-  for i in range(times.size):
-    t=times[i]
-    for n in range(1,3):
-      for m in range(0,2):
-        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
-  plt.plot(times/tlc,tlc*P,label='(2,1)')
-
-  P = 0.0*times
-  for i in range(times.size):
-    t=times[i]
-    for n in range(1,3):
-      for m in range(0,3):
-        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
-  plt.plot(times/tlc,tlc*P,label='(2,2)')
-
-  P = 0.0*times
-  for i in range(times.size):
-    t=times[i]
-    for n in range(1,3):
-      for m in range(0,4):
-        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
-  plt.plot(times/tlc,tlc*P,label='(2,3)')
-
-  P = 0.0*times
-  for i in range(times.size):
-    t=times[i]
-    for n in range(1,3):
-      for m in range(0,5):
-        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
-  plt.plot(times/tlc,tlc*P,label='(2,4)')
-
-  P = 0.0*times
-  for i in range(times.size):
-    t=times[i]
-    for n in range(1,3):
-      for m in range(0,20):
-        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
-  plt.plot(times/tlc,tlc*P,label='(2,20)')
-
-  plt.legend(loc='best')
-  plt.yscale('log')
-  plt.xlabel(r'$ct/R$',fontsize=15)
-  plt.ylabel('$(R/c)\, P(t)$',fontsize=15)
-  plt.title('all n=1-2 with increasing m')
-  #plt.show()
-  plt.savefig('waittime_vs_time_n=2.pdf')
-  plt.close()
-
-  plt.figure()
-
-  P = 0.0*times
-  for i in range(times.size):
-    t=times[i]
-    for n in range(1,4):
-      for m in range(0,1):
-        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
-  plt.plot(times/tlc,tlc*P,label='(3,0)')
-
-  P = 0.0*times
-  for i in range(times.size):
-    t=times[i]
-    for n in range(1,4):
-      for m in range(0,2):
-        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
-  plt.plot(times/tlc,tlc*P,label='(3,1)')
-
-  P = 0.0*times
-  for i in range(times.size):
-    t=times[i]
-    for n in range(1,4):
-      for m in range(0,3):
-        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
-  plt.plot(times/tlc,tlc*P,label='(3,2)')
-
-  P = 0.0*times
-  for i in range(times.size):
-    t=times[i]
-    for n in range(1,4):
-      for m in range(0,4):
-        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
-  plt.plot(times/tlc,tlc*P,label='(3,3)')
-
-  P = 0.0*times
-  for i in range(times.size):
-    t=times[i]
-    for n in range(1,4):
-      for m in range(0,5):
-        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
-  plt.plot(times/tlc,tlc*P,label='(3,4)')
-
-  P = 0.0*times
-  for i in range(times.size):
-    t=times[i]
-    for n in range(1,4):
-      for m in range(0,20):
-        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
-  plt.plot(times/tlc,tlc*P,label='(3,20)')
-
-  plt.legend(loc='best')
-  plt.yscale('log')
-  plt.xlabel(r'$ct/R$',fontsize=15)
-  plt.ylabel('$(R/c)\, P(t)$',fontsize=15)
-  plt.title('all n=1-3 with increasing m')
-  #plt.show()
-  plt.savefig('waittime_vs_time_n=3.pdf')
-  plt.close()
-
-  plt.figure()
-  '''
-  P = 0.0*times
-  for i in range(times.size):
-    t=times[i]
-    for n in range(1,p.nmax+1):
-      for m in range(0,1):
-        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
-  plt.plot(times/tlc,tlc*P,label='(12,0)')
-
-  P = 0.0*times
-  for i in range(times.size):
-    t=times[i]
-    for n in range(1,p.nmax+1):
-      for m in range(0,2):
-        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
-  plt.plot(times/tlc,tlc*P,label='(12,1)')
-
-  P = 0.0*times
-  for i in range(times.size):
-    t=times[i]
-    for n in range(1,p.nmax+1):
-      for m in range(0,3):
-        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
-  plt.plot(times/tlc,tlc*P,label='(12,2)')
-
-  P = 0.0*times
-  for i in range(times.size):
-    t=times[i]
-    for n in range(1,p.nmax+1):
-      for m in range(0,4):
-        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
-  plt.plot(times/tlc,tlc*P,label='(12,3)')
-
-
-  P = 0.0*times
-  for i in range(times.size):
-    t=times[i]
-    for n in range(1,5+1):
-      for m in range(0,30):
-        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
-  plt.plot(times/tlc,tlc*P,'--',label='(5,30)', alpha=0.5)
-
-  P = 0.0*times
-  for i in range(times.size):
-    t=times[i]
-    for n in range(1,6+1):
-      for m in range(0,30):
-        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
-  plt.plot(times/tlc,tlc*P,'--',label='(6,30)', alpha=0.5)
-  '''
-
-  P = 0.0*times
-  for i in range(times.size):
-    t=times[i]
-    for n in range(1,6+1):
-      for m in range(0,30):
-        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
-  plt.plot(times/tlc,tlc*P,label='(5,30)', alpha=0.5)
-
-  P = 0.0*times
-  for i in range(times.size):
-    t=times[i]
-    for n in range(1,7+1):
-      for m in range(0,30):
-        P[i]=P[i] + Pnmsoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
-  plt.plot(times/tlc,tlc*P, '--', label='(6,30)', alpha=0.5)
-
-  plt.legend(loc='best')
-  plt.yscale('log')
-  plt.xlabel(r'$ct/R$',fontsize=15)
-  plt.ylabel('$(R/c)\, P(t)$',fontsize=15)
-  plt.title('all n=1-6 with increasing m')
-  plt.show()
-  plt.savefig('waittime_vs_time_n=6.pdf')
-  plt.close()
-
+  for k, nmax in enumerate(n_upper_lims):
+      plt.figure()
+      for mmax in m_upper_lims:
+          wait_time_line(ssoln, Pnmsoln, times, nmax=nmax, mmax=mmax)
+      plt.legend(loc='best')
+      plt.yscale('log')
+      plt.xlabel(r'$ct/R$',fontsize=15)
+      plt.ylabel('$(R/c)\, P(t)$',fontsize=15)
+      plt.title(titles[k])
+      plt.savefig('waittime_vs_time_n={}.pdf'.format(nmax))
+      plt.close()
   return P
 
 
