@@ -112,13 +112,14 @@ def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds):
     for i in range(len(bounds)-1):
         freq_min = bounds[i]
         freq_max = bounds[i+1]
-        Pnm_masked = Pnmsoln[:, :, np.logical_and(sigma[1:] >= freq_min, sigma[1:] <= freq_max)]
-        pdb.set_trace()
+        Pnm_masked = Pnmsoln[:, :, np.logical_and(np.abs(sigma[1:]) >= freq_min, np.abs(sigma[1:]) <= freq_max)]
 #        line = wait_time_line(ax1, ssoln, Pnm_masked, times, p, nmax=p.nmax, mmax=nsolnmax, alpha=0.5)
         line = wait_time_line(ax1, ssoln, Pnm_masked, times, p, nmax=6, mmax=20, alpha=0.5)
-        ax2.fill_between(np.cbrt(np.linspace(freq_min, freq_max)/p.c1), 10*np.max(spec),alpha=0.5)
+        ax2.fill_between(np.cbrt(np.linspace(freq_min, freq_max)/p.c1), 10*np.max(spec), facecolor=line[-1].get_color(), alpha=0.5)
+        ax2.fill_between(-np.cbrt(np.linspace(freq_min, freq_max)/p.c1), 10*np.max(spec), facecolor=line[-1].get_color(), alpha=0.5)
 
-    ax2.set_xlim(np.cbrt(np.array(bounds)/p.c1)[::len(bounds)-1])
+    xlim = np.max(np.cbrt(np.array(bounds)/p.c1))
+    ax2.set_xlim(-xlim, xlim)
     ax2.set_ylim(np.min(spec), 10*np.max(spec))
     ax2.set_yscale('log')
     ax2.set_title('Spectrum')
@@ -174,7 +175,8 @@ def main():
   times = p.radius/fc.clight * np.arange(0.1,140.0,0.1)
 #  wait_time_dist = wait_time_vs_time(ssoln,Pnmsoln,times,p)
 
-  x_bounds = np.array([-148, 0, 148])
+  peak = 60
+  x_bounds = np.array([0, peak/2, peak, 3*peak/2, 160])
   sigma_bounds = p.c1 * x_bounds**3.
 
   wait_time_freq_dependence(ssoln, sigma, Jsoln, Pnmsoln, times, p, sigma_bounds)
