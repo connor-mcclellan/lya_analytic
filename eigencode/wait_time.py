@@ -12,13 +12,25 @@ nsolnmax=30                                          # maximum number of solutio
 fc=fundconst()
 la=lymanalpha()
 
-def get_Pnm(ssoln,sigma,Jsoln,p):
+def get_Pnm(ssoln,sigma,Jsoln,p,sigma_bounds=None):
+
+  if sigma_bounds is not None:
+    sig_min, sig_max = sigma_bounds
+    sigma_inds = np.arange(len(sigma))[np.logical_and(sigma <= sig_max, sigma >= sig_min)]
+    sigma_eval = sigma[sigma_inds]
+    dsigma=np.diff(sigma_eval)
+  else:
+    sigma_inds = np.arange(len(sigma))
+    dsigma=np.diff(sigma)
+
   Pnmsoln=np.zeros((p.nmax,nsolnmax))
-  dsigma=sigma[1]-sigma[0]
-  for n in range(1,p.nmax+1):
-    for i in range(nsolnmax):
-      Pnmsoln[n-1,i] = np.sqrt(1.5) * p.Delta**2 * (16.0*np.pi**2*p.radius/3.0/p.k/p.energy) \
-                     * (-1.0)**(n+1) * np.sum(Jsoln[n-1,i,:])*dsigma
+  for k in sigma_inds[1:]:
+    for n in range(1,p.nmax+1):
+      for i in range(nsolnmax):
+  #      Pnmsoln[n-1,i] = np.sqrt(1.5) * p.Delta**2 * (16.0*np.pi**2*p.radius/3.0/p.k/p.energy) \
+  #                     * (-1.0)**(n+1) * np.sum(Jsoln[n-1,i,:])*dsigma
+        Pnmsoln[n-1,i] = np.sqrt(1.5) * p.Delta**2 * (16.0*np.pi**2*p.radius/3.0/p.k/p.energy) \
+                       * (-1.0)**(n+1) * np.sum(Jsoln[n-1,i,k])*dsigma[k-1]
 
   filename = "damping_times.data"
   fname=open(filename,'w')
@@ -64,7 +76,7 @@ def get_Pnm(ssoln,sigma,Jsoln,p):
 
   return Pnmsoln
 
-def wait_time_vs_time(ssoln,Pnmsoln,times,p):
+def wait_time_vs_time(ssoln,Pnmsoln,times,p,intervals):
 
   tlc = p.radius/fc.clight
 
