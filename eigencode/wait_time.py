@@ -66,15 +66,15 @@ def get_Pnm(ssoln,sigma,Jsoln,p):
   return Pnmsoln
 
 
-def wait_time_line(ssoln, Pnmsoln, times, p, freq_bounds=None, nmax=6, mmax=20):
+def wait_time_line(ax, ssoln, Pnmsoln, times, p, nmax=6, mmax=20,alpha=0.5):
     tlc = p.radius/fc.clight
     P = np.zeros(np.shape(times))
     for i, t in enumerate(times):
         for n in range(1, nmax+1):
             for m in range(0, mmax):
                 P[i] += np.sum(Pnmsoln[n-1,m,:]) * np.exp(ssoln[n-1,m] * t)
-    plt.plot(times/tlc,tlc*P,label='({},{})'.format(nmax, mmax))
-    return P
+    line = ax.plot(times/tlc,tlc*P,label='({},{})'.format(nmax, mmax), alpha=alpha)
+    return line
 
 
 def wait_time_vs_time(ssoln,Pnmsoln,times,p):
@@ -87,7 +87,7 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
   for k, nmax in enumerate(n_upper_lims):
       plt.figure()
       for mmax in m_upper_lims:
-          wait_time_line(ssoln, Pnmsoln, times, p, nmax=nmax, mmax=mmax)
+          wait_time_line(plt, ssoln, Pnmsoln, times, p, nmax=nmax, mmax=mmax, alpha=alpha)
       plt.legend(loc='best')
       plt.yscale('log')
       plt.xlabel(r'$ct/R$',fontsize=15)
@@ -97,29 +97,40 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
       plt.close()
 
 
-def wait_time_freq_dependence(ssoln,sigma,Pnmsoln,times,p,bounds,bound_type='x'):
+def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds):
     '''
     Produce a wait time distribution with all spatial and frequency eigenmodes,
     split into ranges of frequency. The ranges are constructed between the 
     values of the list argument 'bounds'.
     '''
 
-    if bound_type=='x':
-        bounds = np.array(bounds)**3. * p.c1
-    elif bound_type=='sigma':
-        pass
+    fig, (ax1, ax2) = plt.subplots(1, 2)
 
-    plt.figure()
+    spec = np.sum(np.sum(np.abs(Jsoln), axis=0), axis=0)
+    ax2.plot(np.cbrt(sigma/p.c1), spec, 'k-', lw=0.5)
+
     for i in range(len(bounds)-1):
         freq_min = bounds[i]
         freq_max = bounds[i+1]
-        Pnm_masked = Pnmsoln[:, :, np.logical_and(sigma[1:] > freq_min, sigma[1:] <= freq_max)]
-        wait_time_line(ssoln, Pnm_masked, times, p, nmax=p.nmax, mmax=nsolnmax)
-    plt.legend(loc='best')
-    plt.yscale('log')
-    plt.xlabel(r'$ct/R$',fontsize=15)
-    plt.ylabel('$(R/c)\, P(t)$',fontsize=15)
-    plt.title('Frequency Dependent Wait Time Distribution')
+        Pnm_masked = Pnmsoln[:, :, np.logical_and(sigma[1:] >= freq_min, sigma[1:] <= freq_max)]
+        pdb.set_trace()
+#        line = wait_time_line(ax1, ssoln, Pnm_masked, times, p, nmax=p.nmax, mmax=nsolnmax, alpha=0.5)
+        line = wait_time_line(ax1, ssoln, Pnm_masked, times, p, nmax=6, mmax=20, alpha=0.5)
+        ax2.fill_between(np.cbrt(np.linspace(freq_min, freq_max)/p.c1), 10*np.max(spec),alpha=0.5)
+
+    ax2.set_xlim(np.cbrt(np.array(bounds)/p.c1)[::len(bounds)-1])
+    ax2.set_ylim(np.min(spec), 10*np.max(spec))
+    ax2.set_yscale('log')
+    ax2.set_title('Spectrum')
+    ax2.set_ylabel("$|J(x)|$")
+    ax2.set_xlabel('$x$')
+
+    ax1.legend(loc='best')
+    ax1.set_yscale('log')
+    ax1.set_xlabel(r'$ct/R$',fontsize=15)
+    ax1.set_ylabel('$(R/c)\, P(t)$',fontsize=15)
+    ax1.set_title('Wait Time')
+    plt.tight_layout()
     plt.show()
     plt.savefig('waittime_vs_time_freq.pdf')
     plt.close()   
@@ -162,8 +173,11 @@ def main():
   Pnmsoln = get_Pnm(ssoln,sigma,Jsoln,p)
   times = p.radius/fc.clight * np.arange(0.1,140.0,0.1)
 #  wait_time_dist = wait_time_vs_time(ssoln,Pnmsoln,times,p)
-  pdb.set_trace()
-  wait_time_freq_dependence(ssoln, sigma, Pnmsoln, times, p, [0, 3e8, 6e9], bound_type='sigma')
+
+  x_bounds = np.array([-148, 0, 148])
+  sigma_bounds = p.c1 * x_bounds**3.
+
+  wait_time_freq_dependence(ssoln, sigma, Jsoln, Pnmsoln, times, p, sigma_bounds)
 
 #  print('Optical Depth =', tau0)
 #  print('Peak at ct/R =', fc.clight/p.radius * times[np.argmax(wait_time_dist)])
