@@ -25,6 +25,7 @@ def get_Pnm(ssoln,sigma,Jsoln,p):
   fname=open(filename,'w')
   fname.write('%5s\t%5s\t%10s\t%10s\t%10s\t%10s\t%10s\n' % ('n','m','s(Hz)','t(s)','Pnm','-Pnm/snm','cumul prob') )
   totalprob=0.0
+  # Normalize probabilities here?
   for n in range(1,p.nmax+1):
     for j in range(nsolnmax):
       if ssoln[n-1,j]==0.0:
