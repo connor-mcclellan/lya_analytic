@@ -98,11 +98,11 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
       plt.close()
 
 
-def mc_wait_time(mc_dir, bounds)
+def mc_wait_time(mc_dir, bounds, p):
         plt.figure()
         mu, x, time = np.load(mc_dir + 'mu_x_time.npy')
         nbins=64
-        n_x, bins_x, _ = plt.hist(x, bins=n_bins, density=True)
+        n_x, bins_x, _ = plt.hist(x, bins=nbins, density=True)
         bincenters_x = 0.5 * (bins_x[1:] + bins_x[:-1])
 
         bc = []
@@ -111,23 +111,27 @@ def mc_wait_time(mc_dir, bounds)
         size = []
 
         for i in range(len(bounds)-1):
+            bounds = np.cbrt(np.array(bounds)/p.c1)
             freq_min = bounds[i]
             freq_max = bounds[i+1]
             mask = np.logical_and(np.abs(x)>freq_min, np.abs(x)<freq_max)
             t = time[mask]
-            n, bins, _ = plt.hist(t, bins=np.logspace(log10(min(t)), log10(max(t))), nbins, density=True)
-            bincenters = 0.5*(bins[1:] + bins[:-1])
-            plt.cla()
+            try:
+                n, bins, _ = plt.hist(t, bins=np.logspace(np.log10(min(t)), np.log10(max(t)), nbins), density=True)
+                bincenters = 0.5*(bins[1:] + bins[:-1])
+                plt.cla()
 
-            bc.append(bincenters)
-            counts.append(n)
-            nu_bounds.append([nu_min, nu_max])
-            size.append(len(t))
-
+                bc.append(bincenters)
+                counts.append(n)
+                nu_bounds.append([freq_min, freq_max])
+                size.append(len(t))
+            except:
+                pass
+        plt.close()
         return bc, counts, nu_bounds, size
 
 
-def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds):
+def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds,):
     '''
     Produce a wait time distribution with all spatial and frequency eigenmodes,
     split into ranges of frequency. The ranges are constructed between the 
@@ -139,22 +143,22 @@ def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds):
     spec = np.sum(np.sum(np.abs(Jsoln), axis=0), axis=0)
     ax2.plot(np.cbrt(sigma/p.c1), spec, 'k-', lw=0.5)
 
-    mc_dir = '/home/connor/Documents/999x/9999/lya_analytic/data/1m_tau0_10000000.0_xinit_0.0_temp_10000.0_probabs_0.0/'
+    mc_dir = '/home/connor/Documents/lya_analytic/data/1m_tau0_10000000.0_xinit_0.0_temp_10000.0_probabs_0.0/'
 
     for i in range(len(bounds)-1):
-
-        x, y = mc_wait_time(mc_dir, bounds)
-        ax1.scatter(x, y)
 
         freq_min = bounds[i]
         freq_max = bounds[i+1]
 
         Pnm_masked = Pnmsoln[:, :, np.logical_and(np.abs(sigma[1:]) >= freq_min, np.abs(sigma[1:]) <= freq_max)]
-        line = wait_time_line(ax1, ssoln, Pnm_masked, times, p, nmax=p.nmax, mmax=nsolnmax, alpha=0.5)
+#        line = wait_time_line(ax1, ssoln, Pnm_masked, times, p, nmax=p.nmax, mmax=nsolnmax, alpha=0.5)
 
-#        line = wait_time_line(ax1, ssoln, Pnm_masked, times, p, nmax=6, mmax=20, alpha=0.5)
+        line = wait_time_line(ax1, ssoln, Pnm_masked, times, p, nmax=6, mmax=20, alpha=0.5)
         ax2.fill_between(np.cbrt(np.linspace(freq_min, freq_max)/p.c1), 10*np.max(spec), facecolor=line[-1].get_color(), alpha=0.5)
         ax2.fill_between(-np.cbrt(np.linspace(freq_min, freq_max)/p.c1), 10*np.max(spec), facecolor=line[-1].get_color(), alpha=0.5)
+
+        x, y, _, _ = mc_wait_time(mc_dir, bounds, p)
+        ax1.scatter(x, y, facecolor=line[-1].get_color(), s=1)
 
     xlim = np.max(np.cbrt(np.array(bounds)/p.c1))
     ax2.set_xlim(-xlim, xlim)
