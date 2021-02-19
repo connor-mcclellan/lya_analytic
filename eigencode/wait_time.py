@@ -7,7 +7,7 @@ from efunctions import parameters
 import pdb
 
 # max number of solutions at each n
-nsolnmax=30                                          # maximum number of solutions for each n.
+nsolnmax=20                                          # maximum number of solutions for each n.
 
 fc=fundconst()
 la=lymanalpha()
@@ -74,6 +74,7 @@ def wait_time_line(ax, ssoln, Pnmsoln, times, p, nmax=6, mmax=20,alpha=0.5):
         for n in range(1, nmax+1):
             for m in range(0, mmax):
                 P[i] += np.sum(Pnmsoln[n-1,m,:]) * np.exp(ssoln[n-1,m] * t)
+                # TODO: Normalize positive part of the spectrum to 1
     line = ax.plot(times/tlc,tlc*P,label='({},{})'.format(nmax, mmax), alpha=alpha)
     return line
 
@@ -99,36 +100,24 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
 
 
 def mc_wait_time(mc_dir, bounds, p):
+
+        freq_min, freq_max = bounds # in x units
+
         plt.figure()
         mu, x, time = np.load(mc_dir + 'mu_x_time.npy')
         nbins=64
         n_x, bins_x, _ = plt.hist(x, bins=nbins, density=True)
         bincenters_x = 0.5 * (bins_x[1:] + bins_x[:-1])
 
-        bc = []
-        counts = []
-        nu_bounds = []
-        size = []
-
-        for i in range(len(bounds)-1):
-            bounds = np.cbrt(np.array(bounds)/p.c1)
-            freq_min = bounds[i]
-            freq_max = bounds[i+1]
-            mask = np.logical_and(np.abs(x)>freq_min, np.abs(x)<freq_max)
-            t = time[mask]
-            try:
-                n, bins, _ = plt.hist(t, bins=np.logspace(np.log10(min(t)), np.log10(max(t)), nbins), density=True)
-                bincenters = 0.5*(bins[1:] + bins[:-1])
-                plt.cla()
-
-                bc.append(bincenters)
-                counts.append(n)
-                nu_bounds.append([freq_min, freq_max])
-                size.append(len(t))
-            except:
-                pass
-        plt.close()
-        return bc, counts, nu_bounds, size
+        mask = np.logical_and(np.abs(x)>freq_min, np.abs(x)<freq_max)
+        t = time[mask]
+        try:
+            n, bins, _ = plt.hist(t, bins=np.logspace(np.log10(min(t)), np.log10(max(t)), nbins), density=True)
+            bincenters = 0.5*(bins[1:] + bins[:-1])
+            plt.close()
+            return bincenters, n
+        except:
+            pass
 
 
 def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds,):
@@ -140,8 +129,13 @@ def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds,):
 
     fig, (ax1, ax2) = plt.subplots(1, 2)
     
-    spec = np.sum(np.sum(np.abs(Jsoln), axis=0), axis=0)
-    ax2.plot(np.cbrt(sigma/p.c1), spec, 'k-', lw=0.5)
+    # Fluence: integral of Pnm with respect to time
+    spec = np.zeros(np.shape(Pnmsoln)[-1])
+    for n in range(1, p.nmax+1):
+        for m in range(nsolnmax):
+            spec += Pnmsoln[n-1, m, :]/ssoln[n-1, m]
+
+    ax2.plot(np.cbrt(sigma[1:]/p.c1), np.abs(spec), 'k-', lw=0.5)
 
     mc_dir = '/home/connor/Documents/lya_analytic/data/1m_tau0_10000000.0_xinit_0.0_temp_10000.0_probabs_0.0/'
 
@@ -157,7 +151,8 @@ def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds,):
         ax2.fill_between(np.cbrt(np.linspace(freq_min, freq_max)/p.c1), 10*np.max(spec), facecolor=line[-1].get_color(), alpha=0.5)
         ax2.fill_between(-np.cbrt(np.linspace(freq_min, freq_max)/p.c1), 10*np.max(spec), facecolor=line[-1].get_color(), alpha=0.5)
 
-        x, y, _, _ = mc_wait_time(mc_dir, bounds, p)
+        xbounds = np.cbrt(np.array([freq_min, freq_max])/p.c1)
+        x, y, = mc_wait_time(mc_dir, xbounds, p)
         ax1.scatter(x, y, facecolor=line[-1].get_color(), s=1)
 
     xlim = np.max(np.cbrt(np.array(bounds)/p.c1))
@@ -195,7 +190,7 @@ def dEdnudt(t,sigma,ssoln,Jsoln,p):
 
 def main():
 
-  array = np.load('./eigenmode_data_xinit0.0_tau1e8_nmax12_nsolnmax30.npy',\
+  array = np.load('./eigenmode_data_xinit0.0_tau1e7.npy',\
                   allow_pickle=True, fix_imports=True, )
   energy = array[0]
   temp = array[1]
@@ -204,21 +199,22 @@ def main():
   alpha_abs = array[4]
   prob_dest = array[5]
   xsource = array[6]
-  nmax = array[7]
+  nmax = array[7]-1
   nsigma = array[8]
   nomega = array[9]
   tdiff = array[10]
   sigma = array[11]
-  ssoln = array[12]
-  Jsoln = array[13]
+  ssoln = array[12][1:]
+  Jsoln = array[13][1:]
   p = parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax)
 
   Pnmsoln = get_Pnm(ssoln,sigma,Jsoln,p)
   times = p.radius/fc.clight * np.arange(0.1,140.0,0.1)
 #  wait_time_dist = wait_time_vs_time(ssoln,Pnmsoln,times,p)
 
-  peak = 60
-  x_bounds = np.array([0, peak/2, peak, 3*peak/2, 160])
+#  peak = 60
+#  x_bounds = np.array([0, peak/2, peak, 3*peak/2, 160])
+  x_bounds = np.array([0, 15, 30])
   sigma_bounds = p.c1 * x_bounds**3.
 
   wait_time_freq_dependence(ssoln, sigma, Jsoln, Pnmsoln, times, p, sigma_bounds)
