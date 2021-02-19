@@ -131,11 +131,11 @@ def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds,):
     
     # Fluence: integral of Pnm with respect to time
     spec = np.zeros(np.shape(Pnmsoln)[-1])
-    for n in range(1, p.nmax+1):
+    for n in range(1, 4+1):
         for m in range(nsolnmax):
             spec += Pnmsoln[n-1, m, :]/ssoln[n-1, m]
 
-    ax2.plot(np.cbrt(sigma[1:]/p.c1), np.abs(spec), 'k-', lw=0.5)
+    ax2.plot(np.cbrt(sigma[1:]/p.c1), spec, 'k-', lw=0.5)
 
     mc_dir = '/home/connor/Documents/lya_analytic/data/1m_tau0_10000000.0_xinit_0.0_temp_10000.0_probabs_0.0/'
 
@@ -158,7 +158,7 @@ def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds,):
     xlim = np.max(np.cbrt(np.array(bounds)/p.c1))
     ax2.set_xlim(-xlim, xlim)
     ax2.set_ylim(np.min(spec), 10*np.max(spec))
-    ax2.set_yscale('log')
+    #ax2.set_yscale('log')
     ax2.set_title('Spectrum')
     ax2.set_ylabel("$|J(x)|$")
     ax2.set_xlabel('$x$')
