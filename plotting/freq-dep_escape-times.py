@@ -44,10 +44,7 @@ for i in range(len(freqs) - 1):
 
     # Create time histogram data, normalized for this frequency batch
     n, bins, _ = plt.hist(
-        t, bins=np.logspace(
-            np.log10(
-                min(t)), np.log10(
-                max(t)), n_bins), density=True)
+        t, bins=np.logspace(np.log10(min(t)), np.log10(max(t)), n_bins), density=True)
     bincenters = 0.5 * (bins[1:] + bins[:-1])
     plt.cla()
 
