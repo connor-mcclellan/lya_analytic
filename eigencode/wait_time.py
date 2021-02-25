@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import odeint
 from constants import fundconst,lymanalpha
-from efunctions import parameters
+from efunctions import parameters, line_profile
 import pdb
 
 # max number of solutions at each n
@@ -131,9 +131,14 @@ def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds,):
     
     # Fluence: integral of Pnm with respect to time
     spec = np.zeros(np.shape(Pnmsoln)[-1])
-    for n in range(1, 4+1):
+
+
+    # divide by line profile
+    for n in range(1, 6+1):
         for m in range(nsolnmax):
-            spec += Pnmsoln[n-1, m, :]/ssoln[n-1, m]
+            spec += (-1)**n * Pnmsoln[n-1, m, :]/ssoln[n-1, m]
+    phi = line_profile(sigma,p)
+    spec = spec / phi[1:]
 
     ax2.plot(np.cbrt(sigma[1:]/p.c1), spec, 'k-', lw=0.5)
 
