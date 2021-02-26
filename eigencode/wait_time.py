@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from scipy.integrate import odeint
 from constants import fundconst,lymanalpha
 from efunctions import parameters, line_profile
+from scipy.interpolate import interp1d
 import pdb
 
 # max number of solutions at each n
@@ -13,13 +14,13 @@ fc=fundconst()
 la=lymanalpha()
 
 def get_Pnm(ssoln,sigma,Jsoln,p):
-  dsigma=np.diff(sigma)
+  dsigma=np.diff(sigma, prepend=sigma[1]-sigma[0])
   Pnmsoln=np.zeros((p.nmax,nsolnmax,len(dsigma)))
   for k in range(len(dsigma)):
     for n in range(1,p.nmax+1):
       for i in range(nsolnmax):
         Pnmsoln[n-1,i,k] = np.sqrt(1.5) * p.Delta**2 * (16.0*np.pi**2*p.radius/3.0/p.k/p.energy) \
-                           * (-1.0)**(n+1) * Jsoln[n-1,i,k+1] * dsigma[k]
+                           * (-1.0)**(n+1) * Jsoln[n-1,i,k] * dsigma[k]
 
   filename = "damping_times.data"
   fname=open(filename,'w')
@@ -135,15 +136,31 @@ def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds,):
     # Fluence: integral of Pnm with respect to time
     spec = np.zeros(np.shape(Pnmsoln)[-1])
 
-
-    # divide by line profile
     for n in range(1, 6+1):
         for m in range(nsolnmax):
             spec += (-1)**n * Pnmsoln[n-1, m, :]/ssoln[n-1, m]
-    phi = line_profile(sigma,p)
-    spec = spec / phi[1:]
 
-    ax2.plot(np.cbrt(sigma[1:]/p.c1), spec, 'k-', lw=0.5)
+    sigma_to_x = np.cbrt(sigma/p.c1)
+
+    # Make an array of uniformly spaced x-values (min, max, npoints)
+    xuniform = np.linspace(np.min(sigma_to_x), np.max(sigma_to_x), len(sigma_to_x))
+
+    # Find sigma at each x-value
+    sigma_xuniform = (p.c1) * xuniform**3.
+
+    # Calculate line profile at all the x points needed
+    phi = line_profile(sigma, p)
+    phi_xuniform = line_profile(xuniform**3 * p.c1, p)
+
+    # Interpolate solutions from original points
+    spec_interp = interp1d(sigma_to_x, spec * phi)
+
+    # Apply interpolation to uniformly distributed x values, divide by line
+    # profile at those x positions
+    spec_xuniform = spec_interp(xuniform) / phi_xuniform
+
+
+    ax2.plot(xuniform, spec_xuniform, 'k-', lw=0.5)
 
     mc_dir = '/home/connor/Documents/lya_analytic/data/1m_tau0_10000000.0_xinit_0.0_temp_10000.0_probabs_0.0/'
 
@@ -152,7 +169,7 @@ def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds,):
         freq_min = bounds[i]
         freq_max = bounds[i+1]
 
-        Pnm_masked = Pnmsoln[:, :, np.logical_and(np.abs(sigma[1:]) >= freq_min, np.abs(sigma[1:]) <= freq_max)]
+        Pnm_masked = Pnmsoln[:, :, np.logical_and(np.abs(sigma) >= freq_min, np.abs(sigma) <= freq_max)]
 #        line = wait_time_line(ax1, ssoln, Pnm_masked, times, p, nmax=p.nmax, mmax=nsolnmax, alpha=0.5)
 
         xbounds = np.cbrt(np.array([freq_min, freq_max])/p.c1)
