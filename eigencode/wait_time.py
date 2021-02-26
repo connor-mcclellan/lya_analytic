@@ -67,7 +67,7 @@ def get_Pnm(ssoln,sigma,Jsoln,p):
   return Pnmsoln
 
 
-def wait_time_line(ax, ssoln, Pnmsoln, times, p, nmax=6, mmax=20,alpha=0.5):
+def wait_time_line(ax, ssoln, Pnmsoln, times, p, nmax=6, mmax=20,alpha=0.5,norm=None):
     tlc = p.radius/fc.clight
     P = np.zeros(np.shape(times))
     for i, t in enumerate(times):
@@ -75,6 +75,9 @@ def wait_time_line(ax, ssoln, Pnmsoln, times, p, nmax=6, mmax=20,alpha=0.5):
             for m in range(0, mmax):
                 P[i] += np.sum(Pnmsoln[n-1,m,:]) * np.exp(ssoln[n-1,m] * t)
                 # TODO: Normalize positive part of the spectrum to 1
+    if norm is not None:
+        idx = np.argmin(np.abs(times/tlc - norm[0]))
+        P = norm[1] * P/(P[idx]*tlc)
     line = ax.plot(times/tlc,tlc*P,label='({},{})'.format(nmax, mmax), alpha=alpha)
     return line
 
@@ -152,12 +155,13 @@ def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds,):
         Pnm_masked = Pnmsoln[:, :, np.logical_and(np.abs(sigma[1:]) >= freq_min, np.abs(sigma[1:]) <= freq_max)]
 #        line = wait_time_line(ax1, ssoln, Pnm_masked, times, p, nmax=p.nmax, mmax=nsolnmax, alpha=0.5)
 
-        line = wait_time_line(ax1, ssoln, Pnm_masked, times, p, nmax=6, mmax=20, alpha=0.5)
+        xbounds = np.cbrt(np.array([freq_min, freq_max])/p.c1)
+        x, y, = mc_wait_time(mc_dir, xbounds, p)
+        x_at_ymax, ymax = (x[np.argmax(y)-3], y[np.argmax(y)-3])
+        line = wait_time_line(ax1, ssoln, Pnm_masked, times, p, nmax=6, mmax=20, alpha=0.5, norm=[x_at_ymax, ymax])
         ax2.fill_between(np.cbrt(np.linspace(freq_min, freq_max)/p.c1), 10*np.max(spec), facecolor=line[-1].get_color(), alpha=0.5)
         ax2.fill_between(-np.cbrt(np.linspace(freq_min, freq_max)/p.c1), 10*np.max(spec), facecolor=line[-1].get_color(), alpha=0.5)
 
-        xbounds = np.cbrt(np.array([freq_min, freq_max])/p.c1)
-        x, y, = mc_wait_time(mc_dir, xbounds, p)
         ax1.scatter(x, y, facecolor=line[-1].get_color(), s=1)
 
     xlim = np.max(np.cbrt(np.array(bounds)/p.c1))
