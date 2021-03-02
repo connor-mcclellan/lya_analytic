@@ -390,7 +390,7 @@ def main():
   radius=1.e11
   alpha_abs=0.0
   prob_dest=0.0
-  xsource=4.0
+  xsource=12.0
   nmax=6
   nsigma=512
   nomega=10

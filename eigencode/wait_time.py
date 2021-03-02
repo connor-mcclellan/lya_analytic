@@ -6,6 +6,8 @@ from constants import fundconst,lymanalpha
 from efunctions import parameters, line_profile
 from scipy.interpolate import interp1d
 import pdb
+import matplotlib
+matplotlib.rcParams['text.usetex'] = True
 
 # max number of solutions at each n
 nsolnmax=20                                          # maximum number of solutions for each n.
@@ -14,10 +16,9 @@ fc=fundconst()
 la=lymanalpha()
 
 def get_Pnm(ssoln,sigma,Jsoln,p):
-  pdb.set_trace()
-  dsigma=np.diff(1/2*(sigma[:-1]-sigma[1:]), prepend=sigma[1]-sigma[0])
+  midpoints = 0.5*(sigma[1:]+sigma[:-1])
+  dsigma=np.diff(midpoints, prepend=midpoints[0], append=midpoints[-1])
   Pnmsoln=np.zeros((p.nmax,nsolnmax,len(dsigma)))
-
   for k in range(len(dsigma)):
     for n in range(1,p.nmax+1):
       for i in range(nsolnmax):
@@ -84,6 +85,7 @@ def wait_time_line(ax, ssoln, Pnmsoln, times, p, nmax=6, mmax=20,alpha=0.5,norm=
     if label is None:
         label = '({},{})'.format(nmax, mmax)
     line = ax.plot(times/tlc,tlc*P,label=label, alpha=alpha)
+    
     return line
 
 
@@ -144,7 +146,8 @@ def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds,):
     values of the list argument 'bounds'.
     '''
 
-    fig, (ax1, ax2) = plt.subplots(1, 2)
+    fig1, ax1 = plt.subplots(1, 1, figsize=(4.8,5.4))
+    fig2, ax2 = plt.subplots(1, 1, figsize=(4.8,5.4))
 
     # Fluence: integral of Pnm with respect to time
     spec = np.zeros(np.shape(Pnmsoln)[-1])
@@ -175,7 +178,7 @@ def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds,):
     spec_xuniform = spec_interp(xuniform) / phi_xuniform
 
 
-    ax2.plot(xuniform, spec_xuniform, 'k-', lw=0.5)
+    ax2.plot(xuniform, np.abs(spec_xuniform), 'k-', lw=0.5)
 
     mc_dir = '/home/connor/Documents/lya_analytic/data/1m_tau0_10000000.0_xinit_0.0_temp_10000.0_probabs_0.0/'
 
@@ -187,33 +190,54 @@ def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds,):
         Pnm_masked = Pnmsoln[:, :, np.logical_and(np.abs(sigma) >= freq_min, np.abs(sigma) <= freq_max)]
 #        line = wait_time_line(ax1, ssoln, Pnm_masked, times, p, nmax=p.nmax, mmax=nsolnmax, alpha=0.5)
 
-        xbounds = np.cbrt(np.array([freq_min, freq_max])/p.c1)
+        xbounds = np.around(np.cbrt(np.array([freq_min, freq_max])/p.c1))
         t, y, poly = mc_wait_time(mc_dir, xbounds, p)
-        t_at_ymax, ymax = (t[np.argmax(y)+9], y[np.argmax(y)+9])
-        line = wait_time_line(ax1, ssoln, Pnm_masked, times, p, nmax=6, mmax=20, alpha=0.5, norm=[t_at_ymax, ymax])
-        ax2.fill_between(np.cbrt(np.linspace(freq_min, freq_max)/p.c1), 10*np.max(spec), facecolor=line[-1].get_color(), alpha=0.5)
-        ax2.fill_between(-np.cbrt(np.linspace(freq_min, freq_max)/p.c1), 10*np.max(spec), facecolor=line[-1].get_color(), alpha=0.5)
+        t_at_ymax, ymax = (t[np.argmax(y)+0], y[np.argmax(y)+0])
 
-        ax1.scatter(t, y, facecolor=line[-1].get_color(), s=1, label='${:.1f} \exp(-t/{:.1f})$'.format(np.exp(poly[1]), -1/poly[0]))
+        label = r'$\int \sum\limits_{{n=1}}^{{{}}} \sum\limits_{{m=0}}^{{{}}} P_{{nm}}(\sigma)e^{{s_{{nm}}t}}d\sigma$'.format(p.nmax,nsolnmax)      #P[i] += np.sum(Pnmsoln[n-1,m,:]) * np.exp(ssoln[n-1,m] * t)
+
+        line = wait_time_line(ax1, ssoln, Pnm_masked, times, p, nmax=6, mmax=20, alpha=0.5, norm=[t_at_ymax, ymax], label=label)
+        ax2.fill_between(np.cbrt(np.linspace(freq_min, freq_max)/p.c1), 10*np.max(spec), facecolor=line[-1].get_color(), alpha=0.5, label="${} < |x| < {}$".format(*xbounds))
+        ax2.fill_between(-np.cbrt(np.linspace(freq_min, freq_max)/p.c1), 10*np.max(spec), facecolor=line[-1].get_color(), alpha=0.5)
+        ax1.scatter(t, y, facecolor=line[-1].get_color(), s=1, marker='^', label='MC (${} < |x| < {}$)'.format(*xbounds))
         exp_fit = np.exp(poly[1]) * np.exp(poly[0]*times)
-        ax1.plot(times, exp_fit, 'k--', alpha=0.5, lw=0.5)
+        ax1.plot(times, exp_fit, '--', c=line[-1].get_color(), alpha=0.75, lw=1, label='${:.1f} e^{{-t/{:.1f}}}$'.format(np.exp(poly[1]), -1/poly[0]))
+
 
     xlim = np.max(np.cbrt(np.array(bounds)/p.c1))
     ax2.set_xlim(-xlim, xlim)
-    ax2.set_ylim(np.min(spec), 10*np.max(spec))
-    #ax2.set_yscale('log')
-    ax2.set_title('Spectrum')
-    ax2.set_ylabel("$|J(x)|$")
+    
+    ax2.set_ylim(np.min(spec[spec>0]), 10*np.max(spec))
+    ax2.set_yscale('log')
+    ax2.set_ylabel("$|\sum\limits_{{n=1}}^{{{}}} \sum\limits_{{m=0}}^{{{}}} (-1)^n P_{{nm}}(\sigma) / s_{{nm}}|$") #(-1)**n * Pnmsoln[n-1, m, :]/ssoln[n-1, m]
     ax2.set_xlabel('$x$')
 
+    ax2.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=2, frameon=False)
+    box = ax2.get_position()
+    ax2.set_position([box.x0, box.y0+0.01*box.height,
+                     box.width, 0.99*box.height])
+
     ax1.set_ylim(np.min(y[y>0]), 2*np.max(y))
-    ax1.set_xlim(-5, 140)
+    ax1.set_xlim(-5, max(t)+5)
     ax1.legend(loc='best')
     ax1.set_yscale('log')
     ax1.set_xlabel(r'$ct/R$',fontsize=15)
     ax1.set_ylabel('$(R/c)\, P(t)$',fontsize=15)
-    ax1.set_title('Wait Time')
-    plt.tight_layout()
+
+    box = ax1.get_position()
+    ax1.set_position([box.x0, box.y0+0.01*box.height,
+                     box.width, 0.99*box.height])
+
+    # Put a legend below current axis
+    ax1.legend()
+    handles, labels = ax1.get_legend_handles_labels()
+    order = [0, 4, 1, 2, 5, 3]
+    new_handles = [handles[i] for i in order]
+    new_labels = [labels[i] for i in order]
+    ax1.legend(new_handles, new_labels, loc='upper center', bbox_to_anchor=(0.5, -0.2), ncol=2, frameon=False)
+
+    fig1.tight_layout()
+    fig2.tight_layout()
     plt.show()
     plt.savefig('waittime_vs_time_freq.pdf')
     plt.close()   
