@@ -174,7 +174,7 @@ def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds,):
 
         xbounds = np.cbrt(np.array([freq_min, freq_max])/p.c1)
         x, y, = mc_wait_time(mc_dir, xbounds, p)
-        x_at_ymax, ymax = (x[np.argmax(y)-3], y[np.argmax(y)-3])
+        x_at_ymax, ymax = (x[np.argmax(y)+9], y[np.argmax(y)+9])
         line = wait_time_line(ax1, ssoln, Pnm_masked, times, p, nmax=6, mmax=20, alpha=0.5, norm=[x_at_ymax, ymax])
         ax2.fill_between(np.cbrt(np.linspace(freq_min, freq_max)/p.c1), 10*np.max(spec), facecolor=line[-1].get_color(), alpha=0.5)
         ax2.fill_between(-np.cbrt(np.linspace(freq_min, freq_max)/p.c1), 10*np.max(spec), facecolor=line[-1].get_color(), alpha=0.5)
