@@ -16,6 +16,7 @@ la=lymanalpha()
 def get_Pnm(ssoln,sigma,Jsoln,p):
   dsigma=np.diff(sigma, prepend=sigma[1]-sigma[0])
   Pnmsoln=np.zeros((p.nmax,nsolnmax,len(dsigma)))
+  pdb.set_trace()
   for k in range(len(dsigma)):
     for n in range(1,p.nmax+1):
       for i in range(nsolnmax):
@@ -136,7 +137,7 @@ def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds,):
     # Fluence: integral of Pnm with respect to time
     spec = np.zeros(np.shape(Pnmsoln)[-1])
 
-    for n in range(1, 6+1):
+    for n in range(1, p.nmax+1):
         for m in range(nsolnmax):
             spec += (-1)**n * Pnmsoln[n-1, m, :]/ssoln[n-1, m]
 
@@ -219,7 +220,7 @@ def dEdnudt(t,sigma,ssoln,Jsoln,p):
 
 def main():
 
-  array = np.load('./eigenmode_data_xinit0.0_tau1e7.npy',\
+  array = np.load('./eigenmode_data_xinit0.0_tau1e7_nmax6_nsolnmax20.npy',\
                   allow_pickle=True, fix_imports=True, )
   energy = array[0]
   temp = array[1]
