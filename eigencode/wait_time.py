@@ -132,7 +132,7 @@ def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds,):
     '''
 
     fig, (ax1, ax2) = plt.subplots(1, 2)
-    
+
     # Fluence: integral of Pnm with respect to time
     spec = np.zeros(np.shape(Pnmsoln)[-1])
 
@@ -140,10 +140,13 @@ def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds,):
         for m in range(nsolnmax):
             spec += (-1)**n * Pnmsoln[n-1, m, :]/ssoln[n-1, m]
 
+    pdb.set_trace()
     sigma_to_x = np.cbrt(sigma/p.c1)
 
-    # Make an array of uniformly spaced x-values (min, max, npoints)
-    xuniform = np.linspace(np.min(sigma_to_x), np.max(sigma_to_x), len(sigma_to_x))
+    # Make an array of uniformly spaced x-values symmetric about 0 (min, max, npoints)
+    xuniform_l = np.linspace(np.min(sigma_to_x), -0.1, int(len(sigma_to_x)/2))
+    xuniform_r = np.linspace(0.1, np.max(sigma_to_x), int(len(sigma_to_x)/2))
+    xuniform = np.concatenate([xuniform_l, xuniform_r])
 
     # Find sigma at each x-value
     sigma_xuniform = (p.c1) * xuniform**3.
@@ -225,13 +228,13 @@ def main():
   alpha_abs = array[4]
   prob_dest = array[5]
   xsource = array[6]
-  nmax = array[7]-1
+  nmax = array[7]
   nsigma = array[8]
   nomega = array[9]
   tdiff = array[10]
   sigma = array[11]
-  ssoln = array[12][1:]
-  Jsoln = array[13][1:]
+  ssoln = array[12]
+  Jsoln = array[13]
   p = parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax)
 
   Pnmsoln = get_Pnm(ssoln,sigma,Jsoln,p)

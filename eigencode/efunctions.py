@@ -8,7 +8,7 @@ import warnings
 import pdb
 
 # max number of solutions at each n
-nsolnmax=30                                          # maximum number of solutions for each n.
+nsolnmax=20                                          # maximum number of solutions for each n.
 
 # integration accuracy
 relative_tol=1.e-10 # 1.49012e-8
@@ -108,7 +108,7 @@ def one_s_value(n,s,p, debug=False, trace=False):
   # Add one extra sigma because a single duplicated datapoint will be removed later
   # The -1e-3 is to ensure the last data point, which is equal to sigma_right,
   # does not end up in a bin all by itself
-  naive_array = np.linspace(sigma_left, sigma_right-1e-3, p.nsigma+1)
+  naive_array = np.linspace(sigma_left, sigma_right-1e-3, p.nsigma)
 
   # Bin this evenly-spaced array into the integration ranges we found earlier
   # These are the indices that specify which bin the data points fall into:
@@ -118,10 +118,10 @@ def one_s_value(n,s,p, debug=False, trace=False):
   nleft, nmiddle, nright = [len(inds[inds==i]) for i in range(1, 4)]
 
   # For a nonzero source, make sure that the middle grid has enough points
-  if nmiddle < 3 and p.sigmas != 0.:
+  if nmiddle < 4 and p.sigmas != 0.:
       warnings.warn('Middle grid is critically undersampled. Replacing with minimum of 3 points.')
-      nmiddle += 3
-      nright -= 1  # Make room for the new points
+      nmiddle += 4
+      nright -= 2  # Make room for the new points
       nleft -= 2
 
   ### Create grids
@@ -135,7 +135,6 @@ def one_s_value(n,s,p, debug=False, trace=False):
   # Right grid goes from sigma_right to whichever is larger: source, or 0
   # Its values are always ordered decreasingly
   rightgrid = np.linspace(sigma_right, max(0, p.sigmas), nright)
-
   # Set an offset applied about source
   # This helps resolve the dJ discontinuity better. If it is not large enough,
   # the integrator will not be deterministic near the source
@@ -163,7 +162,7 @@ def one_s_value(n,s,p, debug=False, trace=False):
   dJleft=sol[:,1]
   A=Jleft[-1]    # Set matrix coefficient equal to Jleft's rightmost value
   B=dJleft[-1]
-  pdb.set_trace()
+
 
   # leftward integration
   J=1.0
@@ -233,22 +232,22 @@ def one_s_value(n,s,p, debug=False, trace=False):
       Jmiddle = Jmiddle[::-1]
       dJmiddle = dJmiddle[::-1]
 
-      # Remove duplicated point at 0
-      Jright = Jright[:-1]
-      dJright = dJright[:-1]
-      rightgrid = rightgrid[:-1]
+#      # Remove duplicated point at 0
+#      Jright = Jright[:-1]
+#      dJright = dJright[:-1]
+#      rightgrid = rightgrid[:-1]
 
-  elif p.sigmas > 0.:
+#  elif p.sigmas > 0.:
       # Remove duplicated point at 0
-      Jleft = Jleft[:-1]
-      dJleft = dJleft[:-1]
-      leftgrid = leftgrid[:-1]
+#      Jleft = Jleft[:-1]
+#      dJleft = dJleft[:-1]
+#      leftgrid = leftgrid[:-1]
       
-  else:
+#  else:
       # Remove duplicated point at 0
-      Jright = Jright[:-1]
-      dJright = dJright[:-1]
-      rightgrid = rightgrid[:-1]
+#      Jright = Jright[:-1]
+#      dJright = dJright[:-1]
+#      rightgrid = rightgrid[:-1]
 
   # combine left, middle, and right in one array
   try:
@@ -259,6 +258,10 @@ def one_s_value(n,s,p, debug=False, trace=False):
       sigma=np.concatenate((leftgrid, rightgrid[::-1]))
       J = np.concatenate((Jleft, Jright[::-1]))
       dJ = np.concatenate((dJleft, dJright[::-1]))
+  if np.isnan(np.sum(np.abs(J))):
+      plt.plot(sigma, np.abs(J))
+      plt.title('n={}'.format(n))
+      plt.show()
   return sigma,J,dJ
 
 
@@ -347,8 +350,8 @@ def sweep(s,p):
 
   Jsoln=np.zeros((p.nmax,nsolnmax,p.nsigma))
   ssoln=np.zeros((p.nmax,nsolnmax))
-#  for n in range(1,p.nmax+1):
-  for n in range(7,p.nmax):
+  for n in range(1,p.nmax+1):
+#  for n in range(7,p.nmax):
     print ("n=",n)
     nsoln=-1
 #    nsoln=7
@@ -381,12 +384,12 @@ def main():
   # choices
   energy=1.e0
   temp=1.e4
-  tau0=1.e8
+  tau0=1.e7
   radius=1.e11
   alpha_abs=0.0
   prob_dest=0.0
   xsource=0.0
-  nmax=12+1
+  nmax=6
   nsigma=512
   nomega=10
   p = parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax)
@@ -397,7 +400,7 @@ def main():
   sigma,ssoln,Jsoln=sweep(s,p)
 
   output_data = np.array([energy,temp,tau0,radius,alpha_abs,prob_dest,xsource,nmax,nsigma,nomega,tdiff,sigma,ssoln,Jsoln])
-  np.save('./eigenmode_data_xinit0.0_tau1e8_nmax12_nsolnmax30.npy',output_data,allow_pickle=True, fix_imports=True)
+  np.save('./eigenmode_data_xinit0.0_tau1e7_nmax6_nsolnmax20.npy',output_data,allow_pickle=True, fix_imports=True)
   
 
 if __name__ == "__main__":
