@@ -144,7 +144,7 @@ def one_s_value(n,s,p, debug=False, trace=False):
       offset = np.abs(leftgrid[-2]-leftgrid[-1])/2.
   if len(middlegrid) != 0 and offset > np.diff(middlegrid)[0]:
       offset = np.diff(middlegrid)[0]/2
-  pdb.set_trace()
+
   if p.sigmas < 0.:
     middlegrid[0] -= offset
     leftgrid[-1] -= offset
@@ -185,7 +185,7 @@ def one_s_value(n,s,p, debug=False, trace=False):
       J = Jleft[-1]
       dJ = dJleft[-1]
       y_start = np.array((J, dJ))
-      pdb.set_trace()
+
       # Find solution in middle region
       sol = integrate(middlegrid, y_start, n, s, p)
       Jmiddle=sol[:, 0]
@@ -390,7 +390,7 @@ def main():
   radius=1.e11
   alpha_abs=0.0
   prob_dest=0.0
-  xsource=2.0
+  xsource=4.0
   nmax=6
   nsigma=512
   nomega=10
@@ -402,7 +402,7 @@ def main():
   sigma,ssoln,Jsoln=sweep(s,p)
 
   output_data = np.array([energy,temp,tau0,radius,alpha_abs,prob_dest,xsource,nmax,nsigma,nomega,tdiff,sigma,ssoln,Jsoln])
-  np.save('./eigenmode_data_xinit2.0_tau1e7_nmax6_nsolnmax20.npy',output_data,allow_pickle=True, fix_imports=True)
+  np.save('./eigenmode_data_xinit{:.1f}_tau1e7_nmax6_nsolnmax20.npy'.format(xsource),output_data,allow_pickle=True, fix_imports=True)
   
 
 if __name__ == "__main__":

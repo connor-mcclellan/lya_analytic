@@ -14,9 +14,10 @@ fc=fundconst()
 la=lymanalpha()
 
 def get_Pnm(ssoln,sigma,Jsoln,p):
-  dsigma=np.diff(sigma, prepend=sigma[1]-sigma[0])
-  Pnmsoln=np.zeros((p.nmax,nsolnmax,len(dsigma)))
   pdb.set_trace()
+  dsigma=np.diff(1/2*(sigma[:-1]-sigma[1:]), prepend=sigma[1]-sigma[0])
+  Pnmsoln=np.zeros((p.nmax,nsolnmax,len(dsigma)))
+
   for k in range(len(dsigma)):
     for n in range(1,p.nmax+1):
       for i in range(nsolnmax):
@@ -69,7 +70,7 @@ def get_Pnm(ssoln,sigma,Jsoln,p):
   return Pnmsoln
 
 
-def wait_time_line(ax, ssoln, Pnmsoln, times, p, nmax=6, mmax=20,alpha=0.5,norm=None):
+def wait_time_line(ax, ssoln, Pnmsoln, times, p, nmax=6, mmax=20,alpha=0.5,norm=None,label=None):
     tlc = p.radius/fc.clight
     P = np.zeros(np.shape(times))
     for i, t in enumerate(times):
@@ -80,7 +81,9 @@ def wait_time_line(ax, ssoln, Pnmsoln, times, p, nmax=6, mmax=20,alpha=0.5,norm=
     if norm is not None:
         idx = np.argmin(np.abs(times/tlc - norm[0]))
         P = norm[1] * P/(P[idx]*tlc)
-    line = ax.plot(times/tlc,tlc*P,label='({},{})'.format(nmax, mmax), alpha=alpha)
+    if label is None:
+        label = '({},{})'.format(nmax, mmax)
+    line = ax.plot(times/tlc,tlc*P,label=label, alpha=alpha)
     return line
 
 
@@ -120,10 +123,19 @@ def mc_wait_time(mc_dir, bounds, p):
             n, bins, _ = plt.hist(t, bins=np.logspace(np.log10(min(t)), np.log10(max(t)), nbins), density=True)
             bincenters = 0.5*(bins[1:] + bins[:-1])
             plt.close()
-            return bincenters, n
+            poly = fit_mc_exp(n, bincenters)
+            return bincenters, n, poly
         except:
             pass
 
+
+def fit_mc_exp(n, t, buff=0):
+    peak_index = np.argmax(n)+buff
+    falloff_n = n[n>0][peak_index:]
+    falloff_t = t[n>0][peak_index:]
+
+    poly = np.polyfit(falloff_t, np.log(falloff_n), 1)
+    return poly
 
 def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds,):
     '''
@@ -141,7 +153,6 @@ def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds,):
         for m in range(nsolnmax):
             spec += (-1)**n * Pnmsoln[n-1, m, :]/ssoln[n-1, m]
 
-    pdb.set_trace()
     sigma_to_x = np.cbrt(sigma/p.c1)
 
     # Make an array of uniformly spaced x-values symmetric about 0 (min, max, npoints)
@@ -177,13 +188,15 @@ def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds,):
 #        line = wait_time_line(ax1, ssoln, Pnm_masked, times, p, nmax=p.nmax, mmax=nsolnmax, alpha=0.5)
 
         xbounds = np.cbrt(np.array([freq_min, freq_max])/p.c1)
-        x, y, = mc_wait_time(mc_dir, xbounds, p)
-        x_at_ymax, ymax = (x[np.argmax(y)+9], y[np.argmax(y)+9])
-        line = wait_time_line(ax1, ssoln, Pnm_masked, times, p, nmax=6, mmax=20, alpha=0.5, norm=[x_at_ymax, ymax])
+        t, y, poly = mc_wait_time(mc_dir, xbounds, p)
+        t_at_ymax, ymax = (t[np.argmax(y)+9], y[np.argmax(y)+9])
+        line = wait_time_line(ax1, ssoln, Pnm_masked, times, p, nmax=6, mmax=20, alpha=0.5, norm=[t_at_ymax, ymax])
         ax2.fill_between(np.cbrt(np.linspace(freq_min, freq_max)/p.c1), 10*np.max(spec), facecolor=line[-1].get_color(), alpha=0.5)
         ax2.fill_between(-np.cbrt(np.linspace(freq_min, freq_max)/p.c1), 10*np.max(spec), facecolor=line[-1].get_color(), alpha=0.5)
 
-        ax1.scatter(x, y, facecolor=line[-1].get_color(), s=1)
+        ax1.scatter(t, y, facecolor=line[-1].get_color(), s=1, label='${:.1f} \exp(-t/{:.1f})$'.format(np.exp(poly[1]), -1/poly[0]))
+        exp_fit = np.exp(poly[1]) * np.exp(poly[0]*times)
+        ax1.plot(times, exp_fit, 'k--', alpha=0.5, lw=0.5)
 
     xlim = np.max(np.cbrt(np.array(bounds)/p.c1))
     ax2.set_xlim(-xlim, xlim)
@@ -193,6 +206,8 @@ def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds,):
     ax2.set_ylabel("$|J(x)|$")
     ax2.set_xlabel('$x$')
 
+    ax1.set_ylim(np.min(y[y>0]), 2*np.max(y))
+    ax1.set_xlim(-5, 140)
     ax1.legend(loc='best')
     ax1.set_yscale('log')
     ax1.set_xlabel(r'$ct/R$',fontsize=15)
