@@ -99,7 +99,7 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
   for k, nmax in enumerate(n_upper_lims):
       plt.figure()
       for mmax in m_upper_lims:
-          wait_time_line(plt, ssoln, Pnmsoln, times, p, nmax=nmax, mmax=mmax, alpha=alpha)
+          wait_time_line(plt, ssoln, Pnmsoln, times, p, nmax=nmax, mmax=mmax, alpha=0.5)
       plt.legend(loc='best')
       plt.yscale('log')
       plt.xlabel(r'$ct/R$',fontsize=15)
@@ -145,6 +145,34 @@ def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds,):
     split into ranges of frequency. The ranges are constructed between the 
     values of the list argument 'bounds'.
     '''
+
+
+    ### EIGENFUNCTION VISUALISATION: FOR AESTHETICS ONLY!
+    from scipy.interpolate import make_interp_spline, BSpline
+    import matplotlib.pylab as pl
+    colors = pl.cm.viridis_r(np.linspace(0,1,p.nmax*nsolnmax))
+
+    fig, ax = plt.subplots()
+    for n in reversed(range(1, p.nmax+1)):
+        for m in reversed(range(nsolnmax)):
+            q = nsolnmax*(n-1)+m
+            fine_sigma = np.linspace(-1.2e8, 1.2e8, len(sigma)*100)
+            Jinterp = make_interp_spline(sigma, Jsoln[n-1, m, :], k=3)
+
+#            fine_sigma = np.concatenate([fine_sigma, np.flip(fine_sigma)[1:]])
+#            Jinterp = np.concatenate([Jinterp, np.flip(Jinterp)[1:]])
+
+            ax.plot(fine_sigma, Jinterp(fine_sigma), label='({},{})'.format(n, m), alpha=1-q/(nsolnmax*p.nmax)/2, lw=1.5, color=colors[q]) #0.75 - (n/p.nmax + (m+1)/nsolnmax)/2/2
+    
+    fig.patch.set_visible(False)
+    ax.axis('off')
+    plt.xlim(-1.2e8, 1.2e8)
+    plt.ylim(-3.65e-35, 6.49e-35)
+    plt.subplots_adjust(top=1, bottom=0, left=0, right=1)
+#    plt.savefig('eigenfunctions_xs={:04.1f}.png'.format(p.xsource), )
+    plt.show()
+    exit()
+
 
     fig1, ax1 = plt.subplots(1, 1, figsize=(4.8,5.4))
     fig2, ax2 = plt.subplots(1, 1, figsize=(4.8,5.4))
@@ -259,35 +287,41 @@ def dEdnudt(t,sigma,ssoln,Jsoln,p):
 
 def main():
 
-  array = np.load('./eigenmode_data_xinit0.0_tau1e7_nmax6_nsolnmax20.npy',\
-                  allow_pickle=True, fix_imports=True, )
-  energy = array[0]
-  temp = array[1]
-  tau0 = array[2]
-  radius = array[3]
-  alpha_abs = array[4]
-  prob_dest = array[5]
-  xsource = array[6]
-  nmax = array[7]
-  nsigma = array[8]
-  nomega = array[9]
-  tdiff = array[10]
-  sigma = array[11]
-  ssoln = array[12]
-  Jsoln = array[13]
-  p = parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax)
 
-  Pnmsoln = get_Pnm(ssoln,sigma,Jsoln,p)
-  times = p.radius/fc.clight * np.arange(0.1,140.0,0.1)
-#  wait_time_dist = wait_time_vs_time(ssoln,Pnmsoln,times,p)
+  filenames = [
+              './eigenmode_data_xinit0.0_tau1e7_nmax6_nsolnmax20.npy',
+              ]
 
-#  peak = 60
-#  x_bounds = np.array([0, peak/2, peak, 3*peak/2, 160])
-  x_bounds = np.array([0, 15, 30])
-  sigma_bounds = p.c1 * x_bounds**3.
+  for filename in filenames:
+      array = np.load(filename, allow_pickle=True, fix_imports=True, )
+      energy = array[0]
+      temp = array[1]
+      tau0 = array[2]
+      radius = array[3]
+      alpha_abs = array[4]
+      prob_dest = array[5]
+      xsource = array[6]
+      nmax = array[7]
+      nsigma = array[8]
+      nomega = array[9]
+      tdiff = array[10]
+      sigma = array[11]
+      ssoln = array[12]
+      Jsoln = array[13]
+      p = parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax)
 
-  wait_time_freq_dependence(ssoln, sigma, Jsoln, Pnmsoln, times, p, sigma_bounds)
+      Pnmsoln = get_Pnm(ssoln,sigma,Jsoln,p)
+      times = p.radius/fc.clight * np.arange(0.1,140.0,0.1)
+#      wait_time_dist = wait_time_vs_time(ssoln,Pnmsoln,times,p)
 
+    #  peak = 60
+    #  x_bounds = np.array([0, peak/2, peak, 3*peak/2, 160])
+      x_bounds = np.array([0, 15, 30])
+      sigma_bounds = p.c1 * x_bounds**3.
+
+      wait_time_freq_dependence(ssoln, sigma, Jsoln, Pnmsoln, times, p, sigma_bounds)
+
+plt.show()
 #  print('Optical Depth =', tau0)
 #  print('Peak at ct/R =', fc.clight/p.radius * times[np.argmax(wait_time_dist)])
 #  print('t_c =', 1/(-ssoln[0][0]))
