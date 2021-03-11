@@ -1,17 +1,16 @@
-
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import odeint
 from constants import fundconst,lymanalpha
 from efunctions import parameters, line_profile
+from mc_visual import fit_mc_exp, mc_wait_time
 from scipy.interpolate import interp1d
 import pdb
 import matplotlib
 matplotlib.rcParams['text.usetex'] = True
 
 # max number of solutions at each n
-nsolnmax=20                                          # maximum number of solutions for each n.
-
+nsolnmax=20
 fc=fundconst()
 la=lymanalpha()
 
@@ -31,11 +30,10 @@ def get_Pnm(ssoln,sigma,Jsoln,p):
         Pnmsoln[n-1,i,k] = np.sqrt(1.5) * p.Delta**2 * (16.0*np.pi**2*p.radius/3.0/p.k/p.energy) \
                            * (-1.0)**(n+1) * Jsoln[n-1,i,k] * dsigma[k]
 
-  filename = "damping_times.data"
+  filename = "./data/damping_times.data"
   fname=open(filename,'w')
   fname.write('%5s\t%5s\t%10s\t%10s\t%10s\t%10s\t%10s\n' % ('n','m','s(Hz)','t(s)','Pnm','-Pnm/snm','cumul prob') )
   totalprob=0.0
-  # Normalize probabilities here?
   for n in range(1,p.nmax+1):
     for j in range(nsolnmax):
       if ssoln[n-1,j]==0.0:
@@ -44,7 +42,6 @@ def get_Pnm(ssoln,sigma,Jsoln,p):
       fname.write('%5d\t%5d\t%10.3e\t%10.3e\t%10.3e\t%10.3e\t%10.3e\n' % (n,j,ssoln[n-1,j],-1.0/ssoln[n-1,j],np.sum(Pnmsoln[n-1,j,:]),-np.sum(Pnmsoln[n-1,j,:])/ssoln[n-1,j],totalprob) )
       #print("n,m,snm,- Pnm/ssm,cumulative_prob=",n,j,ssoln[n,j],- Pnmsoln[n-1,j]/ssoln[n,j],totalprob)
   fname.close()
-
   m=np.arange(0,nsolnmax)
 
   plt.figure()
@@ -53,7 +50,7 @@ def get_Pnm(ssoln,sigma,Jsoln,p):
   plt.xlabel('mode number')
   plt.ylabel('decay time(s)')
   plt.legend(loc='best')
-  plt.savefig('t_vs_m.pdf')
+  plt.savefig('./plots/t_vs_m.pdf')
   plt.close()
 
   plt.figure()
@@ -62,7 +59,7 @@ def get_Pnm(ssoln,sigma,Jsoln,p):
   plt.xlabel('mode number')
   plt.ylabel(r'$P_{nm}(s^{-1})$')
   plt.legend(loc='best')
-  plt.savefig('Pnm_vs_m.pdf')
+  plt.savefig('./plots/Pnm_vs_m.pdf')
   plt.close()
 
   plt.figure()
@@ -71,28 +68,10 @@ def get_Pnm(ssoln,sigma,Jsoln,p):
   plt.xlabel('mode number')
   plt.ylabel(r'$-P_{nm}/s_{nm}$')
   plt.legend(loc='best')
-  plt.savefig('Pnm_over_ssm_vs_m.pdf')
+  plt.savefig('./plots/Pnm_over_ssm_vs_m.pdf')
   plt.close()
 
   return Pnmsoln
-
-
-def wait_time_line(ax, ssoln, Pnmsoln, times, p, nmax=6, mmax=20,alpha=0.5,label=None):
-    tlc = p.radius/fc.clight
-    P = np.zeros(np.shape(times))
-    for i, t in enumerate(times):
-        for n in range(1, nmax+1):
-            for m in range(0, mmax):
-                P[i] += np.sum(Pnmsoln[n-1,m,:]) * np.exp(ssoln[n-1,m] * t)
-    rightmost_positive = len(P) - [i for i,v in enumerate(P[::-1]) if v<0][0]
-    dt = midpoint_diff(times)
-    norm = np.sum(dt[rightmost_positive:]*P[rightmost_positive:])
-    P = P/norm
-    if label is None:
-        label = '({},{})'.format(nmax, mmax)
-    line = ax.plot(times/tlc,P*tlc,label=label, alpha=alpha)
-    
-    return line
 
 
 def wait_time_vs_time(ssoln,Pnmsoln,times,p):
@@ -111,40 +90,60 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
       plt.xlabel(r'$ct/R$',fontsize=15)
       plt.ylabel('$(R/c)\, P(t)$',fontsize=15)
       plt.title(titles[k])
-      plt.savefig('waittime_vs_time_n={}.pdf'.format(nmax))
+      plt.savefig('./plots/waittime_vs_time_n={}.pdf'.format(nmax))
       plt.close()
 
 
-def mc_wait_time(ax, mc_dir, bounds, p):
+def wait_time_line(ax, ssoln, Pnmsoln, times, p, nmax=6, mmax=20,alpha=0.5,label=None):
+    '''
+    Produces an analytic line for a wait time distribution using a sum over
+    eigenfunctions. The line is normalized by integrating over the distribution
+    from the right while all values are positive.
+    '''
+    tlc = p.radius/fc.clight
+    P = np.zeros(np.shape(times))
+    for i, t in enumerate(times):
+        for n in range(1, nmax+1):
+            for m in range(0, mmax):
+                P[i] += np.sum(Pnmsoln[n-1,m,:]) * np.exp(ssoln[n-1,m] * t)
+    rightmost_positive = len(P) - [i for i,v in enumerate(P[::-1]) if v<0][0]
+    dt = midpoint_diff(times)
+    norm = np.sum(dt[rightmost_positive:]*P[rightmost_positive:])
+    P = P/norm
+    if label is None:
+        label = '({},{})'.format(nmax, mmax)
+    line = ax.plot(times/tlc,P*tlc,label=label, alpha=alpha)
+    
+    return line
 
-        freq_min, freq_max = bounds # in x units
 
-        plt.figure()
-        mu, x, time = np.load(mc_dir + 'mu_x_time.npy')
-        nbins=64
-        n_x, bins_x, _ = plt.hist(x, bins=nbins, density=True)
-        bincenters_x = 0.5 * (bins_x[1:] + bins_x[:-1])
-        ax.scatter(bincenters_x, n_x, color='k', s=1)
+def eigenmode_visualization(sigma,Jsoln,p):
+    '''
+    Visualise the eigenmodes for a particular set of n and m.
+    '''
 
-        mask = np.logical_and(np.abs(x)>freq_min, np.abs(x)<freq_max)
-        t = time[mask]
-        try:
-            n, bins, _ = plt.hist(t, bins=np.logspace(np.log10(min(t)), np.log10(max(t)), nbins), density=True)
-            bincenters = 0.5*(bins[1:] + bins[:-1])
-            plt.close()
-            poly = fit_mc_exp(n, bincenters)
-            return bincenters, n, poly
-        except:
-            pass
+    from scipy.interpolate import make_interp_spline, BSpline
+    import matplotlib.pylab as pl
+    colors = pl.cm.viridis_r(np.linspace(0,1,p.nmax*nsolnmax))
 
+    fig, ax = plt.subplots()
+    for n in reversed(range(1, p.nmax+1)):
+        for m in reversed(range(nsolnmax)):
+            q = nsolnmax*(n-1)+m
+            fine_sigma = np.linspace(-1.2e8, 1.2e8, len(sigma)*100)
+            Jinterp = make_interp_spline(sigma, Jsoln[n-1, m, :], k=3)
 
-def fit_mc_exp(n, t, buff=0):
-    peak_index = np.argmax(n)+buff
-    falloff_n = n[n>0][peak_index:]
-    falloff_t = t[n>0][peak_index:]
+#            fine_sigma = np.concatenate([fine_sigma, np.flip(fine_sigma)[1:]])
+#            Jinterp = np.concatenate([Jinterp, np.flip(Jinterp)[1:]])
 
-    poly = np.polyfit(falloff_t, np.log(falloff_n), 1)
-    return poly
+            ax.plot(fine_sigma, Jinterp(fine_sigma), label='({},{})'.format(n, m), alpha=1-q/(nsolnmax*p.nmax)/2, lw=1.5, color=colors[q]) #0.75 - (n/p.nmax + (m+1)/nsolnmax)/2/2
+    ax.axis('off')
+    plt.xlim(-1.2e8, 1.2e8)
+    plt.ylim(-3.65e-35, 6.49e-35)
+    plt.subplots_adjust(top=1, bottom=0, left=0, right=1)
+    plt.savefig('eigenfunctions_xs={:04.1f}.png'.format(p.xsource), )
+    plt.show()
+
 
 def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds,):
     '''
@@ -153,41 +152,12 @@ def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds,):
     values of the list argument 'bounds'.
     '''
 
-
-    ### EIGENFUNCTION VISUALISATION: FOR AESTHETICS ONLY!
-#    from scipy.interpolate import make_interp_spline, BSpline
-#    import matplotlib.pylab as pl
-#    colors = pl.cm.viridis_r(np.linspace(0,1,p.nmax*nsolnmax))
-
-#    fig, ax = plt.subplots()
-#    for n in reversed(range(1, p.nmax+1)):
-#        for m in reversed(range(nsolnmax)):
-#            q = nsolnmax*(n-1)+m
-#            fine_sigma = np.linspace(-1.2e8, 1.2e8, len(sigma)*100)
-#            Jinterp = make_interp_spline(sigma, Jsoln[n-1, m, :], k=3)
-
-##            fine_sigma = np.concatenate([fine_sigma, np.flip(fine_sigma)[1:]])
-##            Jinterp = np.concatenate([Jinterp, np.flip(Jinterp)[1:]])
-
-#            ax.plot(fine_sigma, Jinterp(fine_sigma), label='({},{})'.format(n, m), alpha=1-q/(nsolnmax*p.nmax)/2, lw=1.5, color=colors[q]) #0.75 - (n/p.nmax + (m+1)/nsolnmax)/2/2
-    
-    
-#    ax.axis('off')
-#    plt.xlim(-1.2e8, 1.2e8)
-#    plt.ylim(-3.65e-35, 6.49e-35)
-#    plt.subplots_adjust(top=1, bottom=0, left=0, right=1)
-#    plt.savefig('eigenfunctions_xs={:04.1f}.png'.format(p.xsource), )
-#    plt.show()
-#    exit()
-
-
     fig1, ax1 = plt.subplots(1, 1, figsize=(4.8,5.4))
     fig2, ax2 = plt.subplots(1, 1, figsize=(4.8,5.4))
 
     # Fluence: integral of Pnm with respect to time
     spec = np.zeros(np.shape(Pnmsoln)[-1])
     phi = line_profile(sigma, p)
-
     for n in range(1, p.nmax+1):
         for m in range(nsolnmax):
             spec += 16. * np.pi**2 * p.radius * p.Delta / (3.0 * p.k * p.energy) * (-1)**n * Pnmsoln[n-1, m, :]/ssoln[n-1, m]/phi
@@ -212,7 +182,6 @@ def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds,):
     # profile at those x positions
     spec_xuniform = spec_interp(xuniform) / phi_xuniform
 
-
     ax2.plot(xuniform, np.abs(spec_xuniform), 'k-', lw=0.5)
 
     mc_dir = '/home/connor/Documents/lya_analytic/data/1m_tau0_10000000.0_xinit_0.0_temp_10000.0_probabs_0.0/'
@@ -221,57 +190,57 @@ def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds,):
 
         freq_min = bounds[i]
         freq_max = bounds[i+1]
-
-        Pnm_masked = Pnmsoln[:, :, np.logical_and(np.abs(sigma) >= freq_min, np.abs(sigma) <= freq_max)]
-#        line = wait_time_line(ax1, ssoln, Pnm_masked, times, p, nmax=p.nmax, mmax=nsolnmax, alpha=0.5)
-
         xbounds = np.around(np.cbrt(np.array([freq_min, freq_max])/p.c1))
+
+        # Get probability in between frequency bounds
+        Pnm_masked = Pnmsoln[:, :, np.logical_and(np.abs(sigma) >= freq_min, np.abs(sigma) <= freq_max)]
+
+        # Load Monte Carlo data, plot spectrum scatter points and normalize
         t, y, poly = mc_wait_time(ax2, mc_dir, xbounds, p)
         dt = midpoint_diff(t)
         y = y/np.sum(y*dt)
 
+        # Plot analytic escape time distribution
         label = 'Analytic $n_{{max}}={}$ $m_{{max}}={}$'.format(p.nmax,nsolnmax)
-
         line = wait_time_line(ax1, ssoln, Pnm_masked, times, p, nmax=6, mmax=20, alpha=0.5, label=label)
+
+        # Shade spectrum inbetween frequency bounds
         ax2.fill_between(np.cbrt(np.linspace(freq_min, freq_max)/p.c1), 10*np.max(spec), facecolor=line[-1].get_color(), alpha=0.5, label="${} < |x| < {}$".format(*xbounds))
         ax2.fill_between(-np.cbrt(np.linspace(freq_min, freq_max)/p.c1), 10*np.max(spec), facecolor=line[-1].get_color(), alpha=0.5)
+
+        # Plot wait time scatter points
         ax1.scatter(t, y, facecolor=line[-1].get_color(), s=1, marker='^', label='MC (${} < |x| < {}$)'.format(*xbounds))
+
+        # Add exponential fit lines
 #        exp_fit = np.exp(poly[1]) * np.exp(poly[0]*times)
 #        ax1.plot(times, exp_fit, '--', c=line[-1].get_color(), alpha=0.75, lw=1, label='${:.1f} e^{{-t/{:.1f}}}$'.format(np.exp(poly[1]), -1/poly[0]))
         print("mc exp fit: ", np.exp(poly[1]), -1/poly[0])
 
 
+    # Set limits and labels of spectrum plot
     xlim = np.max(np.cbrt(np.array(bounds)/p.c1))
     ax2.set_xlim(-xlim, xlim)
-    
     ax2.set_ylim(np.min(spec[spec>0]), 10*np.max(spec))
     ax2.set_yscale('log')
     ax2.set_ylabel(r"$E_\nu$")
     ax2.set_xlabel('$x$')
-
     ax2.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=2, frameon=False)
     box = ax2.get_position()
     ax2.set_position([box.x0, box.y0+0.01*box.height,
                      box.width, 0.99*box.height])
 
+    # Set limits and labels of escape time plot
     ax1.set_ylim(np.min(y[y>0]), 2*np.max(y))
     ax1.set_xlim(-5, max(t)+5)
-#    ax1.legend(loc='best')
     ax1.set_yscale('log')
     ax1.set_xlabel(r'$ct/R$',fontsize=15)
     ax1.set_ylabel('$(R/c)\, P(t)$',fontsize=15)
 
-#    box = ax1.get_position()
-#    ax1.set_position([box.x0, box.y0+0.01*box.height,
-#                     box.width, 0.99*box.height])
-
-    # Put a legend below current axis
-#    ax1.legend(loc='upper center', bbox_to_anchor=(0.5, -0.2), ncol=2, frameon=False)
-
+    # Formatting & output
     fig1.tight_layout()
     fig2.tight_layout()
     plt.show()
-    plt.savefig('waittime_vs_time_freq.pdf')
+    plt.savefig('./plots/waittime_vs_time_freq.pdf')
     plt.close()   
 
 
@@ -290,12 +259,9 @@ def dEdnudt(t,sigma,ssoln,Jsoln,p):
 
 
 def main():
-
-
   filenames = [
-              './eigenmode_data_xinit0.0_tau1e7_nmax6_nsolnmax20.npy',
+              './data/eigenmode_data_xinit0.0_tau1e7_nmax6_nsolnmax20.npy',
               ]
-
   for filename in filenames:
       array = np.load(filename, allow_pickle=True, fix_imports=True, )
       energy = array[0]
@@ -316,7 +282,7 @@ def main():
 
       Pnmsoln = get_Pnm(ssoln,sigma,Jsoln,p)
       times = p.radius/fc.clight * np.arange(0.1,140.0,0.1)
-#      wait_time_dist = wait_time_vs_time(ssoln,Pnmsoln,times,p)
+#      wait_time_dist = wait_time_vs_time(ssoln,Pnmsoln,times,p) # Uncomment to produce Phil's plots
 
     #  peak = 60
     #  x_bounds = np.array([0, peak/2, peak, 3*peak/2, 160])
@@ -331,4 +297,4 @@ plt.show()
 #  print('t_c =', 1/(-ssoln[0][0]))
 
 if __name__ == "__main__":
-  main()
+    main()
