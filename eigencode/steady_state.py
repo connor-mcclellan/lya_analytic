@@ -29,16 +29,18 @@ def fluence(sigma, p, Pnmsoln=None):
     phi = line_profile(sigma, p)
 
     if Pnmsoln is None:
+        # STEADY STATE SOLUTION
         for n in range(1, p.nmax+1):
             spec[n-1] = (
                         -np.sqrt(6) * np.pi / 3. / p.k / p.Delta / phi 
                         * p.energy / p.radius * n * (-1)**n 
-                        * np.exp(-n * np.pi * p.Delta / p.k / p.radius * sigma)
+                        * np.exp(-n * np.pi * p.Delta / p.k / p.radius * np.abs(sigma))
                         )
             spec_interp = interp1d(sigma_to_x, spec[n-1] * phi)
             spec_xuniform[n-1] = spec_interp(xuniform) / phi_xuniform
 
     else:
+        # TIME DEPENDENT SOLUTION
         for n in range(1, p.nmax+1):
             for m in range(nsolnmax):
                 spec[n-1] += (
