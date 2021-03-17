@@ -9,6 +9,7 @@ import numpy as np
 import pdb
 nsolnmax=20
 
+
 def generate_xuniform(sigma, p):
     sigma_to_x = np.cbrt(sigma/p.c1)
     xuniform_l = np.linspace(np.min(sigma_to_x), -0.1, int(len(sigma_to_x)/2))
@@ -66,7 +67,8 @@ if __name__ == '__main__':
     alpha_abs = array[4]
     prob_dest = array[5]
     xsource = array[6]
-    nmax = array[7]
+#    nmax = array[7]
+    nmax = 18
     nsigma = array[8]
     nomega = array[9]
     tdiff = array[10]
@@ -74,25 +76,43 @@ if __name__ == '__main__':
     ssoln = array[12]
     Jsoln = array[13]
     p = parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax)
-    Pnmsoln = get_Pnm(ssoln,sigma,Jsoln,p)
+#    Pnmsoln = get_Pnm(ssoln,sigma,Jsoln,p)
 
-    x_t, tdep_spec = fluence(sigma, p, Pnmsoln=Pnmsoln)
-    x_t_10, tdep_spec_10 = fluence(sigma, p, Pnmsoln=Pnmsoln, mmax=10)
+#    x_t, tdep_spec = fluence(sigma, p, Pnmsoln=Pnmsoln)
+#    x_t_10, tdep_spec_10 = fluence(sigma, p, Pnmsoln=Pnmsoln, mmax=10)
     x_s, steady_state = fluence(sigma, p)
-
-
+    '''
+    fig, ax = plt.subplots(1, 1)
     for n in range(1, p.nmax+1):
-        fig, ax = plt.subplots(1, 1)
-        norm = np.abs(tdep_spec[n-1][256]/steady_state[n-1][256])
-        ax.plot(x_t, np.abs(tdep_spec[n-1]), 'r--', alpha=0.7, label='time dependent, mmax=20')
-        ax.plot(x_t_10, np.abs(tdep_spec_10[n-1]), 'm--', alpha=0.7, label='time dependent, mmaxx=10')
+        norm = 1.#np.abs(tdep_spec[n-1][256]/steady_state[n-1][256])
+#        ax.plot(x_t, np.abs(tdep_spec[n-1]), 'r--', alpha=0.7, label='time dependent, mmax=20')
+#        ax.plot(x_t_10, np.abs(tdep_spec_10[n-1]), 'm--', alpha=0.7, label='time dependent, mmaxx=10')
         ax.plot(x_s, norm*np.abs(steady_state[n-1]), '-', alpha=0.7, label='steady state n={}'.format(n))
         print(norm)
-        plt.yscale('log')
-        plt.title('n={}'.format(n))
-        plt.legend()
-        plt.tight_layout()
-        plt.show()
+    plt.yscale('log')
+    plt.title('n={}'.format(n))
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+    '''
+    import matplotlib.pylab as pl
+    fig, ax = plt.subplots(1, 1)
+    colors = pl.cm.jet(np.linspace(0,1,p.nmax))
+
+    for n in range(1, p.nmax+1):
+        #y = np.sum(steady_state[:n], axis=0)
+        y = np.abs(steady_state[n-1])
+        if n%2==0:
+            ls='--'
+        else:
+            ls='-'
+        ax.plot(x_s, y, ls, c=colors[n-1], alpha=0.5)
+    sm = plt.cm.ScalarMappable(cmap=pl.cm.jet, norm=plt.Normalize(vmin=1, vmax=p.nmax))
+    cbar=plt.colorbar(sm)
+    cbar.ax.set_ylabel('n')
+    plt.yscale('log')
+    plt.tight_layout()
+    plt.show()
         
 
 
