@@ -17,7 +17,7 @@ def generate_xuniform(sigma, p):
     return xuniform, sigma_to_x
 
 
-def fluence(sigma, p, Pnmsoln=None):
+def fluence(sigma, p, Pnmsoln=None, mmax=20):
     '''
     Calculates the fluence or luminosity by spatial eigenmode.
     '''
@@ -31,6 +31,8 @@ def fluence(sigma, p, Pnmsoln=None):
     if Pnmsoln is None:
         # STEADY STATE SOLUTION
         for n in range(1, p.nmax+1):
+
+#            spec[n-1:] =  (
             spec[n-1] = (
                         -np.sqrt(6) * np.pi / 3. / p.k / p.Delta / phi 
                         * p.energy / p.radius * n * (-1)**n 
@@ -42,7 +44,7 @@ def fluence(sigma, p, Pnmsoln=None):
     else:
         # TIME DEPENDENT SOLUTION
         for n in range(1, p.nmax+1):
-            for m in range(nsolnmax):
+            for m in range(mmax):
                 spec[n-1] += (
                              16. * np.pi**2 * p.radius * p.Delta 
                              / (3.0 * p.k * p.energy) * (-1)**n 
@@ -75,14 +77,20 @@ if __name__ == '__main__':
     Pnmsoln = get_Pnm(ssoln,sigma,Jsoln,p)
 
     x_t, tdep_spec = fluence(sigma, p, Pnmsoln=Pnmsoln)
+    x_t_10, tdep_spec_10 = fluence(sigma, p, Pnmsoln=Pnmsoln, mmax=10)
     x_s, steady_state = fluence(sigma, p)
+
 
     for n in range(1, p.nmax+1):
         fig, ax = plt.subplots(1, 1)
-        ax.plot(x_t, np.abs(tdep_spec[n-1]), 'r--', alpha=0.7, label='time dependent')
-        ax.plot(x_s, np.abs(steady_state[n-1]), 'b--', alpha=0.7, label='steady state')
+        norm = np.abs(tdep_spec[n-1][256]/steady_state[n-1][256])
+        ax.plot(x_t, np.abs(tdep_spec[n-1]), 'r--', alpha=0.7, label='time dependent, mmax=20')
+        ax.plot(x_t_10, np.abs(tdep_spec_10[n-1]), 'm--', alpha=0.7, label='time dependent, mmaxx=10')
+        ax.plot(x_s, norm*np.abs(steady_state[n-1]), '-', alpha=0.7, label='steady state n={}'.format(n))
+        print(norm)
         plt.yscale('log')
         plt.title('n={}'.format(n))
+        plt.legend()
         plt.tight_layout()
         plt.show()
         
