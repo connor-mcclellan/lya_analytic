@@ -176,11 +176,11 @@ def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds,):
     phi_xuniform = line_profile(xuniform**3 * p.c1, p)
 
     # Interpolate solutions from original points
-    spec_interp = interp1d(sigma_to_x, spec * phi)
+    spec_interp = interp1d(sigma_to_x, np.log(spec * phi)) # TODO: Interpolate over log space instead
 
     # Apply interpolation to uniformly distributed x values, divide by line
     # profile at those x positions
-    spec_xuniform = spec_interp(xuniform) / phi_xuniform
+    spec_xuniform = np.exp(spec_interp(xuniform)) / phi_xuniform
 
     ax2.plot(xuniform, np.abs(spec_xuniform), 'k-', lw=0.5)
 

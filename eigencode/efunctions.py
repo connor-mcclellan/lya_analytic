@@ -88,6 +88,10 @@ def one_s_value(n,s,p, debug=False, trace=False):
   sigma_left = -50.0*p.tau0   # Used to be 80
   sigma_right = 50.0*p.tau0
 
+  gam_0 = n**2 * fc.clight
+#  sigma_tp = 
+
+
 # while np.abs(term2/term1) < 1.0:
 #     increase sigma width by some increment
 

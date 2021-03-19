@@ -3,7 +3,7 @@
 
 from wait_time import get_Pnm
 from efunctions import parameters, line_profile
-from scipy.interpolate import interp1d
+from scipy.interpolate import interp1d, CubicSpline
 import matplotlib.pyplot as plt
 import numpy as np
 import pdb
@@ -23,7 +23,8 @@ def fluence(sigma, p, Pnmsoln=None, mmax=20):
     Calculates the fluence or luminosity by spatial eigenmode.
     '''
     xuniform, sigma_to_x = generate_xuniform(sigma, p)
-    phi_xuniform = line_profile(xuniform**3 * p.c1, p)
+    sigma_xuniform = xuniform**3 * p.c1
+    phi_xuniform = line_profile(sigma_xuniform, p)
 
     spec = np.zeros((p.nmax, np.shape(sigma)[0]))
     spec_xuniform = np.zeros((p.nmax, np.shape(xuniform)[0]))
@@ -35,11 +36,11 @@ def fluence(sigma, p, Pnmsoln=None, mmax=20):
 
 #            spec[n-1:] =  (
             spec[n-1] = (
-                        -np.sqrt(6) * np.pi / 3. / p.k / p.Delta / phi 
+                        -np.sqrt(6) * np.pi / 3. / p.k / p.Delta / phi
                         * p.energy / p.radius * n * (-1)**n 
                         * np.exp(-n * np.pi * p.Delta / p.k / p.radius * np.abs(sigma))
                         )
-            spec_interp = interp1d(sigma_to_x, spec[n-1] * phi)
+            spec_interp = CubicSpline(sigma_to_x, spec[n-1] * phi) # Interpolate the SUM instead, not here for each mode
             spec_xuniform[n-1] = spec_interp(xuniform) / phi_xuniform
 
     else:
@@ -51,11 +52,11 @@ def fluence(sigma, p, Pnmsoln=None, mmax=20):
                              / (3.0 * p.k * p.energy) * (-1)**n 
                              * Pnmsoln[n-1, m, :] / ssoln[n-1, m] / phi
                              )
-                spec_interp = interp1d(sigma_to_x, spec[n-1] * phi)
-                spec_xuniform[n-1] = spec_interp(xuniform) / phi_xuniform
+            spec_interp = interp1d(sigma_to_x, spec[n-1] * phi) #TODO: Move this outside the loop
+            spec_xuniform[n-1] = spec_interp(xuniform) / phi_xuniform
 
     return xuniform, spec_xuniform
-
+#    return sigma, spec
 
 if __name__ == '__main__':
     filename = './data/eigenmode_data_xinit0.0_tau1e7_nmax6_nsolnmax20.npy'
@@ -68,7 +69,7 @@ if __name__ == '__main__':
     prob_dest = array[5]
     xsource = array[6]
 #    nmax = array[7]
-    nmax = 18
+    nmax = 1010
     nsigma = array[8]
     nomega = array[9]
     tdiff = array[10]
@@ -99,18 +100,20 @@ if __name__ == '__main__':
     fig, ax = plt.subplots(1, 1)
     colors = pl.cm.jet(np.linspace(0,1,p.nmax))
 
-    for n in range(1, p.nmax+1):
+    for n in range(10, p.nmax, 25):
         #y = np.sum(steady_state[:n], axis=0)
         y = np.abs(steady_state[n-1])
         if n%2==0:
             ls='--'
         else:
             ls='-'
-        ax.plot(x_s, y, ls, c=colors[n-1], alpha=0.5)
+        ax.plot(x_s, y, ls, lw=1, marker='o', ms=1, c=colors[n-1], alpha=0.5)
     sm = plt.cm.ScalarMappable(cmap=pl.cm.jet, norm=plt.Normalize(vmin=1, vmax=p.nmax))
     cbar=plt.colorbar(sm)
     cbar.ax.set_ylabel('n')
     plt.yscale('log')
+#    plt.xscale('log')
+    plt.xlabel('$x$')
     plt.tight_layout()
     plt.show()
         
