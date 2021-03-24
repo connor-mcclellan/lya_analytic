@@ -1,7 +1,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.integrate import odeint
+from scipy.integrate import solve_ivp
 from constants import fundconst,lymanalpha
 #from rk import rk
 import warnings
@@ -63,7 +63,7 @@ def func(sigma, y, args):
 '''
 
 # Differential equation for odeint
-def func(y,sigma,n,s,p):
+def func(sigma,y,n,s,p):
   J = y[0]
   dJ = y[1]
   phi=line_profile(sigma,p)
@@ -78,23 +78,21 @@ def func(y,sigma,n,s,p):
 
 
 def integrate(sigma, y_start, n, s, p):
-  sol = odeint(func, y_start, sigma, rtol=relative_tol, atol=absolute_tol, args=(n,s,p))
+  sol = solve_ivp(func, [sigma[0], sigma[-1]], y_start, args=(n,s,p), dense_output=True)
   #sol = rk(func, [sigma[0], sigma[-1]], y_start, t_eval=sigma, args=(n, s, p))
+  pdb.set_trace()
   return sol
 
 def one_s_value(n,s,p, debug=False, trace=False):
   '''Solve for response given n and s'''
 
 
-  gam_0 = n**2 * fc.clight / (p.a * p.tau_0)**(1/3) / p.radius
-  sigma_tp = p.tau_0 * (-s / gam_0)**(3/2.)
-  sigma_efold = p.tau_0 / np.sqrt(np.pi) / n
+  gam_0 = n**2 * fc.clight / (p.a * p.tau0)**(1/3) / p.radius
+  sigma_tp = p.tau0 * (s / gam_0)**(3/2.)
+  sigma_efold = p.tau0 / np.sqrt(np.pi) / n
 
   sigma_left = -(sigma_tp + 5*sigma_efold)
   sigma_right = (sigma_tp + 5*sigma_efold)
-
-# while np.abs(term2/term1) < 1.0:
-#     increase sigma width by some increment
 
   # check if sigma endpoints are ok
   phi=line_profile(sigma_left,p)
