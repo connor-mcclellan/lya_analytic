@@ -85,12 +85,13 @@ def integrate(sigma, y_start, n, s, p):
 def one_s_value(n,s,p, debug=False, trace=False):
   '''Solve for response given n and s'''
 
-  sigma_left = -50.0*p.tau0   # Used to be 80
-  sigma_right = 50.0*p.tau0
 
-  gam_0 = n**2 * fc.clight
-#  sigma_tp = 
+  gam_0 = n**2 * fc.clight / (p.a * p.tau_0)**(1/3) / p.radius
+  sigma_tp = p.tau_0 * (-s / gam_0)**(3/2.)
+  sigma_efold = p.tau_0 / np.sqrt(np.pi) / n
 
+  sigma_left = -(sigma_tp + 5*sigma_efold)
+  sigma_right = (sigma_tp + 5*sigma_efold)
 
 # while np.abs(term2/term1) < 1.0:
 #     increase sigma width by some increment
