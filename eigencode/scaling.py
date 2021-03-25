@@ -46,7 +46,11 @@ for k, filename in enumerate(filenames):
       t=times[i]
       for n in range(1,p.nmax+1):
         for m in range(0,20):
-          P[i]=P[i] + np.sum(Pnmsoln[n-1,m,:])*np.exp(ssoln[n-1,m]*t)
+          if any(np.isnan(Pnmsoln[n-1,m,:])):
+            continue
+          else:
+            P[i]=P[i] - np.sum(Pnmsoln[n-1,m,:])*ssoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
+
 
     data[0][k] = p.a*tau0 # Optical depth
     data[1][k] = fc.clight/p.radius * times[np.argmax(P)] # Peak of distribution
