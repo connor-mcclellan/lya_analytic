@@ -86,7 +86,6 @@ def integrate(sigma, y_start, n, s, p):
 def one_s_value(n,s,p, debug=False, trace=False):
   '''Solve for response given n and s'''
 
-
   gam_0 = n**2 * fc.clight / (p.a * p.tau0)**(1/3) / p.radius
   sigma_tp = p.tau0 * (s / gam_0)**(3/2.)
   sigma_efold = p.tau0 / np.sqrt(np.pi) / n

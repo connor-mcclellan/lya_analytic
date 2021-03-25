@@ -26,9 +26,10 @@ def get_Pnm(ssoln,sigma,Jsoln,p):
   Pnmsoln=np.zeros((p.nmax,nsolnmax,len(dsigma)))
   for k in range(len(dsigma)):
     for n in range(1,p.nmax+1):
-      for i in range(nsolnmax):
-        Pnmsoln[n-1,i,k] = np.sqrt(1.5) * p.Delta**2 * (16.0*np.pi**2*p.radius/3.0/p.k/p.energy) \
-                           * (-1.0)**(n+1) * Jsoln[n-1,i,k] * dsigma[k]
+      for i in range(nsolnmax): ### EQ 110
+        Pnmsoln[n-1,i,k] = np.sqrt(1.5) * 16.0*np.pi**2 * p.radius * p.Delta**2\
+                           / (3.0 * p.k * p.energy) * (-1.0)**(n) / ssoln[n-1, i]\
+                           * Jsoln[n-1,i,k] * dsigma[k]
 
   filename = "./data/damping_times.data"
   fname=open(filename,'w')
@@ -94,22 +95,34 @@ def wait_time_vs_time(ssoln,Pnmsoln,times,p):
       plt.close()
 
 
-def wait_time_line(ax, ssoln, Pnmsoln, times, p, nmax=6, mmax=20,alpha=0.5,label=None):
+def wait_time_line(ax, sigma, ssoln, Jsoln, Pnmsoln, times, p, nmax=6, mmax=20,alpha=0.5,label=None):
     '''
     Produces an analytic line for a wait time distribution using a sum over
     eigenfunctions. The line is normalized by integrating over the distribution
     from the right while all values are positive.
     '''
+
+
     tlc = p.radius/fc.clight
     P = np.zeros(np.shape(times))
+    denom = np.zeros(np.shape(times))
+    dsigma = midpoint_diff(sigma) 
     for i, t in enumerate(times):
         for n in range(1, nmax+1):
-            for m in range(0, mmax):
-                P[i] += np.sum(Pnmsoln[n-1,m,:]) * np.exp(ssoln[n-1,m] * t)
-    rightmost_positive = len(P) - [i for i,v in enumerate(P[::-1]) if v<0][0]
-    dt = midpoint_diff(times)
-    norm = np.sum(dt[rightmost_positive:]*P[rightmost_positive:])
-    P = P/norm
+            for m in range(0, mmax): 
+
+                ### EQ 113
+                Jint = np.sum(Jsoln[n-1, m, :]*dsigma)
+                P[i] += - (-1)**n * Jint * np.exp(ssoln[n-1, m] * t)
+                denom += (-1)**n / ssoln[n-1, m] * Jint
+
+                ### EQ 112
+                #P[i] += - np.sum(Pnmsoln[n-1, m, :]) * ssoln[n-1, m] * np.exp(ssoln[n-1, m] * t)
+
+    P = P/denom
+
+#    pdb.set_trace()
+
     if label is None:
         label = '({},{})'.format(nmax, mmax)
     line = ax.plot(times/tlc,P*tlc,label=label, alpha=alpha)
@@ -158,9 +171,10 @@ def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds,):
     # Fluence: integral of Pnm with respect to time
     spec = np.zeros(np.shape(Pnmsoln)[-1])
     phi = line_profile(sigma, p)
-    for n in range(1, p.nmax+1):
-        for m in range(nsolnmax):
-            spec += 16. * np.pi**2 * p.radius * p.Delta / (3.0 * p.k * p.energy) * (-1)**n * Pnmsoln[n-1, m, :]/ssoln[n-1, m]/phi
+    for n in range(1, p.nmax+1):   ### EQ 111
+        for m in range(nsolnmax):               ### Should this Delta be here?
+            spec += 16. * np.pi**2 * p.radius * p.Delta / (3.0 * p.k * p.energy\
+                    * phi) * (-1)**n / ssoln[n-1, m] * Jsoln[n-1, m, :]
 
     sigma_to_x = np.cbrt(sigma/p.c1)
 
@@ -193,16 +207,21 @@ def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds,):
         xbounds = np.around(np.cbrt(np.array([freq_min, freq_max])/p.c1))
 
         # Get probability in between frequency bounds
-        Pnm_masked = Pnmsoln[:, :, np.logical_and(np.abs(sigma) >= freq_min, np.abs(sigma) <= freq_max)]
+        mask = np.logical_and(np.abs(sigma) >= freq_min, np.abs(sigma) <= freq_max)
+        Pnm_masked = Pnmsoln[:, :, mask]
+        J_masked = Jsoln[:, :, mask]
 
         # Load Monte Carlo data, plot spectrum scatter points and normalize
-        t, y, poly = mc_wait_time(ax2, mc_dir, xbounds, p)
+        tdata, xdata, poly = mc_wait_time(mc_dir, bounds=xbounds)
+        t, y_t = tdata
+        x, y_x = xdata
+        ax2.scatter(x, y_x, color='k', s=1)
         dt = midpoint_diff(t)
-        y = y/np.sum(y*dt)
+        y = y_t/np.sum(y_t*dt)
 
         # Plot analytic escape time distribution
         label = 'Analytic $n_{{max}}={}$ $m_{{max}}={}$'.format(p.nmax,nsolnmax)
-        line = wait_time_line(ax1, ssoln, Pnm_masked, times, p, nmax=6, mmax=20, alpha=0.5, label=label)
+        line = wait_time_line(ax1, sigma[mask], ssoln, J_masked, Pnm_masked, times, p, nmax=6, mmax=20, alpha=0.5, label=label)
 
         # Shade spectrum inbetween frequency bounds
         ax2.fill_between(np.cbrt(np.linspace(freq_min, freq_max)/p.c1), 10*np.max(spec), facecolor=line[-1].get_color(), alpha=0.5, label="${} < |x| < {}$".format(*xbounds))
@@ -286,7 +305,7 @@ def main():
 
     #  peak = 60
     #  x_bounds = np.array([0, peak/2, peak, 3*peak/2, 160])
-      x_bounds = np.array([0, 15, 30])
+      x_bounds = np.array([0, 50])
       sigma_bounds = p.c1 * x_bounds**3.
 
       wait_time_freq_dependence(ssoln, sigma, Jsoln, Pnmsoln, times, p, sigma_bounds)

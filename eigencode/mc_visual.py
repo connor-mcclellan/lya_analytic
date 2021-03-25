@@ -11,16 +11,18 @@ def fit_mc_exp(n, t, buff=0):
     return poly
 
 
-def mc_wait_time(ax, mc_dir, bounds, p):
+def mc_wait_time(mc_dir, bounds=None):
 
-    freq_min, freq_max = bounds # in x units
+    if bounds is not None:
+        freq_min, freq_max = bounds # in x units
+    else:
+        freq_min, freq_max = (-np.inf, np.inf)
 
     plt.figure()
     mu, x, time = np.load(mc_dir + 'mu_x_time.npy')
     nbins=64
     n_x, bins_x, _ = plt.hist(x, bins=nbins, density=True)
     bincenters_x = 0.5 * (bins_x[1:] + bins_x[:-1])
-    ax.scatter(bincenters_x, n_x, color='k', s=1)
 
     mask = np.logical_and(np.abs(x)>freq_min, np.abs(x)<freq_max)
     t = time[mask]
@@ -29,7 +31,7 @@ def mc_wait_time(ax, mc_dir, bounds, p):
         bincenters = 0.5*(bins[1:] + bins[:-1])
         plt.close()
         poly = fit_mc_exp(n, bincenters)
-        return bincenters, n, poly
+        return (bincenters, n), (bincenters_x, n_x), poly 
     except:
         pass
 
