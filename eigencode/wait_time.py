@@ -26,8 +26,8 @@ def get_Pnm(ssoln,sigma,Jsoln,p):
   Pnmsoln=np.zeros((p.nmax,nsolnmax,len(dsigma)))
   for k in range(len(dsigma)):
     for n in range(1,p.nmax+1):
-      for i in range(nsolnmax): ### EQ 110
-        Pnmsoln[n-1,i,k] = np.sqrt(1.5) * 16.0*np.pi**2 * p.radius * p.Delta**2\
+      for i in range(nsolnmax): ### EQ 110 --- don't make as a function of frequency. Coefficients of n and m already integrated over sigma
+        Pnmsoln[n-1,i,k] = np.sqrt(1.5) * 16.0*np.pi**2 * p.radius * p.Delta\
                            / (3.0 * p.k * p.energy) * (-1.0)**(n) / ssoln[n-1, i]\
                            * Jsoln[n-1,i,k] * dsigma[k]
 
@@ -104,17 +104,18 @@ def wait_time_line(ax, sigma, ssoln, Jsoln, Pnmsoln, times, p, nmax=6, mmax=20,a
 
 
     tlc = p.radius/fc.clight
-    P = np.zeros(np.shape(times))
-    denom = np.zeros(np.shape(times))
-    dsigma = midpoint_diff(sigma) 
+
+    # TODO; Eq 113 different from 112 behaviors
+    P = np.zeros(np.shape(times), np.shape(sigma))
+    denom = np.zeros(np.shape(times), np.shape(sigma))
+
     for i, t in enumerate(times):
         for n in range(1, nmax+1):
             for m in range(0, mmax): 
 
                 ### EQ 113
-                Jint = np.sum(Jsoln[n-1, m, :]*dsigma)
-                P[i] += - (-1)**n * Jint * np.exp(ssoln[n-1, m] * t)
-                denom += (-1)**n / ssoln[n-1, m] * Jint
+                P[i] += - (-1)**n * Jsoln[n-1, m, :] * np.exp(ssoln[n-1, m] * t)
+                denom += (-1)**n / ssoln[n-1, m] * Jsoln[n-1, m, :]
 
                 ### EQ 112
                 #P[i] += - np.sum(Pnmsoln[n-1, m, :]) * ssoln[n-1, m] * np.exp(ssoln[n-1, m] * t)

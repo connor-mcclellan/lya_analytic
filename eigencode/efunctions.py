@@ -7,6 +7,13 @@ from constants import fundconst,lymanalpha
 import warnings
 import pdb
 
+# TODO:
+# [ ] Add in master sigma grid
+# [ ] Rewrite sol to use interpolants on master sigma grid
+# [ ] Insert zero at line center for Jsoln
+
+
+
 # max number of solutions at each n
 nsolnmax=20                                          # maximum number of solutions for each n.
 
@@ -18,7 +25,7 @@ fc=fundconst()
 la=lymanalpha()
 
 class parameters:
-  def __init__(self,temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax):
+  def __init__(self,temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax):#,s):
     self.temp=temp                                              # temperature in K
     self.tau0=tau0                                              # line center optical depth of sphere
     self.radius=radius                                          # radius of sphere in cm
@@ -34,10 +41,27 @@ class parameters:
     self.k=self.numden*fc.line_strength*la.osc_strength         # in nu units. tau0=k*radius/(sqrt(pi)*delta)
     self.xmax=np.rint(4.0*(self.a*tau0)**0.333)                 # wing 1.e4 times smaller than center
     self.c1=np.sqrt(2.0/3.0)*np.pi/(3.0*self.a)               	# sigma(x) = c1*x^3, c1 = 0.855/a
+
     self.sigmas=self.c1*xsource**3
-    self.c2=self.c1**(2.0/3.0)*self.a/(np.pi*self.Delta)        # phi(sigma) = c2 / sigma**(2.0/3.0), c2=0.287*a**(1.0/3.0)/Delta
     self.nsigma=nsigma
     self.nmax=nmax
+#    self.s = s
+#    self.sigma_bounds = get_sigma_bounds(self.nmax, self) #TODO: 
+#    self.sigma_master = 
+
+    self.c2=self.c1**(2.0/3.0)*self.a/(np.pi*self.Delta)        # phi(sigma) = c2 / sigma**(2.0/3.0), c2=0.287*a**(1.0/3.0)/Delta
+
+
+def get_sigma_bounds(n, p):
+  gam_0 = n**2 * fc.clight / (p.a * p.tau0)**(1/3) / p.radius
+#  pdb.set_trace()
+  sigma_tp = p.tau0 * (-p.s / gam_0)**(3/2.)
+  sigma_efold = p.tau0 / np.sqrt(np.pi) / n
+
+  sigma_left = -(sigma_tp + 5*sigma_efold)
+  sigma_right = (sigma_tp + 5*sigma_efold)
+
+  return sigma_left, sigma_right
 
 def line_profile(sigma,p):					# units of Hz^{-1}
   x=(np.abs(sigma)/p.c1)**(1.0/3.0)
@@ -78,20 +102,18 @@ def func(sigma,y,n,s,p):
 
 
 def integrate(sigma, y_start, n, s, p):
+  '''
+  Returns interpolants which can be used to evaluate the function at any sigma
+  '''
   sol = solve_ivp(func, [sigma[0], sigma[-1]], y_start, args=(n,s,p), dense_output=True)
   #sol = rk(func, [sigma[0], sigma[-1]], y_start, t_eval=sigma, args=(n, s, p))
   pdb.set_trace()
-  return sol
+  return sol.sol
 
 def one_s_value(n,s,p, debug=False, trace=False):
   '''Solve for response given n and s'''
 
-  gam_0 = n**2 * fc.clight / (p.a * p.tau0)**(1/3) / p.radius
-  sigma_tp = p.tau0 * (s / gam_0)**(3/2.)
-  sigma_efold = p.tau0 / np.sqrt(np.pi) / n
-
-  sigma_left = -(sigma_tp + 5*sigma_efold)
-  sigma_right = (sigma_tp + 5*sigma_efold)
+  sigma_left, sigma_right = get_sigma_bounds(n, p)
 
   # check if sigma endpoints are ok
   phi=line_profile(sigma_left,p)
@@ -396,11 +418,10 @@ def main():
   nmax=6
   nsigma=512
   nomega=10
-  p = parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax)
+  s = np.arange(0.02,-15.0,-0.01)
+  p = parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax,s)
   tdiff = (p.radius/fc.clight)*(p.a*p.tau0)**0.333
 
-#  s = np.arange(-13.2,-13.4,-0.01)
-  s = np.arange(0.02,-15.0,-0.01)
   sigma,ssoln,Jsoln=sweep(s,p)
 
   output_data = np.array([energy,temp,tau0,radius,alpha_abs,prob_dest,xsource,nmax,nsigma,nomega,tdiff,sigma,ssoln,Jsoln])

@@ -18,7 +18,7 @@ def generate_xuniform(sigma, p):
     return xuniform, sigma_to_x
 
 
-def fluence(sigma, p, Pnmsoln=None, mmax=20):
+def fluence(sigma, p, Jsoln=None, mmax=20):
     '''
     Calculates the fluence or luminosity by spatial eigenmode.
     '''
@@ -30,7 +30,7 @@ def fluence(sigma, p, Pnmsoln=None, mmax=20):
     spec_xuniform = np.zeros((p.nmax, np.shape(xuniform)[0]))
     phi = line_profile(sigma, p)
 
-    if Pnmsoln is None:
+    if Jsoln is None:
         # STEADY STATE SOLUTION
         for n in range(1, p.nmax+1):
 
@@ -48,11 +48,11 @@ def fluence(sigma, p, Pnmsoln=None, mmax=20):
         for n in range(1, p.nmax+1):
             for m in range(mmax):
                 spec[n-1] += (
-                             16. * np.pi**2 * p.radius * p.Delta 
-                             / (3.0 * p.k * p.energy) * (-1)**n 
-                             * Pnmsoln[n-1, m, :] / ssoln[n-1, m] / phi
+                             16. * np.pi**2 * p.radius
+                             / (3.0 * p.k * p.energy * phi) * (-1)**n
+                             * Jsoln[n-1, m, :] / ssoln[n-1, m]
                              )
-            spec_interp = interp1d(sigma_to_x, spec[n-1] * phi) #TODO: Move this outside the loop
+            spec_interp = interp1d(sigma_to_x, spec[n-1] * phi)
             spec_xuniform[n-1] = spec_interp(xuniform) / phi_xuniform
 
     return xuniform, spec_xuniform
@@ -68,8 +68,8 @@ if __name__ == '__main__':
     alpha_abs = array[4]
     prob_dest = array[5]
     xsource = array[6]
-#    nmax = array[7]
-    nmax = 1010
+    nmax = array[7]
+#    nmax = 1010
     nsigma = array[8]
     nomega = array[9]
     tdiff = array[10]
@@ -79,22 +79,25 @@ if __name__ == '__main__':
     p = parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax)
 #    Pnmsoln = get_Pnm(ssoln,sigma,Jsoln,p)
 
-#    x_t, tdep_spec = fluence(sigma, p, Pnmsoln=Pnmsoln)
-#    x_t_10, tdep_spec_10 = fluence(sigma, p, Pnmsoln=Pnmsoln, mmax=10)
+    x_t, tdep_spec = fluence(sigma, p, Jsoln=Jsoln)
     x_s, steady_state = fluence(sigma, p)
-    '''
-    fig, ax = plt.subplots(1, 1)
+
+
     for n in range(1, p.nmax+1):
-        norm = 1.#np.abs(tdep_spec[n-1][256]/steady_state[n-1][256])
-#        ax.plot(x_t, np.abs(tdep_spec[n-1]), 'r--', alpha=0.7, label='time dependent, mmax=20')
+        fig, ax = plt.subplots(1, 1)
+        ax.plot(x_t, np.abs(np.sum(tdep_spec[:n], axis=0)), 'r--', alpha=0.7, label='time dependent, mmax=20')
 #        ax.plot(x_t_10, np.abs(tdep_spec_10[n-1]), 'm--', alpha=0.7, label='time dependent, mmaxx=10')
-        ax.plot(x_s, norm*np.abs(steady_state[n-1]), '-', alpha=0.7, label='steady state n={}'.format(n))
-        print(norm)
-    plt.yscale('log')
-    plt.title('n={}'.format(n))
-    plt.legend()
-    plt.tight_layout()
-    plt.show()
+        ax.plot(x_s, np.abs(np.sum(steady_state[:n], axis=0)), '-', alpha=0.7, label='steady state n={}'.format(n))
+        plt.yscale('log')
+        plt.ylim(1e-21, 1e-11)
+        plt.xlim(0, 40)
+        plt.title('abs val of sum to n={}'.format(n))
+        plt.xlabel('x')
+        plt.legend()
+        plt.tight_layout()
+#        plt.show()
+        plt.savefig('timedep_v_steadystate_n{}.pdf'.format(n))
+
     '''
     import matplotlib.pylab as pl
     fig, ax = plt.subplots(1, 1)
@@ -116,7 +119,7 @@ if __name__ == '__main__':
     plt.xlabel('$x$')
     plt.tight_layout()
     plt.show()
-        
+    ''' 
 
 
 
