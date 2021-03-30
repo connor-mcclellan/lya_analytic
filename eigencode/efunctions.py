@@ -1,7 +1,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.integrate import solve_ivp
+from scipy.integrate import solve_ivp, odeint
 from constants import fundconst,lymanalpha
 #from rk import rk
 import warnings
@@ -12,6 +12,8 @@ import pdb
 # [ ] Rewrite sol to use interpolants on master sigma grid
 # [ ] Insert zero at line center for Jsoln
 
+# DONE:
+# - Found error with scipy solve_ivp - was returning different values than odeint
 
 
 # max number of solutions at each n
@@ -45,17 +47,14 @@ class parameters:
     self.sigmas=self.c1*xsource**3
     self.nsigma=nsigma
     self.nmax=nmax
-#    self.s = s
-#    self.sigma_bounds = get_sigma_bounds(self.nmax, self) #TODO: 
-#    self.sigma_master = 
+    self.sigma_bounds = get_sigma_bounds(self.nmax, self)
+#    self.sigma_master = np.concat
 
-    self.c2=self.c1**(2.0/3.0)*self.a/(np.pi*self.Delta)        # phi(sigma) = c2 / sigma**(2.0/3.0), c2=0.287*a**(1.0/3.0)/Delta
-
+    self.c2 = self.c1**(2.0/3.0)*self.a/(np.pi*self.Delta)        # phi(sigma) = c2 / sigma**(2.0/3.0), c2=0.287*a**(1.0/3.0)/Delta
 
 def get_sigma_bounds(n, p):
   gam_0 = n**2 * fc.clight / (p.a * p.tau0)**(1/3) / p.radius
-#  pdb.set_trace()
-  sigma_tp = p.tau0 * (-p.s / gam_0)**(3/2.)
+  sigma_tp = p.tau0 * (0.05 / gam_0)**(3/2.) # Location of first resonance hardcoded in
   sigma_efold = p.tau0 / np.sqrt(np.pi) / n
 
   sigma_left = -(sigma_tp + 5*sigma_efold)
@@ -86,7 +85,7 @@ def func(sigma, y, args):
   return dydsigma
 '''
 
-# Differential equation for odeint
+# Differential equation for solve_ivp
 def func(sigma,y,n,s,p):
   J = y[0]
   dJ = y[1]
@@ -105,10 +104,10 @@ def integrate(sigma, y_start, n, s, p):
   '''
   Returns interpolants which can be used to evaluate the function at any sigma
   '''
-  sol = solve_ivp(func, [sigma[0], sigma[-1]], y_start, args=(n,s,p), dense_output=True)
+  sol = solve_ivp(func, [sigma[0], sigma[-1]], y_start, t_eval=sigma, args=(n,s,p), dense_output=False)
   #sol = rk(func, [sigma[0], sigma[-1]], y_start, t_eval=sigma, args=(n, s, p))
-  pdb.set_trace()
-  return sol.sol
+  return sol.y.T
+
 
 def one_s_value(n,s,p, debug=False, trace=False):
   '''Solve for response given n and s'''
@@ -212,8 +211,8 @@ def one_s_value(n,s,p, debug=False, trace=False):
 
       # Find solution in middle region
       sol = integrate(middlegrid, y_start, n, s, p)
-      Jmiddle=sol[:, 0]
-      dJmiddle=sol[:, 1]
+      Jmiddle=sol[:,0]
+      dJmiddle=sol[:,1]
 
       # Set coefficients of matrix equation at the source
       A = Jmiddle[-1]    # Overwrite previous matrix coefficients
@@ -230,8 +229,8 @@ def one_s_value(n,s,p, debug=False, trace=False):
 
       # Find solution in middle region
       sol = integrate(middlegrid, y_start, n, s, p)
-      Jmiddle=sol[:, 0]
-      dJmiddle=sol[:, 1]
+      Jmiddle=sol[:,0]
+      dJmiddle=sol[:,1]
 
       # Set coefficients of matrix equation at the source
       C = Jmiddle[-1]   # Overwrite previous matrix coefficients
@@ -396,15 +395,6 @@ def sweep(s,p):
   return sigma,ssoln,Jsoln
 
 
-def get_Pnm(ssoln,sigma,Jsoln,p):
-  Pnmsoln=np.zeros((p.nmax,nsolnmax))
-  dsigma=sigma[1]-sigma[0]
-  for n in range(1,p.nmax+1):
-    for i in range(nsolnmax):
-      Pnmsoln[n-1,i] = np.sqrt(1.5) * p.Delta**2 * (16.0*np.pi**2*p.radius/3.0/p.k/p.energy) \
-                     * (-1.0)**(n+1) * np.sum(Jsoln[n-1,i,:])*dsigma
-  return Pnmsoln
-
 def main():
 
   # choices
@@ -414,18 +404,18 @@ def main():
   radius=1.e11
   alpha_abs=0.0
   prob_dest=0.0
-  xsource=12.0
+  xsource=2.0
   nmax=6
   nsigma=512
   nomega=10
-  s = np.arange(0.02,-15.0,-0.01)
-  p = parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax,s)
+  s = np.arange(0.2,-15.0,-0.01)
+  p = parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax)#,s)
   tdiff = (p.radius/fc.clight)*(p.a*p.tau0)**0.333
 
   sigma,ssoln,Jsoln=sweep(s,p)
 
   output_data = np.array([energy,temp,tau0,radius,alpha_abs,prob_dest,xsource,nmax,nsigma,nomega,tdiff,sigma,ssoln,Jsoln])
-  np.save('./eigenmode_data_xinit{:.1f}_tau1e7_nmax6_nsolnmax20.npy'.format(xsource),output_data,allow_pickle=True, fix_imports=True)
+  np.save('./eigenmode_data_xinit{:.1f}.npy'.format(xsource),output_data,allow_pickle=True, fix_imports=True)
   
 
 if __name__ == "__main__":
