@@ -49,10 +49,7 @@ class parameters:
     self.nmax=nmax
     self.sigma_bounds = get_sigma_bounds(self.nmax, self)
     self.sigma_offset = self.sigma_bounds[1]/self.nsigma # Should be around ~7e3 for integrator to be deterministic near source
-    self.sigma_master = np.concatenate([
-        np.linspace(self.sigma_bounds[0], self.sigmas-self.sigma_offset, int(self.nsigma/2)),
-        np.linspace(self.sigmas+self.sigma_offset, self.sigma_bounds[1], int(self.nsigma/2)),
-    ])
+    self.sigma_master = make_sigma_master(self)
 
 
 def get_sigma_bounds(n, p):
@@ -65,6 +62,64 @@ def get_sigma_bounds(n, p):
 
   return sigma_left, sigma_right
 
+
+def make_sigma_master(p):
+
+  sigma_left, sigma_right = get_sigma_bounds(p.nmax, p)
+
+  # Determine the integration ranges
+  delimiters = sorted(np.array([sigma_left, p.sigmas, 0., sigma_right]))
+
+  # Build an array that's evenly spaced between leftmost and rightmost sigma
+  # The -1e-3 is to ensure the last data point, which is equal to sigma_right,
+  # does not end up in a bin all by itself
+  even_array = np.linspace(sigma_left, sigma_right-1e-3, p.nsigma)
+
+  # Bin this evenly-spaced array into the integration ranges we found earlier
+  # These are the indices that specify which bin the data points fall into:
+  inds = np.digitize(even_array, delimiters)
+
+  # Count how many points have fallen into each integration range
+  nleft, nmiddle, nright = [len(inds[inds==i]) for i in range(1, 4)]
+
+  # For a nonzero source, make sure that the middle grid has enough points
+  if nmiddle < 4 and p.sigmas != 0.:
+      warnings.warn('Middle grid is critically undersampled. Adding 4 points.')
+      nmiddle += 4
+      nright -= 2
+      nleft -= 2
+
+  ### Create grids
+  # Leftgrid goes from sigma_left to whichever is smaller: source, or 0
+  # Its values will be ordered from small to large --- increasingly
+  leftgrid = np.linspace(sigma_left, min(p.sigmas, 0), nleft)
+  # Middle grid goes from 0 to source
+  # Its values are either ordered increasingly or decreasingly, depending  
+  # on whether source>0 or source<0, respectively
+  middlegrid = np.linspace(0, p.sigmas, nmiddle)
+  # Right grid goes from sigma_right to whichever is larger: source, or 0
+  # Its values are always ordered decreasingly
+  rightgrid = np.linspace(sigma_right, max(0, p.sigmas), nright)
+
+  # Set an offset applied about source
+  # This helps resolve the dJ discontinuity better. If it is not large enough,
+  # the integrator will not be deterministic near the source
+  if np.abs(leftgrid[-1]-p.sigma_offset) > np.abs(leftgrid[-2]-leftgrid[-1]):
+      # If offset is larger than bin spacing, split the distance to the end
+      p.sigma_offset = np.abs(leftgrid[-2]-leftgrid[-1])/2.
+  if len(middlegrid) != 0 and p.sigma_offset > np.diff(middlegrid)[0]:
+      p.sigma_offset = np.diff(middlegrid)[0]/2
+
+  if p.sigmas < 0.:
+    middlegrid[0] -= p.sigma_offset
+    leftgrid[-1] -= p.sigma_offset
+  elif p.sigmas > 0.:
+    middlegrid[0] += p.sigma_offset
+    rightgrid[-1] += p.sigma_offset
+  else:
+    leftgrid[-1] -= p.sigma_offset
+    rightgrid[-1] += p.sigma_offset
+  return leftgrid, middlegrid, rightgrid
 
 def line_profile(sigma,p):					# units of Hz^{-1}
   x=(np.abs(sigma)/p.c1)**(1.0/3.0)
@@ -108,85 +163,23 @@ def integrate(sigma, y_start, n, s, p):
   '''
   Returns interpolants which can be used to evaluate the function at any sigma
   '''
-  sol = solve_ivp(func, [sigma[0], sigma[-1]], y_start, t_eval=sigma, args=(n,s,p), dense_output=False)
+  sol = solve_ivp(func, [sigma[0], sigma[-1]], y_start, t_eval=sigma, args=(n,s,p), dense_output=True)
   #sol = rk(func, [sigma[0], sigma[-1]], y_start, t_eval=sigma, args=(n, s, p))
-  return sol.y.T
+  return sol.y.T, sol.sol
 
 
 def one_s_value(n,s,p, debug=False, trace=False):
   '''Solve for response given n and s'''
 
-  sigma_left, sigma_right = get_sigma_bounds(n, p)
-
-  # check if sigma endpoints are ok
-  phi=line_profile(sigma_left,p)
   kappan=n*np.pi/p.radius
   wavenum = kappan * p.Delta / p.k
-  term1 = wavenum**2
-  term2 = 3.0*s*p.Delta**2*phi/(fc.clight*p.k)
-  if np.abs(term2/term1) > 1.0:
-    warnings.warn("term2/term1 at the edge={}".format(term2/term1))
-    quit()
 
-  # Determine the integration ranges
-  delimiters = sorted(np.array([sigma_left, p.sigmas, 0., sigma_right]))
-
-  # Build an array that's evenly spaced between leftmost and rightmost sigma
-  # Add one extra sigma because a single duplicated datapoint will be removed later
-  # The -1e-3 is to ensure the last data point, which is equal to sigma_right,
-  # does not end up in a bin all by itself
-  naive_array = np.linspace(sigma_left, sigma_right-1e-3, p.nsigma)
-
-  # Bin this evenly-spaced array into the integration ranges we found earlier
-  # These are the indices that specify which bin the data points fall into:
-  inds = np.digitize(naive_array, delimiters)
-
-  # Count how many points have fallen into each integration range
-  nleft, nmiddle, nright = [len(inds[inds==i]) for i in range(1, 4)]
-
-  # For a nonzero source, make sure that the middle grid has enough points
-  if nmiddle < 4 and p.sigmas != 0.:
-      warnings.warn('Middle grid is critically undersampled. Replacing with minimum of 3 points.')
-      nmiddle += 4
-      nright -= 2  # Make room for the new points
-      nleft -= 2
-
-  ### Create grids
-  # Leftgrid goes from sigma_left to whichever is smaller: source, or 0
-  # Its values will be ordered from small to large --- increasingly
-  leftgrid = np.linspace(sigma_left, min(p.sigmas, 0), nleft)
-  # Middle grid goes from 0 to source
-  # Its values are either ordered increasingly or decreasingly, depending  
-  # on whether source>0 or source<0, respectively
-  middlegrid = np.linspace(0, p.sigmas, nmiddle)
-  # Right grid goes from sigma_right to whichever is larger: source, or 0
-  # Its values are always ordered decreasingly
-  rightgrid = np.linspace(sigma_right, max(0, p.sigmas), nright)
-  # Set an offset applied about source
-  # This helps resolve the dJ discontinuity better. If it is not large enough,
-  # the integrator will not be deterministic near the source
-  offset = p.sigma_offset
-  if np.abs(leftgrid[-1]-offset) > np.abs(leftgrid[-2]-leftgrid[-1]):
-      # If offset is larger than bin spacing, split the distance to the end
-      offset = np.abs(leftgrid[-2]-leftgrid[-1])/2.
-  if len(middlegrid) != 0 and offset > np.diff(middlegrid)[0]:
-      offset = np.diff(middlegrid)[0]/2
-
-  if p.sigmas < 0.:
-    middlegrid[0] -= offset
-    leftgrid[-1] -= offset
-  elif p.sigmas > 0.:
-    middlegrid[0] += offset
-    rightgrid[-1] += offset
-  else:
-    leftgrid[-1] -= offset
-    rightgrid[-1] += offset
-
+  leftgrid, middlegrid, rightgrid = p.sigma_master
   # rightward integration
   J=1.0
   dJ=wavenum*J
   y_start=np.array( (J,dJ) )
-  sol = integrate(leftgrid,y_start,n,s,p)
+  sol, interp_left = integrate(leftgrid,y_start,n,s,p)
   Jleft=sol[:,0]
   dJleft=sol[:,1]
   A=Jleft[-1]    # Set matrix coefficient equal to Jleft's rightmost value
@@ -197,7 +190,7 @@ def one_s_value(n,s,p, debug=False, trace=False):
   J=1.0
   dJ=-wavenum*J
   y_start=np.array( (J,dJ) )
-  sol = integrate(rightgrid,y_start,n,s,p)
+  sol, interp_right = integrate(rightgrid,y_start,n,s,p)
   Jright=sol[:,0]
   dJright=sol[:,1]
   C=Jright[-1]   # Set matrix coefficient equal to Jright's leftmost value
@@ -214,7 +207,7 @@ def one_s_value(n,s,p, debug=False, trace=False):
       y_start = np.array((J, dJ))
 
       # Find solution in middle region
-      sol = integrate(middlegrid, y_start, n, s, p)
+      sol, interp_middle = integrate(middlegrid, y_start, n, s, p)
       Jmiddle=sol[:,0]
       dJmiddle=sol[:,1]
 
@@ -232,7 +225,7 @@ def one_s_value(n,s,p, debug=False, trace=False):
       y_start = np.array((J, dJ))
 
       # Find solution in middle region
-      sol = integrate(middlegrid, y_start, n, s, p)
+      sol, interp_middle = integrate(middlegrid, y_start, n, s, p)
       Jmiddle=sol[:,0]
       dJmiddle=sol[:,1]
 
