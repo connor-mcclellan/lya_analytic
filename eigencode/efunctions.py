@@ -43,14 +43,17 @@ class parameters:
     self.k=self.numden*fc.line_strength*la.osc_strength         # in nu units. tau0=k*radius/(sqrt(pi)*delta)
     self.xmax=np.rint(4.0*(self.a*tau0)**0.333)                 # wing 1.e4 times smaller than center
     self.c1=np.sqrt(2.0/3.0)*np.pi/(3.0*self.a)               	# sigma(x) = c1*x^3, c1 = 0.855/a
-
+    self.c2 = self.c1**(2.0/3.0)*self.a/(np.pi*self.Delta)      # phi(sigma) = c2 / sigma**(2.0/3.0), c2=0.287*a**(1.0/3.0)/Delta
     self.sigmas=self.c1*xsource**3
     self.nsigma=nsigma
     self.nmax=nmax
     self.sigma_bounds = get_sigma_bounds(self.nmax, self)
-#    self.sigma_master = np.concat
+    self.sigma_offset = self.sigma_bounds[1]/self.nsigma # Should be around ~7e3 for integrator to be deterministic near source
+    self.sigma_master = np.concatenate([
+        np.linspace(self.sigma_bounds[0], self.sigmas-self.sigma_offset, int(self.nsigma/2)),
+        np.linspace(self.sigmas+self.sigma_offset, self.sigma_bounds[1], int(self.nsigma/2)),
+    ])
 
-    self.c2 = self.c1**(2.0/3.0)*self.a/(np.pi*self.Delta)        # phi(sigma) = c2 / sigma**(2.0/3.0), c2=0.287*a**(1.0/3.0)/Delta
 
 def get_sigma_bounds(n, p):
   gam_0 = n**2 * fc.clight / (p.a * p.tau0)**(1/3) / p.radius
@@ -61,6 +64,7 @@ def get_sigma_bounds(n, p):
   sigma_right = (sigma_tp + 5*sigma_efold)
 
   return sigma_left, sigma_right
+
 
 def line_profile(sigma,p):					# units of Hz^{-1}
   x=(np.abs(sigma)/p.c1)**(1.0/3.0)
@@ -161,7 +165,7 @@ def one_s_value(n,s,p, debug=False, trace=False):
   # Set an offset applied about source
   # This helps resolve the dJ discontinuity better. If it is not large enough,
   # the integrator will not be deterministic near the source
-  offset = 7e3
+  offset = p.sigma_offset
   if np.abs(leftgrid[-1]-offset) > np.abs(leftgrid[-2]-leftgrid[-1]):
       # If offset is larger than bin spacing, split the distance to the end
       offset = np.abs(leftgrid[-2]-leftgrid[-1])/2.
