@@ -1,148 +1,28 @@
-
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.integrate import solve_ivp, odeint
 from constants import fundconst,lymanalpha
+from scipy.integrate import solve_ivp, odeint
+from parameters import Parameters, make_sigma_grids
 #from rk import rk
 import warnings
 import pdb
 
 # TODO:
-# [ ] Add in master sigma grid
-# [ ] Rewrite sol to use interpolants on master sigma grid
-# [ ] Insert zero at line center for Jsoln
-
-# DONE:
-# - Found error with scipy solve_ivp - was returning different values than odeint
-
+# [X] Add in master sigma grid
+# [X] Rewrite sol to use interpolants on master sigma grid
+# [ ] Insert zero at line center for Jsoln?
+# [ ] Zero is duplicated for off-center sources - fix it!
 
 # max number of solutions at each n
-nsolnmax=20                                          # maximum number of solutions for each n.
-
-# integration accuracy
-relative_tol=1.e-10 # 1.49012e-8
-absolute_tol=1.e-10 # 1.49012e-8
-
+nsolnmax=20
 fc=fundconst()
 la=lymanalpha()
-
-class parameters:
-  def __init__(self,temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax):#,s):
-    self.temp=temp                                              # temperature in K
-    self.tau0=tau0                                              # line center optical depth of sphere
-    self.radius=radius                                          # radius of sphere in cm
-    self.energy=energy						# impulse energy in erg
-    self.xsource = xsource
-    self.alpha_abs=alpha_abs					# absorption coefficient in cm^{-1}
-    self.prob_dest=prob_dest					# probability of destruction by collisional de-excitation
-    self.vth = np.sqrt( 2.0 * fc.kboltz * temp / fc.amu )       # thermal velocity in cm s^{-1}
-    self.Delta = la.nu0*self.vth/fc.clight                      # doppler width in Hz
-    self.a = la.Gamma/(4.0*np.pi*self.Delta)                    # damping parameter
-    self.sigma0 = la.osc_strength * fc.line_strength/(np.sqrt(np.pi)*self.Delta)  # line center cross section in cm^2
-    self.numden = tau0/(self.sigma0*radius)                     # H(1s) number density in cm^{-3}
-    self.k=self.numden*fc.line_strength*la.osc_strength         # in nu units. tau0=k*radius/(sqrt(pi)*delta)
-    self.xmax=np.rint(4.0*(self.a*tau0)**0.333)                 # wing 1.e4 times smaller than center
-    self.c1=np.sqrt(2.0/3.0)*np.pi/(3.0*self.a)               	# sigma(x) = c1*x^3, c1 = 0.855/a
-    self.c2 = self.c1**(2.0/3.0)*self.a/(np.pi*self.Delta)      # phi(sigma) = c2 / sigma**(2.0/3.0), c2=0.287*a**(1.0/3.0)/Delta
-    self.sigmas=self.c1*xsource**3
-    self.nsigma=nsigma
-    self.nmax=nmax
-    self.sigma_bounds = get_sigma_bounds(self.nmax, self)
-    self.sigma_offset = self.sigma_bounds[1]/self.nsigma # Should be around ~7e3 for integrator to be deterministic near source
-    self.sigma_master = make_sigma_master(self)
-
-
-def get_sigma_bounds(n, p):
-  gam_0 = n**2 * fc.clight / (p.a * p.tau0)**(1/3) / p.radius
-  sigma_tp = p.tau0 * (0.05 / gam_0)**(3/2.) # Location of first resonance hardcoded in
-  sigma_efold = p.tau0 / np.sqrt(np.pi) / n
-
-  sigma_left = -(sigma_tp + 5*sigma_efold)
-  sigma_right = (sigma_tp + 5*sigma_efold)
-
-  return sigma_left, sigma_right
-
-
-def make_sigma_master(p):
-
-  sigma_left, sigma_right = get_sigma_bounds(p.nmax, p)
-
-  # Determine the integration ranges
-  delimiters = sorted(np.array([sigma_left, p.sigmas, 0., sigma_right]))
-
-  # Build an array that's evenly spaced between leftmost and rightmost sigma
-  # The -1e-3 is to ensure the last data point, which is equal to sigma_right,
-  # does not end up in a bin all by itself
-  even_array = np.linspace(sigma_left, sigma_right-1e-3, p.nsigma)
-
-  # Bin this evenly-spaced array into the integration ranges we found earlier
-  # These are the indices that specify which bin the data points fall into:
-  inds = np.digitize(even_array, delimiters)
-
-  # Count how many points have fallen into each integration range
-  nleft, nmiddle, nright = [len(inds[inds==i]) for i in range(1, 4)]
-
-  # For a nonzero source, make sure that the middle grid has enough points
-  if nmiddle < 4 and p.sigmas != 0.:
-      warnings.warn('Middle grid is critically undersampled. Adding 4 points.')
-      nmiddle += 4
-      nright -= 2
-      nleft -= 2
-
-  ### Create grids
-  # Leftgrid goes from sigma_left to whichever is smaller: source, or 0
-  # Its values will be ordered from small to large --- increasingly
-  leftgrid = np.linspace(sigma_left, min(p.sigmas, 0), nleft)
-  # Middle grid goes from 0 to source
-  # Its values are either ordered increasingly or decreasingly, depending  
-  # on whether source>0 or source<0, respectively
-  middlegrid = np.linspace(0, p.sigmas, nmiddle)
-  # Right grid goes from sigma_right to whichever is larger: source, or 0
-  # Its values are always ordered decreasingly
-  rightgrid = np.linspace(sigma_right, max(0, p.sigmas), nright)
-
-  # Set an offset applied about source
-  # This helps resolve the dJ discontinuity better. If it is not large enough,
-  # the integrator will not be deterministic near the source
-  if np.abs(leftgrid[-1]-p.sigma_offset) > np.abs(leftgrid[-2]-leftgrid[-1]):
-      # If offset is larger than bin spacing, split the distance to the end
-      p.sigma_offset = np.abs(leftgrid[-2]-leftgrid[-1])/2.
-  if len(middlegrid) != 0 and p.sigma_offset > np.diff(middlegrid)[0]:
-      p.sigma_offset = np.diff(middlegrid)[0]/2
-
-  if p.sigmas < 0.:
-    middlegrid[0] -= p.sigma_offset
-    leftgrid[-1] -= p.sigma_offset
-  elif p.sigmas > 0.:
-    middlegrid[0] += p.sigma_offset
-    rightgrid[-1] += p.sigma_offset
-  else:
-    leftgrid[-1] -= p.sigma_offset
-    rightgrid[-1] += p.sigma_offset
-  return leftgrid, middlegrid, rightgrid
 
 def line_profile(sigma,p):					# units of Hz^{-1}
   x=(np.abs(sigma)/p.c1)**(1.0/3.0)
   #line_profile = ( np.exp(-x**2)/np.sqrt(np.pi) + p.a/np.pi/(0.01+x**2) ) / p.Delta		# doppler and natural
   line_profile = p.a / np.pi / (0.01 + x**2) / p.Delta
   return line_profile
-
-'''
-# Differential equation for 'infegrate'
-def func(sigma, y, args):
-  n, s, p = args
-  J = y[0]
-  dJ = y[1]
-  phi=line_profile(sigma,p)
-  kappan=n*np.pi/p.radius
-  wavenum = kappan * p.Delta / p.k
-  term1 = wavenum**2 
-  term2 = 3.0*s*p.Delta**2*phi/(fc.clight*p.k)
-  dydsigma=np.zeros(2)
-  dydsigma[0]=dJ
-  dydsigma[1]= (term1+term2) * J
-  return dydsigma
-'''
 
 # Differential equation for solve_ivp
 def func(sigma,y,n,s,p):
@@ -164,7 +44,6 @@ def integrate(sigma, y_start, n, s, p):
   Returns interpolants which can be used to evaluate the function at any sigma
   '''
   sol = solve_ivp(func, [sigma[0], sigma[-1]], y_start, t_eval=sigma, args=(n,s,p), dense_output=True)
-  #sol = rk(func, [sigma[0], sigma[-1]], y_start, t_eval=sigma, args=(n, s, p))
   return sol.y.T, sol.sol
 
 
@@ -174,7 +53,9 @@ def one_s_value(n,s,p, debug=False, trace=False):
   kappan=n*np.pi/p.radius
   wavenum = kappan * p.Delta / p.k
 
-  leftgrid, middlegrid, rightgrid = p.sigma_master
+  # Construct grids for this value of n
+  leftgrid, middlegrid, rightgrid = make_sigma_grids(n, p).values()
+
   # rightward integration
   J=1.0
   dJ=wavenum*J
@@ -184,7 +65,6 @@ def one_s_value(n,s,p, debug=False, trace=False):
   dJleft=sol[:,1]
   A=Jleft[-1]    # Set matrix coefficient equal to Jleft's rightmost value
   B=dJleft[-1]
-
 
   # leftward integration
   J=1.0
@@ -241,50 +121,28 @@ def one_s_value(n,s,p, debug=False, trace=False):
   # solution of the matrix equation
   scale_right = - 1.0/(D-B*(C/A)) * np.sqrt(6.0)/8.0 * n**2 * p.energy/(p.k*p.radius**3)
   scale_left = C/A * scale_right
-  Jleft = Jleft * scale_left
-  dJleft = dJleft * scale_left
-  Jright = Jright * scale_right
-  dJright = dJright * scale_right
-  Jmiddle = Jmiddle * scale_left if p.sigmas > 0. else Jmiddle * scale_right
-  dJmiddle = dJmiddle * scale_left if p.sigmas > 0. else Jmiddle * scale_right
+  scale_middle = scale_left if p.sigmas > 0. else scale_right
+
+  # Scale solutions by each factor to match discontinuity
+  Jleft, dJleft = interp_left(p.sigma_master['left']) * scale_left
+  Jright, dJright = interp_right(p.sigma_master['right']) * scale_right
+  if Jmiddle is not np.nan:
+      Jmiddle, dJmiddle = interp_middle(p.sigma_master['middle']) * scale_middle
 
   if p.sigmas < 0.:
       # reorder middle grid to be increasing, starting from source & going to 0
-      middlegrid = middlegrid[::-1]
       Jmiddle = Jmiddle[::-1]
       dJmiddle = dJmiddle[::-1]
 
-#      # Remove duplicated point at 0
-#      Jright = Jright[:-1]
-#      dJright = dJright[:-1]
-#      rightgrid = rightgrid[:-1]
-
-#  elif p.sigmas > 0.:
-      # Remove duplicated point at 0
-#      Jleft = Jleft[:-1]
-#      dJleft = dJleft[:-1]
-#      leftgrid = leftgrid[:-1]
-      
-#  else:
-      # Remove duplicated point at 0
-#      Jright = Jright[:-1]
-#      dJright = dJright[:-1]
-#      rightgrid = rightgrid[:-1]
-
   # combine left, middle, and right in one array
   try:
-      sigma=np.concatenate((leftgrid, middlegrid, rightgrid[::-1]))
       J = np.concatenate((Jleft, Jmiddle, Jright[::-1]))
       dJ = np.concatenate((dJleft, dJmiddle, dJright[::-1]))
   except:
-      sigma=np.concatenate((leftgrid, rightgrid[::-1]))
       J = np.concatenate((Jleft, Jright[::-1]))
       dJ = np.concatenate((dJleft, dJright[::-1]))
-  if np.isnan(np.sum(np.abs(J))):
-      plt.plot(sigma, np.abs(J))
-      plt.title('n={}'.format(n))
-      plt.show()
-  return sigma,J,dJ
+
+  return J,dJ
 
 
 def solve(s1,s2,s3,n,p):
@@ -298,9 +156,9 @@ def solve(s1,s2,s3,n,p):
   refine_log = []
 
   while err>1.e-6:
-    sigma,J1,dJ1=one_s_value(n,s1,p)
-    sigma,J2,dJ2=one_s_value(n,s2,p)
-    sigma,J3,dJ3=one_s_value(n,s3,p)
+    J1,dJ1=one_s_value(n,s1,p)
+    J2,dJ2=one_s_value(n,s2,p)
+    J3,dJ3=one_s_value(n,s3,p)
 
     f1 = np.sum(np.abs(J1)) # sum of absolute values of ENTIRE spectrum
     f2 = np.sum(np.abs(J2)) # this is the size of the response!
@@ -308,10 +166,10 @@ def solve(s1,s2,s3,n,p):
     err=np.abs((s3-s1)/s2) # error is fractional difference between eigenfrequencies
 
     sl=0.5*(s1+s2) # s between s1 and s2
-    sigma,Jl,dJl=one_s_value(n,sl,p)
+    Jl,dJl=one_s_value(n,sl,p)
     fl = np.sum(np.abs(Jl))
     sr=0.5*(s2+s3) # s between s2 and s3
-    sigma,Jr,dJr=one_s_value(n,sr,p)
+    Jr,dJr=one_s_value(n,sr,p)
     fr = np.sum(np.abs(Jr))
 
     #####
@@ -339,14 +197,12 @@ def solve(s1,s2,s3,n,p):
 
     i=i+1
 
-
-
   # choose middle point to be eigenfrequency
   sres=s2
   # Response looks very close to the eigenvector when frequency is close to the eigenfrequency
   Jres = (J3-J1)*(s3-sres)*(s1-sres)/(s1-s3)
   # Slighly better estimate than using just J2 --- derivation in notes
-  return sigma,sres,Jres
+  return sres,Jres
 
 
 def plot_refinement(refine_pts, refine_res, refine_log):
@@ -379,41 +235,37 @@ def sweep(s,p):
 #    nsoln=7
     norm=np.zeros(s.size)
     for i in range(s.size):
-      sigma,J,dJ=one_s_value(n,s[i],p)
+      J,dJ=one_s_value(n,s[i],p)
       norm[i]=np.sum(np.abs(J))
       print("nsoln,n,s,response=",nsoln,n,s[i],norm[i])
       if i>1 and norm[i-2]<norm[i-1] and norm[i]<norm[i-1]:
         nsoln=nsoln+1
         if nsoln>nsolnmax-1:
           break
-        sigma,sres,Jres = solve(s[i-2],s[i-1],s[i],n,p)
+        sres,Jres = solve(s[i-2],s[i-1],s[i],n,p)
         ssoln[n-1,nsoln]=sres
         Jsoln[n-1,nsoln,:]=Jres
-  return sigma,ssoln,Jsoln
+  return ssoln,Jsoln
 
 
 def main():
-
-  # choices
   energy=1.e0
   temp=1.e4
   tau0=1.e7
   radius=1.e11
   alpha_abs=0.0
   prob_dest=0.0
-  xsource=2.0
+  xsource=0.0
   nmax=6
   nsigma=512
   nomega=10
   s = np.arange(0.2,-15.0,-0.01)
-  p = parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax)#,s)
+  p = Parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax)
   tdiff = (p.radius/fc.clight)*(p.a*p.tau0)**0.333
-
-  sigma,ssoln,Jsoln=sweep(s,p)
-
+  ssoln,Jsoln=sweep(s,p)
+  sigma = sorted(np.concatenate(list(p.sigma_master.values())))
   output_data = np.array([energy,temp,tau0,radius,alpha_abs,prob_dest,xsource,nmax,nsigma,nomega,tdiff,sigma,ssoln,Jsoln])
-  np.save('./eigenmode_data_xinit{:.1f}.npy'.format(xsource),output_data,allow_pickle=True, fix_imports=True)
-  
+  np.save('./data/eigenmode_data_xinit{:.0f}_tau{:.0e}_n{}_m{}.npy'.format(xsource, tau0, p.nmax, nsolnmax).replace('+0',''),output_data, allow_pickle=True, fix_imports=True)
 
 if __name__ == "__main__":
   main()
