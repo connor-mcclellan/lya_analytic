@@ -2,7 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import odeint
 from constants import fundconst,lymanalpha
-from efunctions import parameters, line_profile
+from efunctions import line_profile
+from parameters import Parameters
 from mc_visual import fit_mc_exp, mc_wait_time
 from scipy.interpolate import interp1d
 import pdb
@@ -280,7 +281,7 @@ def dEdnudt(t,sigma,ssoln,Jsoln,p):
 
 def main():
   filenames = [
-              './data/eigenmode_data_xinit0.0_tau1e7_nmax6_nsolnmax20.npy',
+              './data/eigenmode_data_xinit0_tau1e7_n6_m20.npy',
               ]
   for filename in filenames:
       array = np.load(filename, allow_pickle=True, fix_imports=True, )
@@ -298,7 +299,7 @@ def main():
       sigma = array[11]
       ssoln = array[12]
       Jsoln = array[13]
-      p = parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax)
+      p = Parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax)
 
       Pnmsoln = get_Pnm(ssoln,sigma,Jsoln,p)
       times = p.radius/fc.clight * np.arange(0.1,140.0,0.1)

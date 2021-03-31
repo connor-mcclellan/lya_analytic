@@ -37,13 +37,13 @@ def get_sigma_bounds(n, p):
     sigma_tp = p.tau0 * (0.05 / gam_0)**(3/2.) # Location of first resonance hardcoded in
     sigma_efold = p.tau0 / np.sqrt(np.pi) / n
 
-    sigma_left = -(sigma_tp + 5*sigma_efold)
-    sigma_right = (sigma_tp + 5*sigma_efold)
+    sigma_left = -(sigma_tp + 23*sigma_efold) # TODO: Parametrize 23?
+    sigma_right = (sigma_tp + 23*sigma_efold)
 
     return sigma_left, sigma_right
 
 
-def make_sigma_grids(n, p):
+def make_sigma_grids(n, p): ## Make master sigma grid uniform in x
 
     sigma_left, sigma_right = get_sigma_bounds(n, p)
 
