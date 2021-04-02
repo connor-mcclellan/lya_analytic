@@ -14,7 +14,7 @@ import pdb
 # [ ] Zero is duplicated for off-center sources - fix it!
 
 # max number of solutions at each n
-nsolnmax=20
+nsolnmax=40
 fc=fundconst()
 la=lymanalpha()
 
