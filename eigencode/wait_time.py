@@ -106,24 +106,25 @@ def wait_time_line(ax, sigma, ssoln, Jsoln, Pnmsoln, times, p, nmax=6, mmax=20,a
 
     tlc = p.radius/fc.clight
 
-    # TODO; Eq 113 different from 112 behaviors
-    P = np.zeros(np.shape(times), np.shape(sigma))
-    denom = np.zeros(np.shape(times), np.shape(sigma))
+    # TODO; Eq 113 is for a single frequency, not a range of frequencies
+    #pdb.set_trace()
+    P = np.zeros((len(times), len(sigma)))
+#    denom = np.zeros((len(times), len(sigma)))
 
     for i, t in enumerate(times):
         for n in range(1, nmax+1):
             for m in range(0, mmax): 
 
                 ### EQ 113
-                P[i] += - (-1)**n * Jsoln[n-1, m, :] * np.exp(ssoln[n-1, m] * t)
-                denom += (-1)**n / ssoln[n-1, m] * Jsoln[n-1, m, :]
+                #P[i] += - (-1)**n * Jsoln[n-1, m, :] * np.exp(ssoln[n-1, m] * t)
+                #denom += (-1)**n / ssoln[n-1, m] * Jsoln[n-1, m, :]
 
                 ### EQ 112
-                #P[i] += - np.sum(Pnmsoln[n-1, m, :]) * ssoln[n-1, m] * np.exp(ssoln[n-1, m] * t)
+                P[i] += - np.sum(Pnmsoln[n-1, m, :]) * ssoln[n-1, m] * np.exp(ssoln[n-1, m] * t)
 
-    P = P/denom
+#    P = P/denom
 
-#    pdb.set_trace()
+    pdb.set_trace()
 
     if label is None:
         label = '({},{})'.format(nmax, mmax)

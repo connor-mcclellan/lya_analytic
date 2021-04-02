@@ -263,7 +263,7 @@ def main():
   p = Parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax)
   tdiff = (p.radius/fc.clight)*(p.a*p.tau0)**0.333
   ssoln,Jsoln=sweep(s,p)
-  sigma = sorted(np.concatenate(list(p.sigma_master.values())))
+  sigma = np.array(sorted(np.concatenate(list(p.sigma_master.values()))))
   output_data = np.array([energy,temp,tau0,radius,alpha_abs,prob_dest,xsource,nmax,nsigma,nomega,tdiff,sigma,ssoln,Jsoln])
   np.save('./data/eigenmode_data_xinit{:.0f}_tau{:.0e}_n{}_m{}.npy'.format(xsource, tau0, p.nmax, nsolnmax).replace('+0',''),output_data, allow_pickle=True, fix_imports=True)
 

@@ -2,7 +2,8 @@
 # solution for each spatial mode.
 
 from wait_time import get_Pnm
-from efunctions import parameters, line_profile
+from efunctions import line_profile
+from parameters import Parameters
 from scipy.interpolate import interp1d, CubicSpline
 import matplotlib.pyplot as plt
 import numpy as np
@@ -59,7 +60,7 @@ def fluence(sigma, p, Jsoln=None, mmax=20):
 #    return sigma, spec
 
 if __name__ == '__main__':
-    filename = './data/eigenmode_data_xinit0.0_tau1e7_nmax6_nsolnmax20.npy'
+    filename = './data/eigenmode_data_xinit0_tau1e7_n6_m20.npy'
     array = np.load(filename, allow_pickle=True, fix_imports=True, )
     energy = array[0]
     temp = array[1]
@@ -76,7 +77,7 @@ if __name__ == '__main__':
     sigma = array[11]
     ssoln = array[12]
     Jsoln = array[13]
-    p = parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax)
+    p = Parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax)
 #    Pnmsoln = get_Pnm(ssoln,sigma,Jsoln,p)
 
     x_t, tdep_spec = fluence(sigma, p, Jsoln=Jsoln)
