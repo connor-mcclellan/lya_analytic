@@ -222,29 +222,31 @@ def plot_refinement(refine_pts, refine_res, refine_log):
       plt.show()
 
 
-def sweep(s,p):
+def sweep(p):
   # loop over n and s=-i\omega. when you find a maximum in the size of the response, call the solve function
   # tabulate s(n,m) and J(n,m,sigma).
 
   Jsoln=np.zeros((p.nmax,nsolnmax,p.nsigma))
   ssoln=np.zeros((p.nmax,nsolnmax))
   for n in range(1,p.nmax+1):
-#  for n in range(7,p.nmax):
     print ("n=",n)
-    nsoln=-1
-#    nsoln=7
-    norm=np.zeros(s.size)
-    for i in range(s.size):
-      J,dJ=one_s_value(n,s[i],p)
-      norm[i]=np.sum(np.abs(J))
-      print("nsoln,n,s,response=",nsoln,n,s[i],norm[i])
-      if i>1 and norm[i-2]<norm[i-1] and norm[i]<norm[i-1]:
+    nsoln=0
+
+    # TODO: s_start and s_incr: make parameters in the future
+    s = 0.2
+    s_increment = -0.01
+
+    norm=[]
+    while nsoln < nsolnmax:
+      J,dJ=one_s_value(n,s,p)
+      norm.append(np.sum(np.abs(J)))
+      print("nsoln,n,s,response=",nsoln,n,s,norm[-1])
+      if len(norm)>2 and norm[-3]<norm[-2] and norm[-1]<norm[-2]:
         nsoln=nsoln+1
-        if nsoln>nsolnmax-1:
-          break
-        sres,Jres = solve(s[i-2],s[i-1],s[i],n,p)
-        ssoln[n-1,nsoln]=sres
-        Jsoln[n-1,nsoln,:]=Jres
+        sres,Jres = solve(s-2*s_increment,s-s_increment,s,n,p)
+        ssoln[n-1,nsoln-1]=sres
+        Jsoln[n-1,nsoln-1,:]=Jres
+      s += s_increment
   return ssoln,Jsoln
 
 
@@ -259,10 +261,10 @@ def main():
   nmax=6
   nsigma=512
   nomega=10
-  s = np.arange(0.2,-15.0,-0.01)
+#  s = np.arange(0.2,-15.0,-0.01)
   p = Parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax)
   tdiff = (p.radius/fc.clight)*(p.a*p.tau0)**0.333
-  ssoln,Jsoln=sweep(s,p)
+  ssoln,Jsoln=sweep(p)
   sigma = np.array(sorted(np.concatenate(list(p.sigma_master.values()))))
   output_data = np.array([energy,temp,tau0,radius,alpha_abs,prob_dest,xsource,nmax,nsigma,nomega,tdiff,sigma,ssoln,Jsoln])
   np.save('./data/eigenmode_data_xinit{:.0f}_tau{:.0e}_n{}_m{}.npy'.format(xsource, tau0, p.nmax, nsolnmax).replace('+0',''),output_data, allow_pickle=True, fix_imports=True)

@@ -53,7 +53,6 @@ def fluence(sigma, p, Jsoln=None, mmax=20):
                              / (3.0 * p.k * p.energy * phi) * (-1)**n
                              * Jsoln[n-1, m, :] / ssoln[n-1, m]
                              )
-            pdb.set_trace()
             spec_interp = interp1d(sigma_to_x, spec[n-1] * phi)
             spec_xuniform[n-1] = spec_interp(xuniform) / phi_xuniform
 
@@ -61,7 +60,7 @@ def fluence(sigma, p, Jsoln=None, mmax=20):
 #    return sigma, spec
 
 if __name__ == '__main__':
-    filename = './data/eigenmode_data_xinit0_tau1e7_n6_m40.npy'
+    filename = './data/eigenmode_data_xinit0_tau1e7_n6_m20.npy'
     array = np.load(filename, allow_pickle=True, fix_imports=True, )
     energy = array[0]
     temp = array[1]
@@ -82,7 +81,8 @@ if __name__ == '__main__':
 #    Pnmsoln = get_Pnm(ssoln,sigma,Jsoln,p)
 
 
-    filename2 = './data/eigenmode_data_xinit0_tau1e7_n6_m20.npy'
+#    filename2 = './data/eigenmode_data_xinit0_tau1e7_n6_m20.npy'
+    filename2 = './data/old/eigenmode_data_xinit0.0_tau1e7_nmax6_nsolnmax20.npy'
     array2 = np.load(filename2, allow_pickle=True, fix_imports=True, )
     energy2 = array2[0]
     temp2 = array2[1]
@@ -101,20 +101,20 @@ if __name__ == '__main__':
     Jsoln2 = array2[13]
     p2 = Parameters(temp2,tau02,radius2,energy2,xsource2,alpha_abs2,prob_dest2,nsigma2,nmax2)
 
-#    x_t2, tdep_spec2 = fluence(sigma2, p2, Jsoln=Jsoln2)
-    x_t, tdep_spec = fluence(sigma, p, Jsoln=Jsoln, mmax=40)
+    x_t2, tdep_spec2 = fluence(sigma2, p2, Jsoln=Jsoln2)
+    x_t, tdep_spec = fluence(sigma, p, Jsoln=Jsoln)#, mmax=40)
     x_s, steady_state = fluence(sigma, p)
-    pdb.set_trace()
+
 
     for n in range(1, p.nmax+1):
         fig, ax = plt.subplots(1, 1)
-        ax.plot(x_t, np.abs(np.sum(tdep_spec[:n], axis=0)), 'r-', alpha=0.7, label='time dependent m=40')
-        ax.plot(x_t2, np.abs(np.sum(tdep_spec2[:n], axis=0)), 'm--', alpha=0.7, label='time dependent m=20')
+        ax.plot(x_t, np.abs(np.sum(tdep_spec[:n], axis=0)), 'r-', alpha=0.7, label=r'$n={{{}}}$, all $m < 20$'.format(n))
+        ax.plot(x_t2, np.abs(np.sum(tdep_spec2[:n], axis=0)), 'm--', alpha=0.7, label=r'(old code) $n={{{}}}$, all $m < 20$'.format(n))
 #        ax.plot(x_t_10, np.abs(tdep_spec_10[n-1]), 'm--', alpha=0.7, label='time dependent, mmaxx=10')
         ax.plot(x_s, np.abs(np.sum(steady_state[:n], axis=0)), '-', alpha=0.7, label='steady state n={}'.format(n))
         plt.yscale('log')
         plt.ylim(1e-21, 1e-11)
-        plt.xlim(0, 40)
+        plt.xlim(0, 30)
         plt.title('abs val of sum to n={}'.format(n))
         plt.xlabel('x')
         plt.legend()
