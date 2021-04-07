@@ -43,17 +43,25 @@ def get_sigma_bounds(n, p):
     return sigma_left, sigma_right
 
 
-def make_sigma_grids(n, p): ## Make master sigma grid uniform in x
+def make_sigma_grids(n, p, xuniform=True): ## Make master sigma grid uniform in x
 
-    sigma_left, sigma_right = get_sigma_bounds(n, p)
+    left, right = get_sigma_bounds(n, p)
+    source = p.sigmas
+    offset = p.sigma_offset
+
+    if xuniform:
+        left = np.cbrt(left/p.c1)
+        right = np.cbrt(right/p.c1)
+        source = p.xsource
+        offset = np.cbrt(p.sigma_offset/p.c1)
 
     # Determine the integration ranges
-    delimiters = sorted(np.array([sigma_left, p.sigmas, 0., sigma_right]))
+    delimiters = sorted(np.array([left, source, 0., right]))
 
     # Build an array that's evenly spaced between leftmost and rightmost sigma
     # The -1e-3 is to ensure the last data point, which is equal to sigma_right,
     # does not end up in a bin all by itself
-    even_array = np.linspace(sigma_left, sigma_right-1e-3, p.nsigma)
+    even_array = np.linspace(left, right-1e-6, p.nsigma)
 
     # Bin this evenly-spaced array into the integration ranges we found earlier
     # These are the indices that specify which bin the data points fall into:
@@ -63,7 +71,7 @@ def make_sigma_grids(n, p): ## Make master sigma grid uniform in x
     nleft, nmiddle, nright = [len(inds[inds==i]) for i in range(1, 4)]
 
     # For a nonzero source, make sure that the middle grid has enough points
-    if nmiddle < 4 and p.sigmas != 0.:
+    if nmiddle < 4 and source != 0.:
         warnings.warn('Middle grid is critically undersampled. Adding 4 points.')
         nmiddle += 4
         nright -= 2
@@ -72,33 +80,39 @@ def make_sigma_grids(n, p): ## Make master sigma grid uniform in x
     ### Create grids
     # Leftgrid goes from sigma_left to whichever is smaller: source, or 0
     # Its values will be ordered from small to large --- increasingly
-    leftgrid = np.linspace(sigma_left, min(p.sigmas, 0), nleft)
+    leftgrid = np.linspace(left, min(source, 0), nleft)
     # Middle grid goes from 0 to source
     # Its values are either ordered increasingly or decreasingly, depending  
     # on whether source>0 or source<0, respectively
-    middlegrid = np.linspace(0, p.sigmas, nmiddle)
+    middlegrid = np.linspace(0, source, nmiddle)
     # Right grid goes from sigma_right to whichever is larger: source, or 0
     # Its values are always ordered decreasingly
-    rightgrid = np.linspace(sigma_right, max(0, p.sigmas), nright)
+    rightgrid = np.linspace(right, max(0, source), nright)
 
     # Set an offset applied about source
     # This helps resolve the dJ discontinuity better. If it is not large enough,
     # the integrator will not be deterministic near the source
-    if np.abs(leftgrid[-1]-p.sigma_offset) > np.abs(leftgrid[-2]-leftgrid[-1]):
+    if np.abs(leftgrid[-1]-offset) > np.abs(leftgrid[-2]-leftgrid[-1]):
         # If offset is larger than bin spacing, split the distance to the end
-        p.sigma_offset = np.abs(leftgrid[-2]-leftgrid[-1])/2.
-    if len(middlegrid) != 0 and p.sigma_offset > np.diff(middlegrid)[0]:
-        p.sigma_offset = np.diff(middlegrid)[0]/2
+        offset = np.abs(leftgrid[-2]-leftgrid[-1])/2.
+    if len(middlegrid) != 0 and offset > np.diff(middlegrid)[0]:
+        offset = np.diff(middlegrid)[0]/2
 
-    if p.sigmas < 0.:
-      middlegrid[-1] += p.sigma_offset
-      leftgrid[-1] -= p.sigma_offset
-    elif p.sigmas > 0.:
-      middlegrid[-1] -= p.sigma_offset
-      rightgrid[-1] += p.sigma_offset
+    if source < 0.:
+      middlegrid[-1] += offset
+      leftgrid[-1] -= offset
+    elif source > 0.:
+      middlegrid[-1] -= offset
+      rightgrid[-1] += offset
     else:
-      leftgrid[-1] -= p.sigma_offset
-      rightgrid[-1] += p.sigma_offset
+      leftgrid[-1] -= offset
+      rightgrid[-1] += offset
+
+    if xuniform:
+        leftgrid = p.c1 * leftgrid**3.
+        rightgrid = p.c1 * rightgrid**3.
+        middlegrid = p.c1 * middlegrid**3.
+
     return {'left':leftgrid, 'middle':middlegrid, 'right':rightgrid}
 
 
