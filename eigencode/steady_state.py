@@ -60,7 +60,7 @@ def fluence(sigma, p, Jsoln=None, mmax=20):
 #    return sigma, spec
 
 if __name__ == '__main__':
-    filename = './data/eigenmode_data_xinit0_tau1e7_n6_m20.npy'
+    filename = './data/eigenmode_data_xinit0_tau1e7_n6_m20_xuniform_masteronly.npy'
     array = np.load(filename, allow_pickle=True, fix_imports=True, )
     energy = array[0]
     temp = array[1]
@@ -82,7 +82,7 @@ if __name__ == '__main__':
 
 
 #    filename2 = './data/eigenmode_data_xinit0_tau1e7_n6_m20.npy'
-    filename2 = './data/old/eigenmode_data_xinit0.0_tau1e7_nmax6_nsolnmax20.npy'
+    filename2 = './data/eigenmode_data_xinit0_tau1e7_n6_m20.npy'
     array2 = np.load(filename2, allow_pickle=True, fix_imports=True, )
     energy2 = array2[0]
     temp2 = array2[1]
@@ -108,10 +108,10 @@ if __name__ == '__main__':
 
     for n in range(1, p.nmax+1):
         fig, ax = plt.subplots(1, 1)
-        ax.plot(x_t, np.abs(np.sum(tdep_spec[:n], axis=0)), 'r-', alpha=0.7, label=r'$n={{{}}}$, all $m < 20$'.format(n))
-        ax.plot(x_t2, np.abs(np.sum(tdep_spec2[:n], axis=0)), 'm--', alpha=0.7, label=r'(old code) $n={{{}}}$, all $m < 20$'.format(n))
+        ax.plot(x_t, np.abs(np.sum(tdep_spec[:n], axis=0)), 'r-', marker='o', ms=1, alpha=0.7, label=r'$(xuniform) n={{{}}}$, all $m < 20$'.format(n))
+        ax.plot(x_t2, np.abs(np.sum(tdep_spec2[:n], axis=0)), 'm--', marker='^', ms=1, alpha=0.7, label=r'$n={{{}}}$, all $m < 20$'.format(n))
 #        ax.plot(x_t_10, np.abs(tdep_spec_10[n-1]), 'm--', alpha=0.7, label='time dependent, mmaxx=10')
-        ax.plot(x_s, np.abs(np.sum(steady_state[:n], axis=0)), '-', alpha=0.7, label='steady state n={}'.format(n))
+        ax.plot(x_s, np.abs(np.sum(steady_state[:n], axis=0)), '-', marker='s', ms=1, alpha=0.7, label='steady state n={}'.format(n))
         plt.yscale('log')
         plt.ylim(1e-21, 1e-11)
         plt.xlim(0, 30)

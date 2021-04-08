@@ -29,7 +29,7 @@ class Parameters:
     self.nmax=nmax
     self.sigma_bounds = get_sigma_bounds(self.nmax, self)
     self.sigma_offset = self.sigma_bounds[1]/self.nsigma # Should be around ~7e3 for integrator to be deterministic near source
-    self.sigma_master = make_sigma_grids(self.nmax, self)
+    self.sigma_master = make_sigma_grids(self.nmax, self, xuniform=True)
 
 
 def get_sigma_bounds(n, p):
@@ -43,7 +43,7 @@ def get_sigma_bounds(n, p):
     return sigma_left, sigma_right
 
 
-def make_sigma_grids(n, p, xuniform=True): ## Make master sigma grid uniform in x
+def make_sigma_grids(n, p, xuniform=False): ## Make master sigma grid uniform in x
 
     left, right = get_sigma_bounds(n, p)
     source = p.sigmas
