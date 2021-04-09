@@ -119,8 +119,8 @@ if __name__ == '__main__':
         plt.xlabel('x')
         plt.legend()
         plt.tight_layout()
-#        plt.show()
-        plt.savefig('timedep_v_steadystate_n{}.pdf'.format(n))
+        plt.show()
+#        plt.savefig('timedep_v_steadystate_n{}.pdf'.format(n))
 
     '''
     import matplotlib.pylab as pl

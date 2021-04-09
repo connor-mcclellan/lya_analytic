@@ -12,9 +12,11 @@ import pdb
 # [X] Rewrite sol to use interpolants on master sigma grid
 # [ ] Insert zero at line center for Jsoln?
 # [ ] Zero is duplicated for off-center sources - fix it!
+# [ ] rtol and atol convergence
+
 
 # max number of solutions at each n
-nsolnmax=100
+nsolnmax=20
 fc=fundconst()
 la=lymanalpha()
 
@@ -43,7 +45,7 @@ def integrate(sigma, y_start, n, s, p):
   '''
   Returns interpolants which can be used to evaluate the function at any sigma
   '''
-  sol = solve_ivp(func, [sigma[0], sigma[-1]], y_start, t_eval=sigma, args=(n,s,p), dense_output=True)
+  sol = solve_ivp(func, [sigma[0], sigma[-1]], y_start, t_eval=sigma, args=(n,s,p), rtol=1e-10, atol=1e-10, dense_output=True)
   return sol.y.T, sol.sol
 
 
@@ -267,7 +269,7 @@ def main():
   ssoln,Jsoln=sweep(p)
   sigma = np.array(sorted(np.concatenate(list(p.sigma_master.values()))))
   output_data = np.array([energy,temp,tau0,radius,alpha_abs,prob_dest,xsource,nmax,nsigma,nomega,tdiff,sigma,ssoln,Jsoln])
-  np.save('./data/eigenmode_data_xinit{:.0f}_tau{:.0e}_n{}_m{}_xuniform_masteronly.npy'.format(xsource, tau0, p.nmax, nsolnmax).replace('+0',''),output_data, allow_pickle=True, fix_imports=True)
+  np.save('./data/eigenmode_data_xinit{:.0f}_tau{:.0e}_n{}_m{}_rtolatol_test.npy'.format(xsource, tau0, p.nmax, nsolnmax).replace('+0',''),output_data, allow_pickle=True, fix_imports=True)
 
 if __name__ == "__main__":
   main()

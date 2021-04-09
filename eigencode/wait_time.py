@@ -157,7 +157,7 @@ def eigenmode_visualization(sigma,Jsoln,p):
     plt.show()
 
 
-def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds,):
+def wait_time_freq_dependence(ssoln,Jsoln,Pnmsoln,times,p,bounds,):
     '''
     Produce a wait time distribution with all spatial and frequency eigenmodes,
     split into ranges of frequency. The ranges are constructed between the 
@@ -168,34 +168,38 @@ def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds,):
     fig2, ax2 = plt.subplots(1, 1, figsize=(4.8,5.4))
 
     # Fluence: integral of Pnm with respect to time
-    spec = np.zeros(np.shape(Pnmsoln)[-1])
+    sigma = np.array(sorted(np.concatenate(list(p.sigma_master.values()))))
+    spec = np.zeros(np.shape(sigma))
     phi = line_profile(sigma, p)
     for n in range(1, p.nmax+1):   ### EQ 111
-        for m in range(nsolnmax):               ### Should this Delta be here?
-            spec += 16. * np.pi**2 * p.radius * p.Delta / (3.0 * p.k * p.energy\
-                    * phi) * (-1)**n / ssoln[n-1, m] * Jsoln[n-1, m, :]
+        for m in range(nsolnmax):
+            spec += (
+                    16. * np.pi**2 * p.radius * p.Delta
+                    / (3.0 * p.k * p.energy * phi) * (-1)**n
+                    * Jsoln[n-1, m, :] / ssoln[n-1, m]
+                    )
 
     sigma_to_x = np.cbrt(sigma/p.c1)
 
     # Make an array of uniformly spaced x-values symmetric about 0 (min, max, npoints)
-    xuniform_l = np.linspace(np.min(sigma_to_x), -0.1, int(len(sigma_to_x)/2))
-    xuniform_r = np.linspace(0.1, np.max(sigma_to_x), int(len(sigma_to_x)/2))
-    xuniform = np.concatenate([xuniform_l, xuniform_r])
+#    xuniform_l = np.linspace(np.min(sigma_to_x), -0.1, int(len(sigma_to_x)/2))
+#    xuniform_r = np.linspace(0.1, np.max(sigma_to_x), int(len(sigma_to_x)/2))
+#    xuniform = np.concatenate([xuniform_l, xuniform_r])
 
     # Find sigma at each x-value
-    sigma_xuniform = (p.c1) * xuniform**3.
+#    sigma_xuniform = (p.c1) * xuniform**3.
 
     # Calculate line profile at all the x points needed
-    phi_xuniform = line_profile(xuniform**3 * p.c1, p)
+#    phi_xuniform = line_profile(xuniform**3 * p.c1, p)
 
     # Interpolate solutions from original points
-    spec_interp = interp1d(sigma_to_x, np.log(spec * phi)) # TODO: Interpolate over log space instead
+#    spec_interp = interp1d(sigma_to_x, np.log(spec * phi)) # TODO: Interpolate over log space instead
 
     # Apply interpolation to uniformly distributed x values, divide by line
     # profile at those x positions
-    spec_xuniform = np.exp(spec_interp(xuniform)) / phi_xuniform
+#    spec_xuniform = np.exp(spec_interp(xuniform)) / phi_xuniform
 
-    ax2.plot(xuniform, np.abs(spec_xuniform), 'k-', lw=0.5)
+    ax2.plot(sigma_to_x, spec, 'k-', lw=0.5)
 
     mc_dir = '/home/connor/Documents/lya_analytic/data/1m_tau0_10000000.0_xinit_0.0_temp_10000.0_probabs_0.0/'
 
@@ -238,8 +242,8 @@ def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds,):
     # Set limits and labels of spectrum plot
     xlim = np.max(np.cbrt(np.array(bounds)/p.c1))
     ax2.set_xlim(-xlim, xlim)
-    ax2.set_ylim(np.min(spec[spec>0]), 10*np.max(spec))
-    ax2.set_yscale('log')
+    ax2.set_ylim(np.min(spec[spec>0]), np.max(spec))
+#    ax2.set_yscale('log')
     ax2.set_ylabel(r"$E_\nu$")
     ax2.set_xlabel('$x$')
     ax2.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=2, frameon=False)
@@ -309,7 +313,7 @@ def main():
       x_bounds = np.array([0, 30])
       sigma_bounds = p.c1 * x_bounds**3.
 
-      wait_time_freq_dependence(ssoln, sigma, Jsoln, Pnmsoln, times, p, sigma_bounds)
+      wait_time_freq_dependence(ssoln, Jsoln, Pnmsoln, times, p, sigma_bounds)
 
 plt.show()
 #  print('Optical Depth =', tau0)
