@@ -11,7 +11,7 @@ import matplotlib
 matplotlib.rcParams['text.usetex'] = True
 
 # max number of solutions at each n
-nsolnmax=20
+nsolnmax=100
 fc=fundconst()
 la=lymanalpha()
 
@@ -107,7 +107,7 @@ def wait_time_line(ax, sigma, ssoln, Jsoln, Pnmsoln, times, p, nmax=6, mmax=20,a
     tlc = p.radius/fc.clight
 
     # TODO; Eq 113 is for a single frequency, not a range of frequencies
-    #pdb.set_trace()
+
     P = np.zeros((len(times), len(sigma)))
 #    denom = np.zeros((len(times), len(sigma)))
 
@@ -120,11 +120,7 @@ def wait_time_line(ax, sigma, ssoln, Jsoln, Pnmsoln, times, p, nmax=6, mmax=20,a
                 #denom += (-1)**n / ssoln[n-1, m] * Jsoln[n-1, m, :]
 
                 ### EQ 112
-                P[i] += - np.sum(Pnmsoln[n-1, m, :]) * ssoln[n-1, m] * np.exp(ssoln[n-1, m] * t)
-
-#    P = P/denom
-
-    pdb.set_trace()
+                P[i] += - np.sum(Pnmsoln[n-1, m, :]) * ssoln[n-1, m] * np.exp(ssoln[n-1, m] * t) * p.Delta
 
     if label is None:
         label = '({},{})'.format(nmax, mmax)
@@ -224,7 +220,7 @@ def wait_time_freq_dependence(ssoln,sigma,Jsoln,Pnmsoln,times,p,bounds,):
 
         # Plot analytic escape time distribution
         label = 'Analytic $n_{{max}}={}$ $m_{{max}}={}$'.format(p.nmax,nsolnmax)
-        line = wait_time_line(ax1, sigma[mask], ssoln, J_masked, Pnm_masked, times, p, nmax=6, mmax=20, alpha=0.5, label=label)
+        line = wait_time_line(ax1, sigma[mask], ssoln, J_masked, Pnm_masked, times, p, nmax=p.nmax, mmax=nsolnmax, alpha=0.5, label=label)
 
         # Shade spectrum inbetween frequency bounds
         ax2.fill_between(np.cbrt(np.linspace(freq_min, freq_max)/p.c1), 10*np.max(spec), facecolor=line[-1].get_color(), alpha=0.5, label="${} < |x| < {}$".format(*xbounds))
@@ -282,7 +278,9 @@ def dEdnudt(t,sigma,ssoln,Jsoln,p):
 
 def main():
   filenames = [
-              './data/eigenmode_data_xinit0_tau1e7_n6_m20.npy',
+              './data/eigenmode_data_xinit0_tau1e7_n6_m100_xuniform_masteronly.npy',
+              #'./data/eigenmode_data_xinit0_tau1e7_n6_m20_xuniform_masteronly.npy',
+              #'./data/eigenmode_data_xinit0_tau1e7_n6_m40.npy',
               ]
   for filename in filenames:
       array = np.load(filename, allow_pickle=True, fix_imports=True, )
@@ -308,7 +306,7 @@ def main():
 
     #  peak = 60
     #  x_bounds = np.array([0, peak/2, peak, 3*peak/2, 160])
-      x_bounds = np.array([0, 50])
+      x_bounds = np.array([0, 30])
       sigma_bounds = p.c1 * x_bounds**3.
 
       wait_time_freq_dependence(ssoln, sigma, Jsoln, Pnmsoln, times, p, sigma_bounds)

@@ -6,7 +6,7 @@ fc=fundconst()
 
 
 def gamma(n, m, p): 
-     return 2**(1/3) * np.pi**(13/6)*n**(4/3)*m**(2/3)*fc.clight/p.radius/(p.a * p.tau0)**(1/3)    
+     return 2**(-1/3) * np.pi**(13/6)*n**(4/3)*m**(2/3)*(m-7/8)**(2/3)*fc.clight/p.radius/(p.a * p.tau0)**(1/3)    
 
 
 filename = './data/eigenmode_data_xinit0_tau1e7_n6_m40.npy'
@@ -28,30 +28,31 @@ Jsoln = array[13]
 p = Parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax)
 
 
-'''
+color = ['c', 'm', 'k', 'r', 'limegreen', 'b']
 for n in range(1, nmax+1):
-    gamma_analytic = gamma(n, np.arange(40), p)
-    gamma_sweep = -ssoln[n-1]
+    gamma_analytic = n**(-4/3)*gamma(n, np.arange(40), p)
+    gamma_sweep = -n**(-4/3)*ssoln[n-1]
 
-    plt.plot(np.arange(40), gamma_analytic, '--', label='$\gamma_{nm}$ analytic')
-    plt.plot(np.arange(40), gamma_sweep, '-', label='$\gamma$ sweep')
-    plt.title('n={}'.format(n))
-    plt.ylabel('\gamma')
-    plt.xlabel('m')
-    plt.tight_layout()
-    plt.legend()
-#    plt.show()
-    plt.savefig('gamma_n{}.pdf'.format(n))
-    plt.close()
+    plt.plot(np.arange(40), gamma_analytic, '--', c=color[n-1], alpha=0.5)#, label='$\gamma_{nm}$ analytic')
+    plt.plot(np.arange(40), gamma_sweep, '-', c=color[n-1], alpha=0.5)#, label='$\gamma$ sweep')
+#plt.title('n={}'.format(n))
+plt.ylabel('$\gamma n^{-4/3}$')
+plt.xlabel('m')
+plt.tight_layout()
+plt.legend()
+plt.show()
+    #plt.savefig('gamma_n{}.pdf'.format(n))
+    #plt.close()
+
+
 '''
-
-
 for m in range(0, 40):
     gamma_analytic = gamma(np.arange(1, nmax+1), m, p)
     gamma_sweep = -ssoln[:, m]
 
-    plt.plot(np.arange(1, 7), gamma_analytic, '--', label='$\gamma_{nm}$ analytic')
-    plt.plot(np.arange(1, 7), gamma_sweep, '-', label='$\gamma$ sweep')
+    n = np.arange(1, 7)
+    plt.plot(n, gamma_analytic, '--', label='$\gamma_{nm}$ analytic')
+    plt.plot(n, gamma_sweep, '-', label='$\gamma$ sweep')
     plt.title('m={}'.format(m))
     plt.ylabel('\gamma')
     plt.xlabel('n')
@@ -60,4 +61,4 @@ for m in range(0, 40):
     plt.show()
 #    plt.savefig('gamma_m{}.pdf'.format(n))
 #    plt.close()
-
+'''
