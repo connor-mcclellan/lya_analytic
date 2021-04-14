@@ -4,12 +4,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 fc=fundconst()
 
+mmax=100
 
 def gamma(n, m, p): 
      return 2**(-1/3) * np.pi**(13/6)*n**(4/3)*(m-7/8)**(2/3)*fc.clight/p.radius/(p.a * p.tau0)**(1/3)    
 
 
-filename = './data/eigenmode_data_xinit0_tau1e7_n6_m20_rtolatol_test.npy'
+filename = './data/eigenmode_data_xinit0_tau1e7_n6_m100_xuniform_masteronly.npy'
 array = np.load(filename, allow_pickle=True, fix_imports=True, )
 energy = array[0]
 temp = array[1]
@@ -30,14 +31,16 @@ p = Parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax)
 
 color = ['c', 'm', 'k', 'r', 'limegreen', 'b']
 for n in range(1, nmax+1):
-    gamma_analytic = n**(-4/3)*gamma(n, np.arange(20), p)
-    gamma_sweep = -n**(-4/3)*ssoln[n-1][:20]
+    gamma_analytic = n**(-4/3)*gamma(n, np.arange(mmax), p)
+    gamma_sweep = -n**(-4/3)*ssoln[n-1][:mmax]
 
-    plt.plot(np.arange(0, 20), gamma_analytic, '--', c=color[n-1], alpha=0.5)#, label='$\gamma_{nm}$ analytic')
-    plt.plot(np.arange(1, 21), gamma_sweep, '-', c=color[n-1], alpha=0.5)#, label='$\gamma$ sweep')
+    plt.plot(np.arange(0, mmax), 1/gamma_analytic, '--', c=color[n-1], alpha=0.5)#, label='$\gamma_{nm}$ analytic')
+    plt.plot(np.arange(1, mmax+1), 1/gamma_sweep, '-', c=color[n-1], alpha=0.5)#, label='$\gamma$ sweep')
 #plt.title('n={}'.format(n))
-plt.ylabel('$\gamma n^{-4/3}$')
+plt.ylabel('$n^{4/3}t_{nm}(s)$')
 plt.xlabel('m')
+plt.xscale('log')
+plt.yscale('log')
 plt.tight_layout()
 plt.legend()
 plt.show()

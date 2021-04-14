@@ -23,7 +23,7 @@ la=lymanalpha()
 def line_profile(sigma,p):					# units of Hz^{-1}
   x=(np.abs(sigma)/p.c1)**(1.0/3.0)
   #line_profile = ( np.exp(-x**2)/np.sqrt(np.pi) + p.a/np.pi/(0.01+x**2) ) / p.Delta		# doppler and natural
-  line_profile = p.a / np.pi / (0.01 + x**2) / p.Delta
+  line_profile = p.a / np.pi / (0.01+x**2) / p.Delta
   return line_profile
 
 # Differential equation for solve_ivp
@@ -45,7 +45,7 @@ def integrate(sigma, y_start, n, s, p):
   '''
   Returns interpolants which can be used to evaluate the function at any sigma
   '''
-  sol = solve_ivp(func, [sigma[0], sigma[-1]], y_start, t_eval=sigma, args=(n,s,p), rtol=1e-10, atol=1e-10, dense_output=True)
+  sol = solve_ivp(func, [sigma[0], sigma[-1]], y_start, args=(n,s,p), rtol=1e-10, atol=1e-10, dense_output=True)
   return sol.y.T, sol.sol
 
 
@@ -269,7 +269,7 @@ def main():
   ssoln,Jsoln=sweep(p)
   sigma = np.array(sorted(np.concatenate(list(p.sigma_master.values()))))
   output_data = np.array([energy,temp,tau0,radius,alpha_abs,prob_dest,xsource,nmax,nsigma,nomega,tdiff,sigma,ssoln,Jsoln])
-  np.save('./data/eigenmode_data_xinit{:.0f}_tau{:.0e}_n{}_m{}_rtolatol_test.npy'.format(xsource, tau0, p.nmax, nsolnmax).replace('+0',''),output_data, allow_pickle=True, fix_imports=True)
+  np.save('./data/eigenmode_data_xinit{:.0f}_tau{:.0e}_n{}_m{}_offset.npy'.format(xsource, tau0, p.nmax, nsolnmax).replace('+0',''),output_data, allow_pickle=True, fix_imports=True)
 
 if __name__ == "__main__":
   main()
