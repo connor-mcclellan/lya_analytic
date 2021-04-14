@@ -4,13 +4,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 fc=fundconst()
 
-mmax=100
+mmax=20
 
 def gamma(n, m, p): 
      return 2**(-1/3) * np.pi**(13/6)*n**(4/3)*(m-7/8)**(2/3)*fc.clight/p.radius/(p.a * p.tau0)**(1/3)    
 
 
-filename = './data/eigenmode_data_xinit0_tau1e7_n6_m100_xuniform_masteronly.npy'
+filename = './data/eigenmode_data_xinit0_tau1e7_n6_m20_lineprofile.npy'
 array = np.load(filename, allow_pickle=True, fix_imports=True, )
 energy = array[0]
 temp = array[1]

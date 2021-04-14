@@ -28,7 +28,7 @@ class Parameters:
     self.nsigma=nsigma
     self.nmax=nmax
     self.sigma_bounds = get_sigma_bounds(self.nmax, self)
-    self.sigma_offset = 1e3#self.sigma_bounds[1]/self.nsigma # Should be around ~7e3 for integrator to be deterministic near source
+    self.sigma_offset = self.sigma_bounds[1]/self.nsigma # Should be around ~7e3 for integrator to be deterministic near source
     self.sigma_master = make_sigma_grids(self.nmax, self, xuniform=True)
 
 
@@ -37,7 +37,7 @@ def get_sigma_bounds(n, p):
     sigma_tp = p.tau0 * (0.05 / gam_0)**(3/2.) # Location of first resonance hardcoded in
     sigma_efold = p.tau0 / np.sqrt(np.pi) / n
 
-    sigma_left = -(sigma_tp + 40*sigma_efold) # TODO: Parametrize 23?
+    sigma_left = -(sigma_tp + 40*sigma_efold) # TODO: Parametrize?
     sigma_right = (sigma_tp + 40*sigma_efold)
 
     return sigma_left, sigma_right
