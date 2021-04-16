@@ -37,10 +37,11 @@ def gamma(n, m, p):
      return 2**(-1/3) * np.pi**(13/6)*n**(4/3)*(m-7/8)**(2/3)*fc.clight/p.radius/(p.a * p.tau0)**(1/3)
 
 
-def get_sigma_bounds(n, m, p):
+def get_sigma_bounds(n, m, p, s=None):
     gam_0 = fc.clight / (p.a * p.tau0)**(1/3) / p.radius
-    gam_max = gamma(n, m, p)
-    sigma_tp = p.tau0 * (gam_max / gam_0)**(3/2.)
+    if s is None:
+        s = -gamma(n, m, p) # TODO: Make this change everywhere. Use s if you have it.
+    sigma_tp = p.tau0 * (-s / gam_0)**(3/2.)
     sigma_efold = p.tau0 / np.sqrt(np.pi) / n
 
     sigma_left = -(sigma_tp + 40*sigma_efold) # TODO: Parametrize?
