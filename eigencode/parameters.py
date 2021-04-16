@@ -7,7 +7,7 @@ fc=fundconst()
 la=lymanalpha()
 
 class Parameters:
-  def __init__(self,temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax):#,s):
+  def __init__(self,temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax,mmax):
     self.temp=temp                                              # temperature in K
     self.tau0=tau0                                              # line center optical depth of sphere
     self.radius=radius                                          # radius of sphere in cm
@@ -27,14 +27,20 @@ class Parameters:
     self.sigmas=self.c1*xsource**3
     self.nsigma=nsigma
     self.nmax=nmax
+    self.mmax=mmax
     self.sigma_bounds = get_sigma_bounds(self.nmax, self)
     self.sigma_offset = self.sigma_bounds[1]/self.nsigma/1e2
     self.sigma_master = make_sigma_grids(self.nmax, self, xuniform=True)
 
 
+def gamma(n, m, p): 
+     return 2**(-1/3) * np.pi**(13/6)*n**(4/3)*(m-7/8)**(2/3)*fc.clight/p.radius/(p.a * p.tau0)**(1/3)
+
+
 def get_sigma_bounds(n, p):
-    gam_0 = n**2 * fc.clight / (p.a * p.tau0)**(1/3) / p.radius
-    sigma_tp = p.tau0 * (0.05 / gam_0)**(3/2.) # Location of first resonance hardcoded in
+    gam_0 = fc.clight / (p.a * p.tau0)**(1/3) / p.radius
+    gam_max = gamma(n, p.mmax, p)
+    sigma_tp = p.tau0 * (gam_max / gam_0)**(3/2.)
     sigma_efold = p.tau0 / np.sqrt(np.pi) / n
 
     sigma_left = -(sigma_tp + 40*sigma_efold) # TODO: Parametrize?

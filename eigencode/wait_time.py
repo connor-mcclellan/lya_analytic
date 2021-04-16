@@ -10,8 +10,6 @@ import pdb
 import matplotlib
 matplotlib.rcParams['text.usetex'] = True
 
-# max number of solutions at each n
-nsolnmax=100
 fc=fundconst()
 la=lymanalpha()
 
@@ -24,10 +22,10 @@ def midpoint_diff(t):
 
 def get_Pnm(ssoln,sigma,Jsoln,p):
   dsigma = midpoint_diff(sigma)
-  Pnmsoln=np.zeros((p.nmax,nsolnmax,len(dsigma)))
+  Pnmsoln=np.zeros((p.nmax,p.mmax,len(dsigma)))
   for k in range(len(dsigma)):
     for n in range(1,p.nmax+1):
-      for i in range(nsolnmax): ### EQ 110 --- don't make as a function of frequency. Coefficients of n and m already integrated over sigma
+      for i in range(p.mmax): ### EQ 110 --- don't make as a function of frequency. Coefficients of n and m already integrated over sigma
         Pnmsoln[n-1,i,k] = np.sqrt(1.5) * 16.0*np.pi**2 * p.radius * p.Delta\
                            / (3.0 * p.k * p.energy) * (-1.0)**(n) / ssoln[n-1, i]\
                            * Jsoln[n-1,i,k] * dsigma[k]
@@ -37,14 +35,14 @@ def get_Pnm(ssoln,sigma,Jsoln,p):
   fname.write('%5s\t%5s\t%10s\t%10s\t%10s\t%10s\t%10s\n' % ('n','m','s(Hz)','t(s)','Pnm','-Pnm/snm','cumul prob') )
   totalprob=0.0
   for n in range(1,p.nmax+1):
-    for j in range(nsolnmax):
+    for j in range(p.mmax):
       if ssoln[n-1,j]==0.0:
         continue
       totalprob=totalprob - np.sum(Pnmsoln[n-1,j,:])/ssoln[n-1,j]
       fname.write('%5d\t%5d\t%10.3e\t%10.3e\t%10.3e\t%10.3e\t%10.3e\n' % (n,j,ssoln[n-1,j],-1.0/ssoln[n-1,j],np.sum(Pnmsoln[n-1,j,:]),-np.sum(Pnmsoln[n-1,j,:])/ssoln[n-1,j],totalprob) )
       #print("n,m,snm,- Pnm/ssm,cumulative_prob=",n,j,ssoln[n,j],- Pnmsoln[n-1,j]/ssoln[n,j],totalprob)
   fname.close()
-  m=np.arange(0,nsolnmax)
+  m=np.arange(0,p.mmax)
 
   plt.figure()
   for n in range(1,p.nmax+1):
@@ -136,19 +134,19 @@ def eigenmode_visualization(sigma,Jsoln,p):
 
     from scipy.interpolate import make_interp_spline, BSpline
     import matplotlib.pylab as pl
-    colors = pl.cm.viridis_r(np.linspace(0,1,p.nmax*nsolnmax))
+    colors = pl.cm.viridis_r(np.linspace(0,1,p.nmax*p.mmax))
 
     fig, ax = plt.subplots()
     for n in reversed(range(1, p.nmax+1)):
-        for m in reversed(range(nsolnmax)):
-            q = nsolnmax*(n-1)+m
+        for m in reversed(range(p.mmax)):
+            q = p.mmax*(n-1)+m
             fine_sigma = np.linspace(-1.2e8, 1.2e8, len(sigma)*100)
             Jinterp = make_interp_spline(sigma, Jsoln[n-1, m, :], k=3)
 
 #            fine_sigma = np.concatenate([fine_sigma, np.flip(fine_sigma)[1:]])
 #            Jinterp = np.concatenate([Jinterp, np.flip(Jinterp)[1:]])
 
-            ax.plot(fine_sigma, Jinterp(fine_sigma), label='({},{})'.format(n, m), alpha=1-q/(nsolnmax*p.nmax)/2, lw=1.5, color=colors[q]) #0.75 - (n/p.nmax + (m+1)/nsolnmax)/2/2
+            ax.plot(fine_sigma, Jinterp(fine_sigma), label='({},{})'.format(n, m), alpha=1-q/(p.mmax*p.nmax)/2, lw=1.5, color=colors[q]) #0.75 - (n/p.nmax + (m+1)/p.mmax)/2/2
     ax.axis('off')
     plt.xlim(-1.2e8, 1.2e8)
     plt.ylim(-3.65e-35, 6.49e-35)
@@ -172,7 +170,7 @@ def wait_time_freq_dependence(ssoln,Jsoln,Pnmsoln,times,p,bounds,):
     spec = np.zeros(np.shape(sigma))
     phi = line_profile(sigma, p)
     for n in range(1, p.nmax+1):   ### EQ 111
-        for m in range(nsolnmax):
+        for m in range(p.mmax):
             spec += (
                     16. * np.pi**2 * p.radius * p.Delta
                     / (3.0 * p.k * p.energy * phi) * (-1)**n
@@ -223,8 +221,8 @@ def wait_time_freq_dependence(ssoln,Jsoln,Pnmsoln,times,p,bounds,):
         y = y_t/np.sum(y_t*dt)
 
         # Plot analytic escape time distribution
-        label = 'Analytic $n_{{max}}={}$ $m_{{max}}={}$'.format(p.nmax,nsolnmax)
-        line = wait_time_line(ax1, sigma[mask], ssoln, J_masked, Pnm_masked, times, p, nmax=p.nmax, mmax=nsolnmax, alpha=0.5, label=label)
+        label = 'Analytic $n_{{max}}={}$ $m_{{max}}={}$'.format(p.nmax,p.mmax)
+        line = wait_time_line(ax1, sigma[mask], ssoln, J_masked, Pnm_masked, times, p, nmax=p.nmax, mmax=p.mmax, alpha=0.5, label=label)
 
         # Shade spectrum inbetween frequency bounds
         ax2.fill_between(np.cbrt(np.linspace(freq_min, freq_max)/p.c1), 10*np.max(spec), facecolor=line[-1].get_color(), alpha=0.5, label="${} < |x| < {}$".format(*xbounds))
@@ -273,7 +271,7 @@ def dEdnudt(t,sigma,ssoln,Jsoln,p):
   wait_time = np.zeros((t.size,sigma.size))
   for i in range(t.size):
     for n in range(1,p.nmax+1):
-      for j in range(nsolnmax):
+      for j in range(p.mmax):
         if ssoln[n,j]==0.0:
           continue
         wait_time[i,:] = wait_time[i,:] + prefactor * (-1.0)**(n+1) * Jsoln[n,j,:] * np.exp(ssoln[n,j]*t[i])
@@ -296,13 +294,13 @@ def main():
       prob_dest = array[5]
       xsource = array[6]
       nmax = array[7]
-      nsigma = array[8]
-      nomega = array[9]
+      mmax = array[8]
+      nsigma = array[9]
       tdiff = array[10]
       sigma = array[11]
       ssoln = array[12]
       Jsoln = array[13]
-      p = Parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax)
+      p = Parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax,mmax)
 
       Pnmsoln = get_Pnm(ssoln,sigma,Jsoln,p)
       times = p.radius/fc.clight * np.arange(0.1,140.0,0.1)

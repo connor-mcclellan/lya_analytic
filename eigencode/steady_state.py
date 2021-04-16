@@ -8,7 +8,6 @@ from scipy.interpolate import interp1d, CubicSpline
 import matplotlib.pyplot as plt
 import numpy as np
 import pdb
-nsolnmax=20
 
 
 def generate_xuniform(sigma, p):
@@ -19,7 +18,7 @@ def generate_xuniform(sigma, p):
     return xuniform, sigma_to_x
 
 
-def fluence(sigma, p, Jsoln=None, dijkstra=False, mmax=20):
+def fluence(sigma, p, Jsoln=None, dijkstra=False):
     '''
     Calculates the fluence or luminosity by spatial eigenmode.
     '''
@@ -55,7 +54,7 @@ def fluence(sigma, p, Jsoln=None, dijkstra=False, mmax=20):
     else:
         # TIME DEPENDENT SOLUTION
         for n in range(1, p.nmax+1):
-            for m in range(mmax):
+            for m in range(p.mmax):
                 spec[n-1] += (
                              16. * np.pi**2 * p.radius
                              / (3.0 * p.k * p.energy * phi) * (-1)**n
@@ -79,14 +78,13 @@ if __name__ == '__main__':
     prob_dest = array[5]
     xsource = array[6]
     nmax = array[7]
-#    nmax = 1010
-    nsigma = array[8]
-    nomega = array[9]
+    mmax = array[8]
+    nsigma = array[9]
     tdiff = array[10]
     sigma = array[11]
     ssoln = array[12]
     Jsoln = array[13]
-    p = Parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax)
+    p = Parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax,mmax)
 #    Pnmsoln = get_Pnm(ssoln,sigma,Jsoln,p)
 
 
@@ -100,18 +98,17 @@ if __name__ == '__main__':
     alpha_abs2 = array2[4]
     prob_dest2 = array2[5]
     xsource2 = array2[6]
-    nmax2 = array2[7]
-#    nmax = 1010
-    nsigma2 = array2[8]
-    nomega2 = array2[9]
+    nmax2 = array[7]
+    mmax2 = array[8]
+    nsigma2 = array[9]
     tdiff2 = array2[10]
     sigma2 = array2[11]
     ssoln2 = array2[12]
     Jsoln2 = array2[13]
-    p2 = Parameters(temp2,tau02,radius2,energy2,xsource2,alpha_abs2,prob_dest2,nsigma2,nmax2)
+    p2 = Parameters(temp2,tau02,radius2,energy2,xsource2,alpha_abs2,prob_dest2,nsigma2,nmax2,mmax2)
 
     x_t2, tdep_spec2 = fluence(sigma2, p2, Jsoln=Jsoln2)
-    x_t, tdep_spec = fluence(sigma, p, Jsoln=Jsoln, mmax=100)
+    x_t, tdep_spec = fluence(sigma, p, Jsoln=Jsoln)
     x_s, steady_state = fluence(sigma, p)
     x_d, dijkstra = fluence(sigma, p, dijkstra=True)
 
@@ -120,7 +117,6 @@ if __name__ == '__main__':
         fig, ax = plt.subplots(1, 1)
         ax.plot(x_t, np.abs(np.sum(tdep_spec[:n], axis=0)), 'r-', marker='o', ms=1, alpha=0.7, label=r'all $m < 100$'.format(n))
         ax.plot(x_t2, np.abs(np.sum(tdep_spec2[:n], axis=0)), 'm--', marker='^', ms=1, alpha=0.7, label=r'rtol atol 1e-10, all $m < 20$'.format(n))
-#        ax.plot(x_t_10, np.abs(tdep_spec_10[n-1]), 'm--', alpha=0.7, label='time dependent, mmaxx=10')
         ax.plot(x_s, np.abs(np.sum(steady_state[:n], axis=0)), '-', marker='s', ms=1, alpha=0.7, label='steady state'.format(n))
         ax.plot(x_d, np.abs(dijkstra[0]), '-', marker='s', ms=1, alpha=0.7, label='dijkstra'.format(n))
         plt.yscale('log')

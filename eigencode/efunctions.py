@@ -14,9 +14,6 @@ import pdb
 # [ ] Zero is duplicated for off-center sources - fix it!
 # [ ] rtol and atol convergence
 
-
-# max number of solutions at each n
-nsolnmax=20
 fc=fundconst()
 la=lymanalpha()
 
@@ -228,8 +225,8 @@ def sweep(p):
   # loop over n and s=-i\omega. when you find a maximum in the size of the response, call the solve function
   # tabulate s(n,m) and J(n,m,sigma).
 
-  Jsoln=np.zeros((p.nmax,nsolnmax,p.nsigma))
-  ssoln=np.zeros((p.nmax,nsolnmax))
+  Jsoln=np.zeros((p.nmax,p.mmax,p.nsigma))
+  ssoln=np.zeros((p.nmax,p.mmax))
   for n in range(1,p.nmax+1):
     print ("n=",n)
     nsoln=0
@@ -239,7 +236,7 @@ def sweep(p):
     s_increment = -0.01
 
     norm=[]
-    while nsoln < nsolnmax:
+    while nsoln < p.mmax:
       J,dJ=one_s_value(n,s,p)
       norm.append(np.sum(np.abs(J)))
       print("nsoln,n,s,response=",nsoln,n,s,norm[-1])
@@ -261,15 +258,15 @@ def main():
   prob_dest=0.0
   xsource=0.0
   nmax=6
+  mmax=20
   nsigma=512
-  nomega=10
-#  s = np.arange(0.2,-15.0,-0.01)
+
   p = Parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax)
   tdiff = (p.radius/fc.clight)*(p.a*p.tau0)**0.333
   ssoln,Jsoln=sweep(p)
   sigma = np.array(sorted(np.concatenate(list(p.sigma_master.values()))))
-  output_data = np.array([energy,temp,tau0,radius,alpha_abs,prob_dest,xsource,nmax,nsigma,nomega,tdiff,sigma,ssoln,Jsoln])
-  np.save('./data/eigenmode_data_xinit{:.0f}_tau{:.0e}_n{}_m{}_smalloffset.npy'.format(xsource, tau0, p.nmax, nsolnmax).replace('+0',''),output_data, allow_pickle=True, fix_imports=True)
+  output_data = np.array([energy,temp,tau0,radius,alpha_abs,prob_dest,xsource,nmax,mmax,nsigma,tdiff,sigma,ssoln,Jsoln])
+  np.save('./data/eigenmode_data_xinit{:.0f}_tau{:.0e}_n{}_m{}_smalloffset.npy'.format(xsource, tau0, p.nmax, p.mmax).replace('+0',''),output_data, allow_pickle=True, fix_imports=True)
 
 if __name__ == "__main__":
   main()
