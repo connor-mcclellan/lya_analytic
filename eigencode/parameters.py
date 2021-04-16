@@ -28,7 +28,7 @@ class Parameters:
     self.nsigma=nsigma
     self.nmax=nmax
     self.sigma_bounds = get_sigma_bounds(self.nmax, self)
-    self.sigma_offset = self.sigma_bounds[1]/self.nsigma # Should be around ~7e3 for integrator to be deterministic near source
+    self.sigma_offset = self.sigma_bounds[1]/self.nsigma/1e2
     self.sigma_master = make_sigma_grids(self.nmax, self, xuniform=True)
 
 

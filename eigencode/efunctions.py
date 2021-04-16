@@ -269,7 +269,7 @@ def main():
   ssoln,Jsoln=sweep(p)
   sigma = np.array(sorted(np.concatenate(list(p.sigma_master.values()))))
   output_data = np.array([energy,temp,tau0,radius,alpha_abs,prob_dest,xsource,nmax,nsigma,nomega,tdiff,sigma,ssoln,Jsoln])
-  np.save('./data/eigenmode_data_xinit{:.0f}_tau{:.0e}_n{}_m{}_offset.npy'.format(xsource, tau0, p.nmax, nsolnmax).replace('+0',''),output_data, allow_pickle=True, fix_imports=True)
+  np.save('./data/eigenmode_data_xinit{:.0f}_tau{:.0e}_n{}_m{}_smalloffset.npy'.format(xsource, tau0, p.nmax, nsolnmax).replace('+0',''),output_data, allow_pickle=True, fix_imports=True)
 
 if __name__ == "__main__":
   main()
