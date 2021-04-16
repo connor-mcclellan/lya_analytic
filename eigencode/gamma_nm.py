@@ -31,10 +31,10 @@ p = Parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax)
 
 color = ['c', 'm', 'k', 'r', 'limegreen', 'b']
 for n in range(1, nmax+1):
-    gamma_analytic = n**(-4/3)*gamma(n, np.arange(mmax), p)
+    gamma_analytic = n**(-4/3)*gamma(n, np.arange(1, mmax+1), p)
     gamma_sweep = -n**(-4/3)*ssoln[n-1][:mmax]
 
-    plt.plot(np.arange(0, mmax), 1/gamma_analytic, '--', c=color[n-1], alpha=0.5)#, label='$\gamma_{nm}$ analytic')
+    plt.plot(np.arange(1, mmax+1), 1/gamma_analytic, '--', c=color[n-1], alpha=0.5)#, label='$\gamma_{nm}$ analytic')
     plt.plot(np.arange(1, mmax+1), 1/gamma_sweep, '-', c=color[n-1], alpha=0.5)#, label='$\gamma$ sweep')
 #plt.title('n={}'.format(n))
 plt.ylabel('$n^{4/3}t_{nm}(s)$')

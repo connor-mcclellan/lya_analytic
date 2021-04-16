@@ -46,14 +46,14 @@ def integrate(sigma, y_start, n, s, p):
   return sol.y.T, sol.sol
 
 
-def one_s_value(n,s,p, debug=False, trace=False):
+def one_s_value(n,m,s,p, debug=False, trace=False):
   '''Solve for response given n and s'''
 
   kappan=n*np.pi/p.radius
   wavenum = kappan * p.Delta / p.k
 
   # Construct grids for this value of n
-  leftgrid, middlegrid, rightgrid = make_sigma_grids(n, p).values()
+  leftgrid, middlegrid, rightgrid = make_sigma_grids(n, m, p).values()
 
   # rightward integration
   J=1.0
@@ -144,7 +144,7 @@ def one_s_value(n,s,p, debug=False, trace=False):
   return J,dJ
 
 
-def solve(s1,s2,s3,n,p):
+def solve(s1,s2,s3,n,m,p):
   # iterate to find the eigenfrequency sres and eigenvector Jres(sigma)
   # three frequencies s1, s2, s3
   err=1.e20 # initialize error to be something huge
@@ -155,9 +155,9 @@ def solve(s1,s2,s3,n,p):
   refine_log = []
 
   while err>1.e-6:
-    J1,dJ1=one_s_value(n,s1,p)
-    J2,dJ2=one_s_value(n,s2,p)
-    J3,dJ3=one_s_value(n,s3,p)
+    J1,dJ1=one_s_value(n,m,s1,p)
+    J2,dJ2=one_s_value(n,m,s2,p)
+    J3,dJ3=one_s_value(n,m,s3,p)
 
     f1 = np.sum(np.abs(J1)) # sum of absolute values of ENTIRE spectrum
     f2 = np.sum(np.abs(J2)) # this is the size of the response!
@@ -165,10 +165,10 @@ def solve(s1,s2,s3,n,p):
     err=np.abs((s3-s1)/s2) # error is fractional difference between eigenfrequencies
 
     sl=0.5*(s1+s2) # s between s1 and s2
-    Jl,dJl=one_s_value(n,sl,p)
+    Jl,dJl=one_s_value(n,m,sl,p)
     fl = np.sum(np.abs(Jl))
     sr=0.5*(s2+s3) # s between s2 and s3
-    Jr,dJr=one_s_value(n,sr,p)
+    Jr,dJr=one_s_value(n,m,sr,p)
     fr = np.sum(np.abs(Jr))
 
     #####
@@ -229,7 +229,7 @@ def sweep(p):
   ssoln=np.zeros((p.nmax,p.mmax))
   for n in range(1,p.nmax+1):
     print ("n=",n)
-    nsoln=0
+    nsoln=1
 
     # TODO: s_start and s_incr: make parameters in the future
     s = 0.2
@@ -237,14 +237,14 @@ def sweep(p):
 
     norm=[]
     while nsoln < p.mmax:
-      J,dJ=one_s_value(n,s,p)
+      J,dJ=one_s_value(n,nsoln,s,p)
       norm.append(np.sum(np.abs(J)))
       print("nsoln,n,s,response=",nsoln,n,s,norm[-1])
       if len(norm)>2 and norm[-3]<norm[-2] and norm[-1]<norm[-2]:
-        nsoln=nsoln+1
-        sres,Jres = solve(s-2*s_increment,s-s_increment,s,n,p)
+        sres,Jres = solve(s-2*s_increment,s-s_increment,s,n,nsoln,p)
         ssoln[n-1,nsoln-1]=sres
         Jsoln[n-1,nsoln-1,:]=Jres
+        nsoln=nsoln+1
       s += s_increment
   return ssoln,Jsoln
 
@@ -261,12 +261,12 @@ def main():
   mmax=20
   nsigma=512
 
-  p = Parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax)
+  p = Parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax,mmax)
   tdiff = (p.radius/fc.clight)*(p.a*p.tau0)**0.333
   ssoln,Jsoln=sweep(p)
   sigma = np.array(sorted(np.concatenate(list(p.sigma_master.values()))))
   output_data = np.array([energy,temp,tau0,radius,alpha_abs,prob_dest,xsource,nmax,mmax,nsigma,tdiff,sigma,ssoln,Jsoln])
-  np.save('./data/eigenmode_data_xinit{:.0f}_tau{:.0e}_n{}_m{}_smalloffset.npy'.format(xsource, tau0, p.nmax, p.mmax).replace('+0',''),output_data, allow_pickle=True, fix_imports=True)
+  np.save('./data/eigenmode_data_xinit{:.0f}_tau{:.0e}_n{}_m{}_sigmaboundstest.npy'.format(xsource, tau0, p.nmax, p.mmax).replace('+0',''),output_data, allow_pickle=True, fix_imports=True)
 
 if __name__ == "__main__":
   main()

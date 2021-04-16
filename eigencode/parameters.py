@@ -28,30 +28,30 @@ class Parameters:
     self.nsigma=nsigma
     self.nmax=nmax
     self.mmax=mmax
-    self.sigma_bounds = get_sigma_bounds(self.nmax, self)
-    self.sigma_offset = self.sigma_bounds[1]/self.nsigma/1e2
-    self.sigma_master = make_sigma_grids(self.nmax, self, xuniform=True)
+    self.sigma_bounds = get_sigma_bounds(self.nmax, self.mmax, self)
+    self.sigma_offset = 1e3#self.sigma_bounds[1]/self.nsigma/1e2
+    self.sigma_master = make_sigma_grids(self.nmax, 1, self, xuniform=True)
 
 
 def gamma(n, m, p): 
      return 2**(-1/3) * np.pi**(13/6)*n**(4/3)*(m-7/8)**(2/3)*fc.clight/p.radius/(p.a * p.tau0)**(1/3)
 
 
-def get_sigma_bounds(n, p):
+def get_sigma_bounds(n, m, p):
     gam_0 = fc.clight / (p.a * p.tau0)**(1/3) / p.radius
-    gam_max = gamma(n, p.mmax, p)
+    gam_max = gamma(n, m, p)
     sigma_tp = p.tau0 * (gam_max / gam_0)**(3/2.)
     sigma_efold = p.tau0 / np.sqrt(np.pi) / n
 
     sigma_left = -(sigma_tp + 40*sigma_efold) # TODO: Parametrize?
     sigma_right = (sigma_tp + 40*sigma_efold)
-
+#    pdb.set_trace()
     return sigma_left, sigma_right
 
 
-def make_sigma_grids(n, p, xuniform=False): ## Make master sigma grid uniform in x
+def make_sigma_grids(n, m, p, xuniform=False): ## Make master sigma grid uniform in x
 
-    left, right = get_sigma_bounds(n, p)
+    left, right = get_sigma_bounds(n, m, p)
     source = p.sigmas
     offset = p.sigma_offset
 
