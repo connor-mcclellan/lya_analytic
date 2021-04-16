@@ -123,7 +123,7 @@ if __name__ == '__main__':
     radius=1.e11
     alpha_abs=0.0
     prob_dest=0.0
-    xsource=2.0
+    xsource=0.0
     nmax=6
     nsigma=512
     nomega=10
