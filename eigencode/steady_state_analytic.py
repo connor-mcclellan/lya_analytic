@@ -3,7 +3,7 @@
 
 from wait_time import get_Pnm
 from efunctions import line_profile
-from parameters import Parameters
+from parameters import Parameters, make_sigma_grids
 from scipy.interpolate import interp1d, CubicSpline
 import matplotlib.pyplot as plt
 import numpy as np
@@ -79,6 +79,7 @@ if __name__ == '__main__':
     nomega=10
     p = Parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax)
 
+    sigma = np.array(sorted(np.concatenate(list(p.sigma_master.values()))))
     x_s, steady_state = fluence(sigma, p)
     x_d, dijkstra = fluence(sigma, p, dijkstra=True)
 
@@ -94,5 +95,5 @@ if __name__ == '__main__':
         plt.xlabel('x')
         plt.legend()
         plt.tight_layout()
-        #plt.show()
-        plt.savefig('timedep_v_steadystate_n{}.pdf'.format(n))
+        plt.show()
+        #plt.savefig('timedep_v_steadystate_n{}.pdf'.format(n))
