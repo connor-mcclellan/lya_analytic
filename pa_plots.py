@@ -210,14 +210,18 @@ def comparison_plot(*args):
         axi.plot(xuniform, hsp_xuniform, '-.', label=r'$H_0$', alpha=alpha, c=color[2], linewidth=1)
         axi.errorbar(xc, count, yerr=err, fmt='.', label="MC", alpha=0.75, ms=3., c='k', elinewidth=0.25, capsize=0.5)
 
-        axi.text(xinit+0.5, 0.03, r'x$_{\rm init}$', rotation=90, fontsize=8)
+        if i==0:
+            axi.text(xinit+0.5, 0.03, r'x$_{\rm init}$', rotation=90, fontsize=8)
+            axi.legend(bbox_to_anchor=(1.04, 0.8), loc='upper left', fontsize='x-small', frameon=False)
         axi.set_xlim((min(xc)-2, max(xc)+2))
         axi.set_ylabel(r'$P(x)$')
         axi.grid(linestyle='--', alpha=0.25)
         axi.set_ylim((ymin-0.005, ymax))
         axi.plot(xuniform, hh_xuniform, ':', label=r'$H_{\rm bc}$', alpha=alpha, c=color[3], linewidth=1)
-        axi.legend(bbox_to_anchor=(1.04, 0.8), loc='upper left', fontsize='x-small', frameon=False)
+        
 
+
+    plt.xlabel('$x$')
     plt.subplots_adjust(top=0.97,
                         bottom=0.11,
                         left=0.11,

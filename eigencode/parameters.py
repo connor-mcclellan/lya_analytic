@@ -38,14 +38,23 @@ def gamma(n, m, p):
 
 
 def get_sigma_bounds(n, m, p, s=None):
-    gam_0 = fc.clight / (p.a * p.tau0)**(1/3) / p.radius
+    #gam_0 = fc.clight / (p.a * p.tau0)**(1/3) / p.radius
     if s is None:
         s = -gamma(n, m, p) # TODO: Make this change everywhere. Use s if you have it.
-    sigma_tp = p.tau0 * (-s / gam_0)**(3/2.)
-    sigma_efold = p.tau0 / np.sqrt(np.pi) / n
+#    pdb.set_trace()
+    #sigma_tp = p.tau0 * (-s / gam_0)**(3/2.)
+    #sigma_efold = p.tau0 / np.sqrt(np.pi) / n  
 
-    sigma_left = -(sigma_tp + 40*sigma_efold) # TODO: Parametrize?
-    sigma_right = (sigma_tp + 40*sigma_efold)
+    # From Phil's code
+    kappan=n*np.pi/p.radius
+    wavenum = kappan*p.Delta/p.k
+    phi_crit = wavenum**2 * fc.clight*p.k / ( 3.0*np.abs(s)*p.Delta**2 )
+    x_tp = np.sqrt( p.a/(np.pi*p.Delta*phi_crit) )
+    sigma_tp = p.c1*x_tp**3
+    sigma_efold = p.k/(kappan*p.Delta)
+
+    sigma_left = -(sigma_tp + 5*sigma_efold) # TODO: Parametrize?
+    sigma_right = (sigma_tp + 5*sigma_efold)
     source = p.sigmas
     offset = p.sigma_offset
 

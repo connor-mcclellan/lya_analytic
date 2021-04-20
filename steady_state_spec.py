@@ -13,7 +13,7 @@ if __name__ == "__main__":
     ]
 
     data_dir = '/home/connor/Documents/lya_analytic/data/'
-    generate_new = True
+    generate_new = False
 
     lya = Line(1215.6701, 0.4164, 6.265e8)
     p = Params(line=lya, temp=1e4, tau0=1e7, num_dens=1701290465.5139434, 
