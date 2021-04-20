@@ -28,8 +28,8 @@ class Parameters:
     self.nsigma=nsigma
     self.nmax=nmax
     self.mmax=mmax
-    self.sigma_bounds = get_sigma_bounds(self.nmax, self.mmax, self)
     self.sigma_offset = 1e3#self.sigma_bounds[1]/self.nsigma/1e2
+    self.sigma_bounds = get_sigma_bounds(self.nmax, self.mmax, self)
     self.sigma_master = make_sigma_grids(self.nmax, 1, self, xuniform=True)
 
 
@@ -46,29 +46,32 @@ def get_sigma_bounds(n, m, p, s=None):
 
     sigma_left = -(sigma_tp + 40*sigma_efold) # TODO: Parametrize?
     sigma_right = (sigma_tp + 40*sigma_efold)
-#    pdb.set_trace()
-    return sigma_left, sigma_right
+    source = p.sigmas
+    offset = p.sigma_offset
 
+    return ((sigma_left, min(source-offset, 0)), 
+            (min(source-offset, 0), max(source+offset, 0)),
+            (max(source+offset, 0), sigma_right))
 
-def make_sigma_grids(n, m, p, xuniform=False): ## Make master sigma grid uniform in x
-
-    left, right = get_sigma_bounds(n, m, p)
+def make_sigma_grids(n, m, p, s=None, xuniform=False): ## Make master sigma grid uniform in x
+    
+    left, middle, right = get_sigma_bounds(n, m, p, s=s)
     source = p.sigmas
     offset = p.sigma_offset
 
     if xuniform:
-        left = np.cbrt(left/p.c1)
-        right = np.cbrt(right/p.c1)
+        left = np.cbrt(np.array(left)/p.c1)
+        right = np.cbrt(np.array(right)/p.c1)
+        middle = np.cbrt(np.array(middle)/p.c1)
         source = p.xsource
-        offset = np.cbrt(p.sigma_offset/p.c1)
 
     # Determine the integration ranges
-    delimiters = sorted(np.array([left, source, 0., right]))
+    delimiters = sorted(np.array([left[0], source, 0., right[1]]))
 
     # Build an array that's evenly spaced between leftmost and rightmost sigma
-    # The -1e-3 is to ensure the last data point, which is equal to sigma_right,
+    # The -1e-6 is to ensure the last data point, which is equal to sigma_right,
     # does not end up in a bin all by itself
-    even_array = np.linspace(left, right-1e-6, p.nsigma)
+    even_array = np.linspace(left[0], right[1]-1e-6, p.nsigma)
 
     # Bin this evenly-spaced array into the integration ranges we found earlier
     # These are the indices that specify which bin the data points fall into:
@@ -85,35 +88,9 @@ def make_sigma_grids(n, m, p, xuniform=False): ## Make master sigma grid uniform
         nleft -= 2
 
     ### Create grids
-    # Leftgrid goes from sigma_left to whichever is smaller: source, or 0
-    # Its values will be ordered from small to large --- increasingly
-    leftgrid = np.linspace(left, min(source, 0), nleft)
-    # Middle grid goes from 0 to source
-    # Its values are either ordered increasingly or decreasingly, depending  
-    # on whether source>0 or source<0, respectively
-    middlegrid = np.linspace(0, source, nmiddle)
-    # Right grid goes from sigma_right to whichever is larger: source, or 0
-    # Its values are always ordered decreasingly
-    rightgrid = np.linspace(right, max(0, source), nright)
-
-    # Set an offset applied about source
-    # This helps resolve the dJ discontinuity better. If it is not large enough,
-    # the integrator will not be deterministic near the source
-    if np.abs(leftgrid[-1]-offset) > np.abs(leftgrid[-2]-leftgrid[-1]):
-        # If offset is larger than bin spacing, split the distance to the end
-        offset = np.abs(leftgrid[-2]-leftgrid[-1])/2.
-    if len(middlegrid) != 0 and offset > np.diff(middlegrid)[0]:
-        offset = np.diff(middlegrid)[0]/2
-
-    if source < 0.:
-      middlegrid[-1] += offset
-      leftgrid[-1] -= offset
-    elif source > 0.:
-      middlegrid[-1] -= offset
-      rightgrid[-1] += offset
-    else:
-      leftgrid[-1] -= offset
-      rightgrid[-1] += offset
+    leftgrid = np.linspace(*left, nleft)
+    middlegrid = np.linspace(*middle, nmiddle)
+    rightgrid = np.linspace(*right, nright)
 
     if xuniform:
         leftgrid = p.c1 * leftgrid**3.

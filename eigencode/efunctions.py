@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from constants import fundconst,lymanalpha
 from scipy.integrate import solve_ivp, odeint
-from parameters import Parameters, make_sigma_grids
+from parameters import Parameters, get_sigma_bounds
 #from rk import rk
 import warnings
 import pdb
@@ -38,11 +38,11 @@ def func(sigma,y,n,s,p):
   return dydsigma
 
 
-def integrate(sigma, y_start, n, s, p):
+def integrate(sigma_bounds, y_start, n, s, p):
   '''
   Returns interpolants which can be used to evaluate the function at any sigma
   '''
-  sol = solve_ivp(func, [sigma[0], sigma[-1]], y_start, args=(n,s,p), rtol=1e-10, atol=1e-10, dense_output=True)
+  sol = solve_ivp(func, [sigma_bounds[0], sigma_bounds[1]], y_start, args=(n,s,p), rtol=1e-10, atol=1e-10, dense_output=True)
   return sol.y.T, sol.sol
 
 
@@ -53,13 +53,13 @@ def one_s_value(n,m,s,p, debug=False, trace=False):
   wavenum = kappan * p.Delta / p.k
 
   # Construct grids for this value of n
-  leftgrid, middlegrid, rightgrid = make_sigma_grids(n, m, p).values()
+  left, middle, right = get_sigma_bounds(n, m, p, s=s)
 
   # rightward integration
   J=1.0
   dJ=wavenum*J
   y_start=np.array( (J,dJ) )
-  sol, interp_left = integrate(leftgrid,y_start,n,s,p)
+  sol, interp_left = integrate(left,y_start,n,s,p)
   Jleft=sol[:,0]
   dJleft=sol[:,1]
   A=Jleft[-1]    # Set matrix coefficient equal to Jleft's rightmost value
@@ -69,7 +69,7 @@ def one_s_value(n,m,s,p, debug=False, trace=False):
   J=1.0
   dJ=-wavenum*J
   y_start=np.array( (J,dJ) )
-  sol, interp_right = integrate(rightgrid,y_start,n,s,p)
+  sol, interp_right = integrate(right[::-1],y_start,n,s,p)
   Jright=sol[:,0]
   dJright=sol[:,1]
   C=Jright[-1]   # Set matrix coefficient equal to Jright's leftmost value
@@ -86,7 +86,7 @@ def one_s_value(n,m,s,p, debug=False, trace=False):
       y_start = np.array((J, dJ))
 
       # Find solution in middle region
-      sol, interp_middle = integrate(middlegrid, y_start, n, s, p)
+      sol, interp_middle = integrate(middle, y_start, n, s, p)
       Jmiddle=sol[:,0]
       dJmiddle=sol[:,1]
 
@@ -104,7 +104,7 @@ def one_s_value(n,m,s,p, debug=False, trace=False):
       y_start = np.array((J, dJ))
 
       # Find solution in middle region
-      sol, interp_middle = integrate(middlegrid, y_start, n, s, p)
+      sol, interp_middle = integrate(middle[::-1], y_start, n, s, p)
       Jmiddle=sol[:,0]
       dJmiddle=sol[:,1]
 
@@ -232,7 +232,7 @@ def sweep(p):
     nsoln=1
 
     # TODO: s_start and s_incr: make parameters in the future
-    s = 0.2
+    s = 0.0
     s_increment = -0.01
 
     norm=[]
