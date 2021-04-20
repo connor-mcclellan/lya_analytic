@@ -234,11 +234,11 @@ def sweep(p):
     print ("n=",n)
     nsoln=1
     # TODO: s_start and s_incr: make parameters in the future
-    s = 0.0
+    s = -0.000001
     s_increment = -0.01
 
     norm=[]
-    while nsoln < p.mmax:
+    while nsoln < p.mmax+1:
       J,dJ=one_s_value(n,nsoln,s,p)
       norm.append(np.sum(np.abs(J)))
       print("nsoln,n,s,response=",nsoln,n,s,norm[-1])
@@ -259,8 +259,8 @@ def main():
   alpha_abs=0.0
   prob_dest=0.0
   xsource=0.0
-  nmax=6
-  mmax=20
+  nmax=1
+  mmax=40
   nsigma=512
 
   p = Parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax,mmax)
@@ -268,7 +268,7 @@ def main():
   ssoln,Jsoln=sweep(p)
   sigma = np.array(sorted(np.concatenate(list(p.sigma_master.values()))))
   output_data = np.array([energy,temp,tau0,radius,alpha_abs,prob_dest,xsource,nmax,mmax,nsigma,tdiff,sigma,ssoln,Jsoln])
-  np.save('./data/eigenmode_data_xinit{:.0f}_tau{:.0e}_n{}_m{}_sigmaboundstest.npy'.format(xsource, tau0, p.nmax, p.mmax).replace('+0',''),output_data, allow_pickle=True, fix_imports=True)
+  np.save('./data/eigenmode_data_xinit{:.0f}_tau{:.0e}_n{}_m{}_gammatest.npy'.format(xsource, tau0, p.nmax, p.mmax).replace('+0',''),output_data, allow_pickle=True, fix_imports=True)
 
 if __name__ == "__main__":
   main()
