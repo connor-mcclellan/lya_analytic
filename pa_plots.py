@@ -180,18 +180,6 @@ def residual_plot(xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, e
     ax3.set_ylabel('Residuals')
     ax3.legend(bbox_to_anchor=(1.0, 1), loc='upper left', fontsize='x-small', frameon=False)
 
-    # Bottom right panel: log-scale residuals
-#    ax4.set_ylim((0.001, 100))
-#    ax4.plot(xc, hp_interp(xc)/phix_xc - count, '.', label=r'$|H_{\rm d} - \rm MC|/\rm MC$', alpha=alpha, c=color[0], linewidth=1, marker='^', markersize=2)
-#    ax4.plot(xc, hsp_interp(xc)/phix_xc - count, '.', label=r'$|H_{0} - \rm MC|/\rm MC$', alpha=alpha, c=color[1], linewidth=1, marker='s', markersize=2)
-#    ax4.plot(xc, (hsp_interp(xc) + hh_interp(xc))/phix_xc - count, '.', label=r'$|H_{\rm 0 + bc} - \rm MC|/\rm MC$', alpha=alpha, c=color[2], linewidth=1, marker='o', markersize=2)
-#    ax4.set_yscale('log')
-#    ax4.grid(linestyle='--', alpha=0.25)
-
-#    ax4.yaxis.tick_right()
-#    ax4.set_xlabel(r'$x$')
-
-#    ax4.axis('off')
     plt.subplots_adjust(top=0.97,
 bottom=0.11,
 left=0.11,
@@ -199,10 +187,44 @@ right=0.80,
 hspace=0.1,
 wspace=0.0)
 
-#    plt.show()
+    plt.show()
 #    plt.savefig("./plots/"+filename+"/pdf_xinit{:.1f}.pdf".format(xinit), format='pdf')
-    plt.savefig("./plots/pdf_xinit{:.1f}.pdf".format(xinit), format='pdf')
+#    plt.savefig("./plots/pdf_xinit{:.1f}.pdf".format(xinit), format='pdf')
     plt.close()
+
+
+def comparison_plot(*args):
+
+    color = ['b', 'r', 'orange', 'purple', 'gray']
+    alpha = 0.7
+
+    fig, ax = plt.subplots(3, 1, sharex=True, gridspec_kw={'height_ratios': [1, 1, 1]}, figsize=(7, 5))
+    for i, arg in enumerate(args):
+        xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp = arg
+        axi = ax[i]
+        
+        #linear-scale solutions
+        axi.axvline(xinit, c=color[4], lw=1, alpha=0.5)
+        axi.plot(xuniform, hp_xuniform, '--', label=r'$H_{\rm d}$', alpha=alpha, c=color[0], linewidth=1)
+        axi.plot(xuniform, hsp_xuniform + hh_xuniform, '-', label=r'$H_{\rm 0+bc}$', alpha=alpha, c=color[1], linewidth=1)
+        axi.plot(xuniform, hsp_xuniform, '-.', label=r'$H_0$', alpha=alpha, c=color[2], linewidth=1)
+        axi.errorbar(xc, count, yerr=err, fmt='.', label="MC", alpha=0.75, ms=3., c='k', elinewidth=0.25, capsize=0.5)
+
+        axi.text(xinit+0.5, 0.03, r'x$_{\rm init}$', rotation=90, fontsize=8)
+        axi.set_xlim((min(xc)-2, max(xc)+2))
+        axi.set_ylabel(r'$P(x)$')
+        axi.grid(linestyle='--', alpha=0.25)
+        axi.set_ylim((ymin-0.005, ymax))
+        axi.plot(xuniform, hh_xuniform, ':', label=r'$H_{\rm bc}$', alpha=alpha, c=color[3], linewidth=1)
+        axi.legend(bbox_to_anchor=(1.04, 0.8), loc='upper left', fontsize='x-small', frameon=False)
+
+    plt.subplots_adjust(top=0.97,
+                        bottom=0.11,
+                        left=0.11,
+                        right=0.80,
+                        hspace=0.1,
+                        wspace=0.0)
+    plt.show()
 
 
 def bin_time(t, n):

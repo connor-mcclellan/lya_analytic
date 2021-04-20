@@ -42,7 +42,7 @@ def integrate(sigma_bounds, y_start, n, s, p):
   '''
   Returns interpolants which can be used to evaluate the function at any sigma
   '''
-  sol = solve_ivp(func, [sigma_bounds[0], sigma_bounds[1]], y_start, args=(n,s,p), rtol=1e-10, atol=1e-10, dense_output=True)
+  sol = solve_ivp(func, [sigma_bounds[0], sigma_bounds[1]], y_start, args=(n,s,p), rtol=1e-6, atol=1e-6, dense_output=True)
   return sol.y.T, sol.sol
 
 
@@ -135,12 +135,14 @@ def one_s_value(n,m,s,p, debug=False, trace=False):
 
   # combine left, middle, and right in one array
   try:
-      J = np.concatenate((Jleft, Jmiddle, Jright[::-1]))
-      dJ = np.concatenate((dJleft, dJmiddle, dJright[::-1]))
+      J = np.concatenate((Jleft, Jmiddle, Jright))
+      dJ = np.concatenate((dJleft, dJmiddle, dJright))
   except:
-      J = np.concatenate((Jleft, Jright[::-1]))
-      dJ = np.concatenate((dJleft, dJright[::-1]))
-
+      J = np.concatenate((Jleft, Jright))
+      dJ = np.concatenate((dJleft, dJright))
+  #plt.plot(np.concatenate((p.sigma_master['left'], p.sigma_master['right'])), J)
+  #plt.title("n={}, m={}, s={}".format(n, m, s))
+  #plt.show()
   return J,dJ
 
 
@@ -150,11 +152,12 @@ def solve(s1,s2,s3,n,m,p):
   err=1.e20 # initialize error to be something huge
   i=0
 
-  refine_pts = []
-  refine_res = []
-  refine_log = []
+  #refine_pts = []
+  #refine_res = []
+  #refine_log = []
 
   while err>1.e-6:
+
     J1,dJ1=one_s_value(n,m,s1,p)
     J2,dJ2=one_s_value(n,m,s2,p)
     J3,dJ3=one_s_value(n,m,s3,p)
@@ -172,9 +175,9 @@ def solve(s1,s2,s3,n,m,p):
     fr = np.sum(np.abs(Jr))
 
     #####
-    refine_pts.append([s1, sl, s2, sr, s3])
-    refine_res.append([f1, fl, f2, fr, f3])
-    refine_log.append([i, err])
+    #refine_pts.append([s1, sl, s2, sr, s3])
+    #refine_res.append([f1, fl, f2, fr, f3])
+    #refine_log.append([i, err])
     #####
 
 # three sets of three points --- one of those sets will have a maximal response in the center
