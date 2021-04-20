@@ -234,8 +234,7 @@ def sweep(p):
     print ("n=",n)
     nsoln=1
     # TODO: s_start and s_incr: make parameters in the future
-#    s = 0.0
-    s = -1.05
+    s = 0.0
     s_increment = -0.01
 
     norm=[]
