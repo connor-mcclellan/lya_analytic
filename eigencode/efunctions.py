@@ -42,18 +42,18 @@ def integrate(sigma_bounds, y_start, n, s, p):
   '''
   Returns interpolants which can be used to evaluate the function at any sigma
   '''
-  sol = solve_ivp(func, [sigma_bounds[0], sigma_bounds[1]], y_start, args=(n,s,p), rtol=1e-6, atol=1e-6, dense_output=True)
+  sol = solve_ivp(func, [sigma_bounds[0], sigma_bounds[1]], y_start, args=(n,s,p), rtol=1e-8, atol=1e-8, dense_output=True)
   return sol.y.T, sol.sol
 
 
-def one_s_value(n,m,s,p, debug=False, trace=False):
+def one_s_value(n,s,p, debug=False, trace=False):
   '''Solve for response given n and s'''
 
   kappan=n*np.pi/p.radius
   wavenum = kappan * p.Delta / p.k
 
-  # Construct grids for this value of n
-  left, middle, right = get_sigma_bounds(n, m, p, s=s)
+  # Construct grids for this value of n and s
+  left, middle, right = get_sigma_bounds(n, s, p)
 
   # rightward integration
   J=1.0
@@ -146,7 +146,7 @@ def one_s_value(n,m,s,p, debug=False, trace=False):
   return J,dJ
 
 
-def solve(s1,s2,s3,n,m,p):
+def solve(s1,s2,s3,n,p):
   # iterate to find the eigenfrequency sres and eigenvector Jres(sigma)
   # three frequencies s1, s2, s3
   err=1.e20 # initialize error to be something huge
@@ -158,9 +158,9 @@ def solve(s1,s2,s3,n,m,p):
 
   while err>1.e-6:
 
-    J1,dJ1=one_s_value(n,m,s1,p)
-    J2,dJ2=one_s_value(n,m,s2,p)
-    J3,dJ3=one_s_value(n,m,s3,p)
+    J1,dJ1=one_s_value(n,s1,p)
+    J2,dJ2=one_s_value(n,s2,p)
+    J3,dJ3=one_s_value(n,s3,p)
 
     f1 = np.sum(np.abs(J1)) # sum of absolute values of ENTIRE spectrum
     f2 = np.sum(np.abs(J2)) # this is the size of the response!
@@ -168,10 +168,10 @@ def solve(s1,s2,s3,n,m,p):
     err=np.abs((s3-s1)/s2) # error is fractional difference between eigenfrequencies
 
     sl=0.5*(s1+s2) # s between s1 and s2
-    Jl,dJl=one_s_value(n,m,sl,p)
+    Jl,dJl=one_s_value(n,sl,p)
     fl = np.sum(np.abs(Jl))
     sr=0.5*(s2+s3) # s between s2 and s3
-    Jr,dJr=one_s_value(n,m,sr,p)
+    Jr,dJr=one_s_value(n,sr,p)
     fr = np.sum(np.abs(Jr))
 
     #####
@@ -250,6 +250,20 @@ def sweep(p):
       s += s_increment
   return ssoln,Jsoln
 
+def check_s_eq_0(p):
+    n=1
+    s=0.0
+    kappan=n*np.pi/p.radius
+    wavenum=kappan*p.Delta/p.k
+    J,dJ=one_s_value(n,s,p)
+    pdb.set_trace()
+    plt.figure()
+    plt.plot(p.sigma,J,'b-')
+    analytic = np.sqrt(6.0/np.pi)/16.0 * p.tau0 * n * p.energy/(p.k*p.radius**3) * np.exp(-wavenum*np.abs(p.sigma))
+    plt.plot(p.sigma,analytic,'r--')
+    plt.yscale('log')
+    plt.show()
+    plt.close()
 
 def main():
   energy=1.e0
@@ -259,15 +273,15 @@ def main():
   alpha_abs=0.0
   prob_dest=0.0
   xsource=0.0
-  nmax=1
-  mmax=40
-  nsigma=512
+  nmax=6
+  mmax=20
+  nsigma=1024
 
   p = Parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax,mmax)
+  check_s_eq_0(p)
   tdiff = (p.radius/fc.clight)*(p.a*p.tau0)**0.333
   ssoln,Jsoln=sweep(p)
-  sigma = np.array(sorted(np.concatenate(list(p.sigma_master.values()))))
-  output_data = np.array([energy,temp,tau0,radius,alpha_abs,prob_dest,xsource,nmax,mmax,nsigma,tdiff,sigma,ssoln,Jsoln])
+  output_data = np.array([energy,temp,tau0,radius,alpha_abs,prob_dest,xsource,nmax,mmax,nsigma,tdiff,p.sigma,ssoln,Jsoln])
   np.save('./data/eigenmode_data_xinit{:.0f}_tau{:.0e}_n{}_m{}_gammatest.npy'.format(xsource, tau0, p.nmax, p.mmax).replace('+0',''),output_data, allow_pickle=True, fix_imports=True)
 
 if __name__ == "__main__":

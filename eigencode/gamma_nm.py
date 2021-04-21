@@ -11,7 +11,7 @@ def gamma(n, m, p):
      return 2**(-1/3) * np.pi**(13/6)*n**(4/3)*(m-7/8)**(2/3)*fc.clight/p.radius/(p.a * p.tau0)**(1/3)    
 
 
-filename = './data/eigenmode_data_xinit0_tau1e7_n1_m40_gammatest.npy'
+filename = './data/eigenmode_data_xinit0_tau1e7_n6_m20_gammatest.npy'
 array = np.load(filename, allow_pickle=True, fix_imports=True, )
 energy = array[0]
 temp = array[1]
@@ -29,7 +29,7 @@ ssoln = array[12]
 Jsoln = array[13]
 p = Parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax,mmax)
 
-color = ['b', 'm', 'k', 'r', 'limegreen', 'b']
+color = ['c', 'm', 'k', 'r', 'limegreen', 'b']
 for n in range(1, nmax+1):
     gamma_analytic = n**(-4/3)*gamma(n, np.arange(1, mmax+1), p)
     gamma_sweep = -n**(-4/3)*ssoln[n-1][:mmax]

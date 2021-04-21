@@ -28,24 +28,12 @@ class Parameters:
     self.nsigma=nsigma
     self.nmax=nmax
     self.mmax=mmax
-    self.sigma_offset = 1e3#self.sigma_bounds[1]/self.nsigma/1e2
-    self.sigma_bounds = get_sigma_bounds(self.nmax, self.mmax, self)
-    self.sigma_master = make_sigma_grids(self.nmax, 1, self, xuniform=True)
+    self.sigma_offset = 1e3
+    self.sigma_master = make_sigma_grids(self, xuniform=True)
+    self.sigma = np.array(sorted(np.concatenate(list(self.sigma_master.values()))))
 
+def get_sigma_bounds(n, s, p):
 
-def gamma(n, m, p): 
-     return 2**(-1/3) * np.pi**(13/6)*n**(4/3)*(m-7/8)**(2/3)*fc.clight/p.radius/(p.a * p.tau0)**(1/3)
-
-
-def get_sigma_bounds(n, m, p, s=None):
-    #gam_0 = fc.clight / (p.a * p.tau0)**(1/3) / p.radius
-    if s is None:
-        s = -gamma(n, m, p) # TODO: Make this change everywhere. Use s if you have it.
-#    pdb.set_trace()
-    #sigma_tp = p.tau0 * (-s / gam_0)**(3/2.)
-    #sigma_efold = p.tau0 / np.sqrt(np.pi) / n  
-
-    # From Phil's code
     kappan=n*np.pi/p.radius
     wavenum = kappan*p.Delta/p.k
     phi_crit = wavenum**2 * fc.clight*p.k / ( 3.0*np.abs(s)*p.Delta**2 )
@@ -53,8 +41,8 @@ def get_sigma_bounds(n, m, p, s=None):
     sigma_tp = p.c1*x_tp**3
     sigma_efold = p.k/(kappan*p.Delta)
 
-    sigma_left = -(sigma_tp + 5*sigma_efold) # TODO: Parametrize?
-    sigma_right = (sigma_tp + 5*sigma_efold)
+    sigma_left = -(sigma_tp + 23*sigma_efold) # TODO: Parametrize?
+    sigma_right = (sigma_tp + 23*sigma_efold)
     source = p.sigmas
     offset = p.sigma_offset
 
@@ -62,11 +50,14 @@ def get_sigma_bounds(n, m, p, s=None):
             (min(source-offset, 0), max(source+offset, 0)),
             (max(source+offset, 0), sigma_right))
 
-def make_sigma_grids(n, m, p, s=None, xuniform=False): ## Make master sigma grid uniform in x
+def make_sigma_grids(p, xuniform=True): ## Make master sigma grid uniform in x
     
-    left, middle, right = get_sigma_bounds(n, m, p, s=s)
+    width = p.c1 * 9. * p.a * p.tau0
     source = p.sigmas
     offset = p.sigma_offset
+    left, middle, right = ((-width, min(source-offset, 0)), 
+                           (min(source-offset, 0), max(source+offset, 0)),
+                           (max(source+offset, 0), width))
 
     if xuniform:
         left = np.cbrt(np.array(left)/p.c1)
@@ -122,4 +113,4 @@ if __name__ == '__main__':
     nomega=10
     s = np.arange(0.2,-15.0,-0.01)
     p = Parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax)
-    pdb.set_trace()
+
