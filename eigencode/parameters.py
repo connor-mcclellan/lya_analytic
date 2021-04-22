@@ -41,8 +41,8 @@ def get_sigma_bounds(n, s, p):
     sigma_tp = p.c1*x_tp**3
     sigma_efold = p.k/(kappan*p.Delta)
 
-    sigma_left = -(sigma_tp + 23*sigma_efold) # TODO: Parametrize?
-    sigma_right = (sigma_tp + 23*sigma_efold)
+    sigma_left = -(sigma_tp + 40*sigma_efold) # TODO: Parametrize?
+    sigma_right = (sigma_tp + 40*sigma_efold)
     source = p.sigmas
     offset = p.sigma_offset
 
@@ -52,7 +52,8 @@ def get_sigma_bounds(n, s, p):
 
 def make_sigma_grids(p, xuniform=True): ## Make master sigma grid uniform in x
     
-    width = p.c1 * 9. * p.a * p.tau0
+    width = p.c1 * 50 * p.a * p.tau0
+    print("SIGMA GRID WIDTH: {:.1f}   ({:.0f} * tau0)    (x={:.1f})".format(width, width/p.tau0, np.cbrt(width/p.c1)))
     source = p.sigmas
     offset = p.sigma_offset
     left, middle, right = ((-width, min(source-offset, 0)), 

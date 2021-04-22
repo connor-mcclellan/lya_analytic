@@ -42,7 +42,7 @@ def integrate(sigma_bounds, y_start, n, s, p):
   '''
   Returns interpolants which can be used to evaluate the function at any sigma
   '''
-  sol = solve_ivp(func, [sigma_bounds[0], sigma_bounds[1]], y_start, args=(n,s,p), rtol=1e-8, atol=1e-8, dense_output=True)
+  sol = solve_ivp(func, [sigma_bounds[0], sigma_bounds[1]], y_start, args=(n,s,p), rtol=1e-10, atol=1e-10, dense_output=True)
   return sol.y.T, sol.sol
 
 
@@ -196,9 +196,9 @@ def solve(s1,s2,s3,n,p):
       warnings.warn("too many iterations in solve")
       plot_refinement(refine_pts, refine_res, refine_log)
       pdb.set_trace()
-
+    print("i, err, response = ", i, err, f2)
     i=i+1
-
+  #plot_refinement(refine_pts, refine_res, refine_log) 
   # choose middle point to be eigenfrequency
   sres=s2
   # Response looks very close to the eigenvector when frequency is close to the eigenfrequency
@@ -239,11 +239,11 @@ def sweep(p):
 
     norm=[]
     while nsoln < p.mmax+1:
-      J,dJ=one_s_value(n,nsoln,s,p)
+      J,dJ=one_s_value(n,s,p)
       norm.append(np.sum(np.abs(J)))
       print("nsoln,n,s,response=",nsoln,n,s,norm[-1])
       if len(norm)>2 and norm[-3]<norm[-2] and norm[-1]<norm[-2]:
-        sres,Jres = solve(s-2*s_increment,s-s_increment,s,n,nsoln,p)
+        sres,Jres = solve(s-2*s_increment,s-s_increment,s,n,p)
         ssoln[n-1,nsoln-1]=sres
         Jsoln[n-1,nsoln-1,:]=Jres
         nsoln=nsoln+1
@@ -252,11 +252,10 @@ def sweep(p):
 
 def check_s_eq_0(p):
     n=1
-    s=0.0
+    s=-0.00001
     kappan=n*np.pi/p.radius
     wavenum=kappan*p.Delta/p.k
     J,dJ=one_s_value(n,s,p)
-    pdb.set_trace()
     plt.figure()
     plt.plot(p.sigma,J,'b-')
     analytic = np.sqrt(6.0/np.pi)/16.0 * p.tau0 * n * p.energy/(p.k*p.radius**3) * np.exp(-wavenum*np.abs(p.sigma))
@@ -278,11 +277,11 @@ def main():
   nsigma=1024
 
   p = Parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax,mmax)
-  check_s_eq_0(p)
+  #check_s_eq_0(p)
   tdiff = (p.radius/fc.clight)*(p.a*p.tau0)**0.333
   ssoln,Jsoln=sweep(p)
   output_data = np.array([energy,temp,tau0,radius,alpha_abs,prob_dest,xsource,nmax,mmax,nsigma,tdiff,p.sigma,ssoln,Jsoln])
-  np.save('./data/eigenmode_data_xinit{:.0f}_tau{:.0e}_n{}_m{}_gammatest.npy'.format(xsource, tau0, p.nmax, p.mmax).replace('+0',''),output_data, allow_pickle=True, fix_imports=True)
+  np.save('./data/eigenmode_data_xinit{:.0f}_tau{:.0e}_n{}_m{}_40efoldings.npy'.format(xsource, tau0, p.nmax, p.mmax).replace('+0',''),output_data, allow_pickle=True, fix_imports=True)
 
 if __name__ == "__main__":
   main()
