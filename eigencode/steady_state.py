@@ -46,7 +46,7 @@ def fluence(sigma, p, Jsoln=None, dijkstra=False):
     elif Jsoln is None and dijkstra is True:
         H0 = (
              np.sqrt(6) * p.energy / (3. * p.k * phi) / 32 / np.pi / p.Delta
-             / p.radius**3 / (np.cosh(np.pi * p.Delta / p.k / p.R * sigma) + 1)
+             / p.radius**3 / (np.cosh(np.pi * p.Delta / p.k / p.radius * sigma) + 1)
              )
         F = 4 * np.pi * H0
         spec[0] = 4 * np.pi * p.radius**2 * F
@@ -68,7 +68,7 @@ def fluence(sigma, p, Jsoln=None, dijkstra=False):
 #    return sigma, spec
 
 if __name__ == '__main__':
-    filename = './data/eigenmode_data_xinit0_tau1e7_n6_m20_gammatest.npy'
+    filename = './data/eigenmode_data_xinit0_tau1e7_n6_m20_23efoldings.npy'
     array = np.load(filename, allow_pickle=True, fix_imports=True, )
     energy = array[0]
     temp = array[1]
@@ -89,7 +89,7 @@ if __name__ == '__main__':
 
 
 #    filename2 = './data/eigenmode_data_xinit0_tau1e7_n6_m20.npy'
-    filename2 = './data/old/eigenmode_data_xinit0_tau1e7_n6_m20_rtolatol_test.npy'
+    filename2 = './data/eigenmode_data_xinit0_tau1e7_n6_m20_40efoldings.npy'
     array2 = np.load(filename2, allow_pickle=True, fix_imports=True, )
     energy2 = array2[0]
     temp2 = array2[1]
@@ -115,8 +115,8 @@ if __name__ == '__main__':
 
     for n in range(1, p.nmax):
         fig, ax = plt.subplots(1, 1)
-        ax.plot(x_t, np.abs(np.sum(tdep_spec[:n], axis=0)), 'r-', marker='o', ms=1, alpha=0.7, label=r'gamma fixed, all $m < 100$'.format(n))
-        ax.plot(x_t2, np.abs(np.sum(tdep_spec2[:n], axis=0)), 'm--', marker='^', ms=1, alpha=0.7, label=r'all $m < 20$'.format(n))
+        ax.plot(x_t, np.abs(np.sum(tdep_spec[:n], axis=0)), 'r-', marker='o', ms=1, alpha=0.7, label=r'23 efoldings, all $m < 20$'.format(n))
+        ax.plot(x_t2, np.abs(np.sum(tdep_spec2[:n], axis=0)), 'm--', marker='^', ms=1, alpha=0.7, label=r'40 efoldings, $m < 20$'.format(n))
         ax.plot(x_s, np.abs(np.sum(steady_state[:n], axis=0)), '-', marker='s', ms=1, alpha=0.7, label='steady state'.format(n))
         ax.plot(x_d, np.abs(dijkstra[0]), '-', marker='s', ms=1, alpha=0.7, label='dijkstra'.format(n))
         plt.yscale('log')
