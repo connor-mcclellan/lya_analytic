@@ -45,7 +45,6 @@ def get_sigma_bounds(n, s, p):
     sigma_right = (sigma_tp + 23*sigma_efold)
     source = p.sigmas
     offset = p.sigma_offset
-    pdb.set_trace()
 
     return ((sigma_left, min(source-offset, 0)), 
             (min(source-offset, 0), max(source+offset, 0)),

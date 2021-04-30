@@ -94,6 +94,13 @@ def one_s_value(n,s,p, debug=False, trace=False):
       A = Jmiddle[-1]    # Overwrite previous matrix coefficients
       B = dJmiddle[-1]
 
+      scale_right = - 1.0/(D-B*(C/A)) * np.sqrt(6.0)/8.0 * n**2 * p.energy/(p.k*p.radius**3)
+      scale_left = C/A * scale_right
+      scale_middle = scale_left
+
+      scales = [scale_left, scale_middle, scale_right]
+      interps = [interp_left, interp_middle, interp_right]
+
   # If source < 0, integrate leftward from 0 to source, matching at 0
   # Middlegrid is ordered decreasingly, starting at zero and going to source
   elif p.sigmas < 0.:
@@ -112,36 +119,29 @@ def one_s_value(n,s,p, debug=False, trace=False):
       C = Jmiddle[-1]   # Overwrite previous matrix coefficients
       D = dJmiddle[-1]
 
+      scale_right = - 1.0/(D-B*(C/A)) * np.sqrt(6.0)/8.0 * n**2 * p.energy/(p.k*p.radius**3)
+      scale_left = C/A * scale_right
+      scale_middle = scale_right
+
+      scales = [scale_left, scale_middle, scale_right]
+      interps = [interp_left, interp_middle, interp_right]
+
   # If source = 0, do nothing
   else:
-      Jmiddle = np.nan
-      dJmiddle = np.nan
+      scale_right = - 1.0/(D-B*(C/A)) * np.sqrt(6.0)/8.0 * n**2 * p.energy/(p.k*p.radius**3)
+      scale_left = C/A * scale_right
 
-  # solution of the matrix equation
-  scale_right = - 1.0/(D-B*(C/A)) * np.sqrt(6.0)/8.0 * n**2 * p.energy/(p.k*p.radius**3)
-  scale_left = C/A * scale_right
-  scale_middle = scale_left if p.sigmas > 0. else scale_right
+      scales = [scale_left, scale_right]
+      interps = [interp_left, interp_right]
 
-  # Scale solutions by each factor to match discontinuity
-  Jleft, dJleft = interp_left(p.sigma_master['left']) * scale_left
-  Jright, dJright = interp_right(p.sigma_master['right']) * scale_right
-  if Jmiddle is not np.nan:
-      Jmiddle, dJmiddle = interp_middle(p.sigma_master['middle']) * scale_middle
-
-  if p.sigmas < 0.:
-      # reorder middle grid to be increasing, starting from source & going to 0
-      Jmiddle = Jmiddle[::-1]
-      dJmiddle = dJmiddle[::-1]
-
-  # combine left, middle, and right in one array
-  try:
-      J = np.concatenate((Jleft, Jmiddle, Jright))
-      dJ = np.concatenate((dJleft, dJmiddle, dJright))
-  except:
-      J = np.concatenate((Jleft, Jright))
-      dJ = np.concatenate((dJleft, dJright))
-  #plt.plot(np.concatenate((p.sigma_master['left'], p.sigma_master['right'])), J)
-  #plt.title("n={}, m={}, s={}".format(n, m, s))
+  J, dJ = np.zeros(p.nsigma), np.zeros(p.nsigma)
+  for i in range(len(scales)):
+      mask = np.logical_and(p.sigma <= interps[i].t_max, p.sigma >= interps[i].t_min)
+      inds = np.where(mask)
+      J[inds], dJ[inds] = interps[i](p.sigma[mask]) * scales[i]
+  
+  #plt.plot(np.cbrt(p.sigma/p.c1), J)
+  #plt.title("n={}, s={}".format(n, s))
   #plt.show()
   return J,dJ
 
