@@ -246,10 +246,6 @@ def sweep(p):
         sres,Jres = solve(s-2*s_increment,s-s_increment,s,n,p)
         ssoln[n-1,nsoln-1]=sres
         Jsoln[n-1,nsoln-1,:]=Jres
-        plt.plot(np.cbrt(p.sigma/p.c1), Jres)
-        plt.xlabel('x')
-        plt.ylabel('J')
-        plt.show()
         nsoln=nsoln+1
       s += s_increment
   return ssoln,Jsoln
@@ -285,7 +281,7 @@ def main():
   tdiff = (p.radius/fc.clight)*(p.a*p.tau0)**0.333
   ssoln,Jsoln=sweep(p)
   output_data = np.array([energy,temp,tau0,radius,alpha_abs,prob_dest,xsource,nmax,mmax,nsigma,tdiff,p.sigma,ssoln,Jsoln])
-  np.save('./data/eigenmode_data_xinit{:.0f}_tau{:.0e}_n{}_m{}_efoldings_test.npy'.format(xsource, tau0, p.nmax, p.mmax).replace('+0',''),output_data, allow_pickle=True, fix_imports=True)
+  np.save('./data/eigenmode_data_xinit{:.0f}_tau{:.0e}_n{}_m{}.npy'.format(xsource, tau0, p.nmax, p.mmax).replace('+0',''),output_data, allow_pickle=True, fix_imports=True)
 
 if __name__ == "__main__":
   main()
