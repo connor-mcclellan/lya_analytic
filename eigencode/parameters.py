@@ -41,10 +41,11 @@ def get_sigma_bounds(n, s, p):
     sigma_tp = p.c1*x_tp**3
     sigma_efold = p.k/(kappan*p.Delta)
 
-    sigma_left = -(sigma_tp + 40*sigma_efold) # TODO: Parametrize?
-    sigma_right = (sigma_tp + 40*sigma_efold)
+    sigma_left = -(sigma_tp + 23*sigma_efold) # TODO: Parametrize?
+    sigma_right = (sigma_tp + 23*sigma_efold)
     source = p.sigmas
     offset = p.sigma_offset
+    pdb.set_trace()
 
     return ((sigma_left, min(source-offset, 0)), 
             (min(source-offset, 0), max(source+offset, 0)),
