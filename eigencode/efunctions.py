@@ -242,7 +242,7 @@ def sweep(p, output_dir=None):
       print("nsoln,n,s,response=",nsoln,n,s,norm[-1])
       if len(norm)>2 and norm[-3]<norm[-2] and norm[-1]<norm[-2]:
         sres,Jres = solve(s-2*s_increment,s-s_increment,s,n,p)
-        np.save('n{:02d}_m{:03d}'.format(n, nsoln), np.insert(Jres, 0, sres))
+        np.save(output_dir/'n{}_m{}'.format(n, nsoln), np.insert(Jres, 0, sres))
         nsoln=nsoln+1
       s += s_increment
   return ssoln,Jsoln
