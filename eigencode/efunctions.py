@@ -224,16 +224,14 @@ def plot_refinement(refine_pts, refine_res, refine_log):
       plt.show()
 
 
-def sweep(p):
+def sweep(p, output_dir=None):
   # loop over n and s=-i\omega. when you find a maximum in the size of the response, call the solve function
   # tabulate s(n,m) and J(n,m,sigma).
 
-  Jsoln=np.zeros((p.nmax,p.mmax,p.nsigma))
-  ssoln=np.zeros((p.nmax,p.mmax))
   for n in range(1,p.nmax+1):
     print ("n=",n)
     nsoln=1
-    # TODO: s_start and s_incr: make parameters in the future
+
     s = -0.000001
     s_increment = -0.01
 
@@ -244,8 +242,7 @@ def sweep(p):
       print("nsoln,n,s,response=",nsoln,n,s,norm[-1])
       if len(norm)>2 and norm[-3]<norm[-2] and norm[-1]<norm[-2]:
         sres,Jres = solve(s-2*s_increment,s-s_increment,s,n,p)
-        ssoln[n-1,nsoln-1]=sres
-        Jsoln[n-1,nsoln-1,:]=Jres
+        np.save('n{:02d}_m{:03d}'.format(n, nsoln), np.insert(Jres, 0, sres))
         nsoln=nsoln+1
       s += s_increment
   return ssoln,Jsoln
@@ -264,24 +261,27 @@ def check_s_eq_0(p):
     plt.show()
     plt.close()
 
-def main():
-  energy=1.e0
-  temp=1.e4
-  tau0=1.e7
-  radius=1.e11
-  alpha_abs=0.0
-  prob_dest=0.0
-  xsource=0.0
-  nmax=6
-  mmax=20
-  nsigma=1024
-
-  p = Parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax,mmax)
-  #check_s_eq_0(p)
-  tdiff = (p.radius/fc.clight)*(p.a*p.tau0)**0.333
-  ssoln,Jsoln=sweep(p)
-  output_data = np.array([energy,temp,tau0,radius,alpha_abs,prob_dest,xsource,nmax,mmax,nsigma,tdiff,p.sigma,ssoln,Jsoln])
-  np.save('./data/eigenmode_data_xinit{:.0f}_tau{:.0e}_n{}_m{}.npy'.format(xsource, tau0, p.nmax, p.mmax).replace('+0',''),output_data, allow_pickle=True, fix_imports=True)
 
 if __name__ == "__main__":
-  main()
+    energy=1.e0
+    temp=1.e4
+    tau0=1.e7
+    radius=1.e11
+    alpha_abs=0.0
+    prob_dest=0.0
+    xsource=0.0
+    nmax=6
+    mmax=20
+    nsigma=1024
+
+    from pathlib import Path
+    from datetime import datetime
+    import pickle
+    datestr = datetime.today().strftime('%Y%m%d-%H:%M')
+    output_dir = Path("./data/{}".format(datestr)).resolve()
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    p = Parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax,mmax)
+    pickle.dump(p, open(output_dir/'parameters.p', 'wb'))
+
+    sweep(p, output_dir=output_dir)
