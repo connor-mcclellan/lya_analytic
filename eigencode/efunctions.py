@@ -245,7 +245,7 @@ def sweep(p, output_dir=None):
         np.save(output_dir/'n{}_m{}'.format(n, nsoln), np.insert(Jres, 0, sres))
         nsoln=nsoln+1
       s += s_increment
-  return ssoln,Jsoln
+  return
 
 def check_s_eq_0(p):
     n=1
@@ -277,7 +277,7 @@ if __name__ == "__main__":
     from pathlib import Path
     from datetime import datetime
     import pickle
-    datestr = datetime.today().strftime('%Y%m%d-%H:%M')
+    datestr = datetime.today().strftime('%y%m%d-%H%M')
     output_dir = Path("./data/{}".format(datestr)).resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
 
