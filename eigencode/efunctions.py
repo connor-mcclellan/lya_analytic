@@ -264,4 +264,4 @@ if __name__ == "__main__":
 
     stop = time.time()
     with open(output_dir/'time.txt', 'w') as f:
-        f.write(stop - start)
+        f.write(str(stop - start))
