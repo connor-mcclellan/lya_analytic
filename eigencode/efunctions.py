@@ -149,8 +149,9 @@ def one_s_value(n, s, p):
   for i in range(len(scales)):
       mask = np.logical_and(p.sigma <= interps[i].t_max, p.sigma >= interps[i].t_min)
       inds = np.where(mask)
-      J[inds], dJ[inds] = interps[i](p.sigma[mask]) * scales[i]
+      J[inds], dJ[inds], _ = interps[i](p.sigma[mask]) * scales[i]
   intJdsigma = left_P*scale_left - right_P*scale_right
+
   return J, dJ, intJdsigma
 
 
@@ -173,9 +174,10 @@ def solve(s1, s2, s3, n, p):
         ratio2 = ratio1 * (s3-s2) / (s1-s2)
         sguess = (s1*ratio2 - s3)/(ratio2 - 1.0)
         Jguess, dJguess, nguess = one_s_value(n, sguess, p)
-        print("guess:)
-        print("s:    {}    {}    {}".format(sguess/s1, sguess/s2, sguess/s3))
-        print("n:    {}    {}    {}".format(nguess/n1, nguess/n2, nguess/n3))
+
+        print("\nguess:")
+        print("s:    {:.6f}    {:.6f}    {:.6f}".format(sguess/s1, sguess/s2, sguess/s3))
+        print("n:    {:.1e}    {:.1e}    {:.1e}".format(nguess/n1, nguess/n2, nguess/n3))
 
         if (sguess - s1)*(sguess - s2) < 0.0:
             s3, J3, n3 = s2, J2, n2
@@ -193,23 +195,28 @@ def sweep(p, output_dir=None):
   # loop over n and s=-i\omega. when you find a maximum in the size of the response, call the solve function
   # tabulate s(n,m) and J(n,m,sigma).
 
+  gamma_const = fc.clight/p.radius/(p.a*p.tau0)**0.333 * np.pi**(13.0/6.0)/2.0**0.333
+
   for n in range(1,p.nmax+1):
     print ("n=",n)
     nsoln=1
 
     s = -0.000001
     s_increment = -0.01
-
     norm=[]
     while nsoln < p.mmax+1:
+
       J,dJ,intJdsigma=one_s_value(n,s,p)
-      norm.append(intJdsigma)
+      norm.append(np.abs(intJdsigma))
       print("nsoln,n,s,response=",nsoln,n,s,norm[-1])
       if len(norm)>2 and norm[-3]<norm[-2] and norm[-1]<norm[-2]:
         sres,Jres,intJdsigmares = solve(s-2*s_increment,s-s_increment,s,n,p)
         out = {"s":sres, "J":Jres, "Jint":intJdsigmares}
         np.save(output_dir/'n{}_m{}.npy'.format(n, nsoln), out)
+
         nsoln=nsoln+1
+        s_increment = -0.25*gamma_const*n**(4.0/3.0)*0.667*(nsoln+1.0/8.0)**(-1.0/3.0)
+        print("\nds={}".format(s_increment))
       s += s_increment
   return
 
@@ -242,12 +249,19 @@ if __name__ == "__main__":
 
     from pathlib import Path
     from datetime import datetime
+    import time
     import pickle
     datestr = datetime.today().strftime('%y%m%d-%H%M')
     output_dir = Path("./data/{}".format(datestr)).resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    start = time.time()
+
     p = Parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax,mmax)
     pickle.dump(p, open(output_dir/'parameters.p', 'wb'))
 
     sweep(p, output_dir=output_dir)
+
+    stop = time.time()
+    with open(output_dir/'time.txt', 'w') as f:
+        f.write(stop - start)
