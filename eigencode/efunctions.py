@@ -10,8 +10,10 @@ import pdb
 # TODO:
 # [X] Add in master sigma grid
 # [X] Rewrite sol to use interpolants on master sigma grid
+# [X] Speed improvements to sweep routine
+# [X] Add int J dsigma as a more accurate normalization
+# [ ] Change sweep step based on dispersion relation
 # [ ] Insert zero at line center for Jsoln?
-# [ ] Zero is duplicated for off-center sources - fix it!
 # [ ] rtol and atol convergence
 
 fc=fundconst()
@@ -32,9 +34,10 @@ def func(sigma,y,n,s,p):
   wavenum = kappan * p.Delta / p.k
   term1 = wavenum**2 
   term2 = 3.0*s*p.Delta**2*phi/(fc.clight*p.k)
-  dydsigma=np.zeros(2)
+  dydsigma=np.zeros(3)
   dydsigma[0]=dJ
   dydsigma[1]= (term1+term2) * J
+  dydsigma[2]=J
   return dydsigma
 
 
@@ -46,53 +49,59 @@ def integrate(sigma_bounds, y_start, n, s, p):
   return sol.y.T, sol.sol
 
 
-def one_s_value(n,s,p, debug=False, trace=False):
+def one_s_value(n, s, p):
   '''Solve for response given n and s'''
 
-  kappan=n*np.pi/p.radius
+  kappan = n*np.pi/p.radius
   wavenum = kappan * p.Delta / p.k
 
   # Construct grids for this value of n and s
   left, middle, right = get_sigma_bounds(n, s, p)
 
   # rightward integration
-  J=1.0
-  dJ=wavenum*J
-  y_start=np.array( (J,dJ) )
-  sol, interp_left = integrate(left,y_start,n,s,p)
-  Jleft=sol[:,0]
-  dJleft=sol[:,1]
-  A=Jleft[-1]    # Set matrix coefficient equal to Jleft's rightmost value
-  B=dJleft[-1]
+  J = 1.0
+  dJ = wavenum*J
+  y_start = np.array( (J, dJ, 0.0) )
+  sol, interp_left = integrate(left, y_start, n, s, p)
+  Jleft = sol[:,0]
+  dJleft = sol[:,1]
+  intJdsigmaleft = sol[:,2]
+  A = Jleft[-1]    # Set matrix coefficient equal to Jleft's rightmost value
+  B = dJleft[-1]
+  left_P = intJdsigmaleft[-1]
 
   # leftward integration
-  J=1.0
-  dJ=-wavenum*J
-  y_start=np.array( (J,dJ) )
-  sol, interp_right = integrate(right[::-1],y_start,n,s,p)
-  Jright=sol[:,0]
-  dJright=sol[:,1]
-  C=Jright[-1]   # Set matrix coefficient equal to Jright's leftmost value
-  D=dJright[-1]
+  J = 1.0
+  dJ = -wavenum*J
+  y_start = np.array( (J, dJ, 0.0) )
+  sol, interp_right = integrate(right[::-1], y_start, n, s, p)
+  Jright = sol[:,0]
+  dJright = sol[:,1]
+  intJdsigmaright = sol[:,2]
+  C = Jright[-1]   # Set matrix coefficient equal to Jright's leftmost value
+  D = dJright[-1]
+  right_P = intJdsigmaright[-1]
 
   # middle integration
   # If source > 0, integrate rightward from 0 to source, matching at 0
   # Middlegrid is ordered increasingly, starting at 0 and going to source
   if p.sigmas > 0.:
 
-      # Match initial conditions at 0 (leftward integration)
+      # Match initial conditions at 0 (rightward integration)
       J = Jleft[-1]
       dJ = dJleft[-1]
-      y_start = np.array((J, dJ))
+      y_start = np.array((J, dJ, left_P))
 
       # Find solution in middle region
       sol, interp_middle = integrate(middle, y_start, n, s, p)
-      Jmiddle=sol[:,0]
-      dJmiddle=sol[:,1]
+      Jmiddle = sol[:,0]
+      dJmiddle = sol[:,1]
+      intJdsigmamiddle = sol[:,2]
 
       # Set coefficients of matrix equation at the source
       A = Jmiddle[-1]    # Overwrite previous matrix coefficients
       B = dJmiddle[-1]
+      left_P = intJdsigmamiddle[-1]
 
       scale_right = - 1.0/(D-B*(C/A)) * np.sqrt(6.0)/8.0 * n**2 * p.energy/(p.k*p.radius**3)
       scale_left = C/A * scale_right
@@ -105,19 +114,21 @@ def one_s_value(n,s,p, debug=False, trace=False):
   # Middlegrid is ordered decreasingly, starting at zero and going to source
   elif p.sigmas < 0.:
 
-      # Match initial conditions at 0 (rightward integration)
+      # Match initial conditions at 0 (leftward integration)
       J = Jright[-1]
       dJ = dJright[-1]
-      y_start = np.array((J, dJ))
+      y_start = np.array((J, dJ, right_P))
 
       # Find solution in middle region
       sol, interp_middle = integrate(middle[::-1], y_start, n, s, p)
       Jmiddle=sol[:,0]
       dJmiddle=sol[:,1]
+      intJdsigmamiddle = sol[:,2]
 
       # Set coefficients of matrix equation at the source
       C = Jmiddle[-1]   # Overwrite previous matrix coefficients
       D = dJmiddle[-1]
+      right_P = intJdsigmamiddle[-1]
 
       scale_right = - 1.0/(D-B*(C/A)) * np.sqrt(6.0)/8.0 * n**2 * p.energy/(p.k*p.radius**3)
       scale_left = C/A * scale_right
@@ -139,90 +150,44 @@ def one_s_value(n,s,p, debug=False, trace=False):
       mask = np.logical_and(p.sigma <= interps[i].t_max, p.sigma >= interps[i].t_min)
       inds = np.where(mask)
       J[inds], dJ[inds] = interps[i](p.sigma[mask]) * scales[i]
-  
-  #plt.plot(np.cbrt(p.sigma/p.c1), J)
-  #plt.title("n={}, s={}".format(n, s))
-  #plt.show()
-  return J,dJ
+  intJdsigma = left_P*scale_left - right_P*scale_right
+  return J, dJ, intJdsigma
 
 
-def solve(s1,s2,s3,n,p):
-  # iterate to find the eigenfrequency sres and eigenvector Jres(sigma)
-  # three frequencies s1, s2, s3
-  err=1.e20 # initialize error to be something huge
-  i=0
+def solve(s1, s2, s3, n, p):
+    '''
+    Iterate to find the eigenfrequency sres and eigenvector Jres(sigma)
+    given three frequencies s1, s2, s3.
+    '''
 
-  #refine_pts = []
-  #refine_res = []
-  #refine_log = []
+    if s1>s3:
+        s1, s3 = s3, s1
 
-  while err>1.e-6:
+    J1, dJ1, n1 = one_s_value(n, s1, p)
+    J2, dJ2, n2 = one_s_value(n, s2, p)
+    J3, dJ3, n3 = one_s_value(n, s3, p)
 
-    J1,dJ1=one_s_value(n,s1,p)
-    J2,dJ2=one_s_value(n,s2,p)
-    J3,dJ3=one_s_value(n,s3,p)
+    err=1.e20
+    while err>1.e-3:
+        ratio1 = (n2-n1) / (n2-n3)
+        ratio2 = ratio1 * (s3-s2) / (s1-s2)
+        sguess = (s1*ratio2 - s3)/(ratio2 - 1.0)
+        Jguess, dJguess, nguess = one_s_value(n, sguess, p)
+        print("guess:)
+        print("s:    {}    {}    {}".format(sguess/s1, sguess/s2, sguess/s3))
+        print("n:    {}    {}    {}".format(nguess/n1, nguess/n2, nguess/n3))
 
-    f1 = np.sum(np.abs(J1)) # sum of absolute values of ENTIRE spectrum
-    f2 = np.sum(np.abs(J2)) # this is the size of the response!
-    f3 = np.sum(np.abs(J3))
-    err=np.abs((s3-s1)/s2) # error is fractional difference between eigenfrequencies
+        if (sguess - s1)*(sguess - s2) < 0.0:
+            s3, J3, n3 = s2, J2, n2
+        else:
+            s1, J1, n1 = s2, J2, n2
+        s2, J2, n2 = sguess, Jguess, nguess
+        err=np.abs((s3-s1)/s2)
 
-    sl=0.5*(s1+s2) # s between s1 and s2
-    Jl,dJl=one_s_value(n,sl,p)
-    fl = np.sum(np.abs(Jl))
-    sr=0.5*(s2+s3) # s between s2 and s3
-    Jr,dJr=one_s_value(n,sr,p)
-    fr = np.sum(np.abs(Jr))
-
-    #####
-    #refine_pts.append([s1, sl, s2, sr, s3])
-    #refine_res.append([f1, fl, f2, fr, f3])
-    #refine_log.append([i, err])
-    #####
-
-# three sets of three points --- one of those sets will have a maximal response in the center
-# find that maximum response
-    if fl>f1 and fl>f2:
-      s3=s2
-      s2=sl
-    elif f2>fl and f2>fr:
-      s1=sl
-      s3=sr
-    elif fr>f2 and fr>f3:
-      s1=s2
-      s2=sr
-
-    if i==100:
-      warnings.warn("too many iterations in solve")
-      plot_refinement(refine_pts, refine_res, refine_log)
-      pdb.set_trace()
-    print("i, err, response = ", i, err, f2)
-    i=i+1
-  #plot_refinement(refine_pts, refine_res, refine_log) 
-  # choose middle point to be eigenfrequency
-  sres=s2
-  # Response looks very close to the eigenvector when frequency is close to the eigenfrequency
-  Jres = (J3-J1)*(s3-sres)*(s1-sres)/(s1-s3)
-  # Slighly better estimate than using just J2 --- derivation in notes
-  return sres,Jres
-
-
-def plot_refinement(refine_pts, refine_res, refine_log):
-    #for j in range(len(refine_pts)):
-      j = len(refine_pts)-1
-      for i in range(len(refine_pts)):
-          if j != i:
-              plt.plot(refine_pts[i], refine_res[i], marker='|', label="i={}  err={:.1E}".format(*refine_log[i]), alpha=0.2)
-      plt.plot(refine_pts[j], refine_res[j], marker='|', label="j={}  err={:.1E}".format(*refine_log[j]), alpha=1)
-      for k, txt in enumerate(['s1', 'sl', 's2', 'sr', 's3']):
-          plt.annotate(txt, (refine_pts[j][k], refine_res[j][k]))
-          plt.annotate('{}={}'.format(txt, refine_pts[j][k]), (0.8, 0.5-0.05*k), xycoords='axes fraction')
-
-      plt.legend(prop={'size': 6})
-      plt.ylim((min(np.ndarray.flatten(np.array(refine_res))), 10*max(np.ndarray.flatten(np.array(refine_res)))))
-      plt.yscale('log')
-      plt.show()
-
+    sres=s2
+    Jres = (J3-J1)*(s3-sres)*(s1-sres)/(s1-s3)
+    nres = (n3-n1)*(s3-sres)*(s1-sres)/(s1-s3)
+    return sres, Jres, nres
 
 def sweep(p, output_dir=None):
   # loop over n and s=-i\omega. when you find a maximum in the size of the response, call the solve function
@@ -237,12 +202,13 @@ def sweep(p, output_dir=None):
 
     norm=[]
     while nsoln < p.mmax+1:
-      J,dJ=one_s_value(n,s,p)
-      norm.append(np.sum(np.abs(J)))
+      J,dJ,intJdsigma=one_s_value(n,s,p)
+      norm.append(intJdsigma)
       print("nsoln,n,s,response=",nsoln,n,s,norm[-1])
       if len(norm)>2 and norm[-3]<norm[-2] and norm[-1]<norm[-2]:
-        sres,Jres = solve(s-2*s_increment,s-s_increment,s,n,p)
-        np.save(output_dir/'n{}_m{}'.format(n, nsoln), np.insert(Jres, 0, sres))
+        sres,Jres,intJdsigmares = solve(s-2*s_increment,s-s_increment,s,n,p)
+        out = {"s":sres, "J":Jres, "Jint":intJdsigmares}
+        np.save(output_dir/'n{}_m{}.npy'.format(n, nsoln), out)
         nsoln=nsoln+1
       s += s_increment
   return
@@ -252,7 +218,7 @@ def check_s_eq_0(p):
     s=-0.00001
     kappan=n*np.pi/p.radius
     wavenum=kappan*p.Delta/p.k
-    J,dJ=one_s_value(n,s,p)
+    J,dJ,intJdsigma=one_s_value(n,s,p)
     plt.figure()
     plt.plot(p.sigma,J,'b-')
     analytic = np.sqrt(6.0/np.pi)/16.0 * p.tau0 * n * p.energy/(p.k*p.radius**3) * np.exp(-wavenum*np.abs(p.sigma))
