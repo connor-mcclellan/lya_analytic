@@ -200,9 +200,12 @@ def sweep(p, nmin=1, output_dir=None):
   for n in range(nmin,p.nmax+1):
     print ("n=",n)
     nsoln=1
-
     s = -0.000001
-    s_increment = -0.01
+    if nmin == 1:
+        s_increment = -0.01
+    else:
+        s_increment = -0.25*gamma_const*n**(4.0/3.0)*0.667*(1+1.0/8.0)**(-1.0/3.0)
+
     norm=[]
     while nsoln < p.mmax+1:
 
@@ -243,8 +246,8 @@ if __name__ == "__main__":
     alpha_abs=0.0
     prob_dest=0.0
     xsource=0.0
-    nmin=1
-    nmax=100
+    nmin=71
+    nmax=80
     mmax=100
     nsigma=1024
 
