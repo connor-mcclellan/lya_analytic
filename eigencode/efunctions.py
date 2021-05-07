@@ -243,8 +243,8 @@ if __name__ == "__main__":
     alpha_abs=0.0
     prob_dest=0.0
     xsource=0.0
-    nmax=6
-    mmax=20
+    nmax=100
+    mmax=100
     nsigma=1024
 
     from pathlib import Path

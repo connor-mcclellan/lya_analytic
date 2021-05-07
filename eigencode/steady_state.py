@@ -4,7 +4,9 @@
 from wait_time import get_Pnm
 from efunctions import line_profile
 from parameters import Parameters
+from util import construct_sol
 from scipy.interpolate import interp1d, CubicSpline
+from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import pdb
@@ -18,7 +20,7 @@ def generate_xuniform(sigma, p):
     return xuniform, sigma_to_x
 
 
-def fluence(sigma, p, Jsoln=None, dijkstra=False):
+def fluence(sigma, p, Jsoln=None, ssoln=None, dijkstra=False):
     '''
     Calculates the fluence or luminosity by spatial eigenmode.
     '''
@@ -36,7 +38,7 @@ def fluence(sigma, p, Jsoln=None, dijkstra=False):
 
 #            spec[n-1:] =  (
             spec[n-1] = (                   ## FACTOR OF 2???
-                        -np.sqrt(6) * np.pi / 2 / 3. / p.k / p.Delta / phi
+                        -np.sqrt(6) * np.pi / 3. / p.k / p.Delta / phi
                         * p.energy / p.radius * n * (-1)**n 
                         * np.exp(-n * np.pi * p.Delta / p.k / p.radius * np.abs(sigma))
                         )
@@ -54,11 +56,11 @@ def fluence(sigma, p, Jsoln=None, dijkstra=False):
     else:
         # TIME DEPENDENT SOLUTION
         for n in range(1, p.nmax+1):
-            for m in range(p.mmax):
+            for m in range(1, p.mmax+1):
                 spec[n-1] += (
                              16. * np.pi**2 * p.radius
                              / (3.0 * p.k * p.energy * phi) * (-1)**n
-                             * Jsoln[n-1, m, :] / ssoln[n-1, m]
+                             * Jsoln[n-1, m-1, :] / ssoln[n-1, m-1]
                              )
             #spec_interp = interp1d(sigma_to_x, spec[n-1] * phi)
             #spec_xuniform[n-1] = spec_interp(xuniform) / phi_xuniform
@@ -68,28 +70,10 @@ def fluence(sigma, p, Jsoln=None, dijkstra=False):
 #    return sigma, spec
 
 if __name__ == '__main__':
-    filename = './data/eigenmode_data_xinit0_tau1e7_n6_m20.npy'
-    array = np.load(filename, allow_pickle=True, fix_imports=True, )
-    energy = array[0]
-    temp = array[1]
-    tau0 = array[2]
-    radius = array[3]
-    alpha_abs = array[4]
-    prob_dest = array[5]
-    xsource = array[6]
-    nmax = array[7]
-    mmax = array[8]
-    nsigma = array[9]
-    tdiff = array[10]
-    sigma = array[11]
-    ssoln = array[12]
-    Jsoln = array[13]
-    p = Parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax,mmax)
-#    Pnmsoln = get_Pnm(ssoln,sigma,Jsoln,p)
+    directory = Path('./data/210507-1342').resolve()
+    Jsoln, ssoln, intJsoln, p = construct_sol(directory, nmax=5, mmax=100)
 
-
-#    filename2 = './data/eigenmode_data_xinit0_tau1e7_n6_m20.npy'
-    filename2 = './data/old/eigenmode_data_xinit0_tau1e7_n6_m20_23efoldings.npy'
+    filename2 = './data/old/eigenmode_data_xinit0_tau1e7_n6_m20.npy'
     array2 = np.load(filename2, allow_pickle=True, fix_imports=True, )
     energy2 = array2[0]
     temp2 = array2[1]
@@ -98,27 +82,28 @@ if __name__ == '__main__':
     alpha_abs2 = array2[4]
     prob_dest2 = array2[5]
     xsource2 = array2[6]
-    nmax2 = array[7]
-    mmax2 = array[8]
-    nsigma2 = array[9]
+    nmax2 = array2[7]
+    mmax2 = array2[8]
+    nsigma2 = array2[9]
     tdiff2 = array2[10]
     sigma2 = array2[11]
     ssoln2 = array2[12]
     Jsoln2 = array2[13]
     p2 = Parameters(temp2,tau02,radius2,energy2,xsource2,alpha_abs2,prob_dest2,nsigma2,nmax2,mmax2)
 
-    x_t2, tdep_spec2 = fluence(sigma2, p2, Jsoln=Jsoln2)
-    x_t, tdep_spec = fluence(sigma, p, Jsoln=Jsoln)
-    x_s, steady_state = fluence(sigma, p)
-    x_d, dijkstra = fluence(sigma, p, dijkstra=True)
+    x_t2, tdep_spec2 = fluence(sigma2, p2, Jsoln=Jsoln2, ssoln=ssoln2)
+
+    x_t, tdep_spec = fluence(p.sigma, p, Jsoln=Jsoln, ssoln=ssoln)
+    x_s, steady_state = fluence(p.sigma, p)
+    x_d, dijkstra = fluence(p.sigma, p, dijkstra=True)
 
 
     for n in range(1, p.nmax):
         fig, ax = plt.subplots(1, 1)
-        ax.plot(x_t, np.abs(np.sum(tdep_spec[:n], axis=0)), 'r-', marker='o', ms=1, alpha=0.7, label=r'No extrapolation, all $m < 20$'.format(n))
-        ax.plot(x_t2, np.abs(np.sum(tdep_spec2[:n], axis=0)), 'm--', marker='^', ms=1, alpha=0.7, label=r'Extrapolation, $m < 20$'.format(n))
+        ax.plot(x_t2, 2*np.abs(np.sum(tdep_spec2[:n], axis=0)), 'm--', marker='^', ms=1, alpha=0.7, label=r'$2 \times$ Old code, $m < 20$'.format(n))
         ax.plot(x_s, np.abs(np.sum(steady_state[:n], axis=0)), '-', marker='s', ms=1, alpha=0.7, label='steady state'.format(n))
-        ax.plot(x_d, np.abs(dijkstra[0]), '-', marker='s', ms=1, alpha=0.7, label='dijkstra'.format(n))
+        ax.plot(x_d, np.abs(dijkstra[0]), '-', marker='s', ms=1, alpha=0.7, label=r'dijkstra'.format(n))
+        ax.plot(x_t, np.abs(np.sum(tdep_spec[:n], axis=0)), 'r-', marker='o', ms=1, alpha=0.7, label=r'New code, all $m < 100$'.format(n))
         plt.yscale('log')
         plt.ylim(1e-16, 1e-12)
         plt.xlim(0, 30)
@@ -126,8 +111,8 @@ if __name__ == '__main__':
         plt.xlabel('x')
         plt.legend()
         plt.tight_layout()
-        plt.show()
-        #plt.savefig('timedep_v_steadystate_n{}.pdf'.format(n))
+        #plt.show()
+        plt.savefig('timedep_v_steadystate_n{}.pdf'.format(n))
 
     '''
     import matplotlib.pylab as pl
