@@ -12,20 +12,36 @@ import pdb
 # [X] Rewrite sol to use interpolants on master sigma grid
 # [X] Speed improvements to sweep routine
 # [X] Add int J dsigma as a more accurate normalization
-# [ ] Change sweep step based on dispersion relation
+# [X] Change sweep step based on dispersion relation
 # [ ] Insert zero at line center for Jsoln?
-# [ ] rtol and atol convergence
 
 fc = fundconst()
 la = lymanalpha()
 
-
-
-
-# Differential equation for solve_ivp
-
-
 def func(sigma, y, n, s, p):
+    '''
+    Differential equation for solve_ivp.
+
+    Parameters
+    ----------
+    sigma : float
+        Independent variable.
+    y : array
+        Array containing dependent variables J, dJ, and intJdsigma
+    n : int
+        Additional argument for calculating solution scale. Spatial eigenmode.
+    s : float
+        Sweep variable; imaginary frequency. Negative for damped, real 
+        solutions.
+    p : `Parameters` object
+        Contains physical parameters for the problem.
+
+    Returns
+    -------
+    dydsigma : array
+        The derivative of the dependent variables with respect to the 
+        independent variable.
+    '''
     J = y[0]
     dJ = y[1]
     phi = line_profile(sigma, p)
@@ -42,7 +58,33 @@ def func(sigma, y, n, s, p):
 
 def integrate(sigma_bounds, y_start, n, s, p):
     '''
-    Returns interpolants which can be used to evaluate the function at any sigma
+    Integrates the solution over a given range of sigma, given starting 
+    conditions, mode number, and imaginary frequency.
+
+    Parameters
+    ----------
+    sigma_bounds : tuple
+        The lower and upper bounds of the integration range over sigma.
+        If provided as (a, b) with a > b, the integrator will work from left
+        to right. If given as (b, a) with a > b, the integrator will work from
+        right to left.
+    y_start : array
+        Starting values for (J, dJ, intJdsigma) at the first value of 
+        sigma_bounds.
+    n : int
+        Spatial eigenmode.
+    s : float
+        Imaginary frequency.
+    p : `Parameters` object
+        Physical parameters of the problem.
+
+    Returns
+    -------
+    sol.y.T : array
+        The transposed solution for the integrator's choice of sigma points.
+    sol.sol : scipy.integrate.OdeSolution
+        Interpolants which can be used to evaluate the function at any 
+        sigma.
     '''
     sol = solve_ivp(func, [sigma_bounds[0], sigma_bounds[1]], y_start, args=(
         n, s, p), rtol=1e-10, atol=1e-10, dense_output=True)
@@ -50,7 +92,27 @@ def integrate(sigma_bounds, y_start, n, s, p):
 
 
 def one_s_value(n, s, p):
-    '''Solve for response given n and s'''
+    '''
+    Solves for the function's response given n and s.
+
+    Parameters
+    ----------
+    n : int
+        Spatial eigenmode.
+    s : float
+        Imaginary frequency.
+    p : `Parameters` object
+        Physical parameters of the problem.
+
+    Returns
+    -------
+    J : array
+        Solution values that have been interpolated onto the master sigma grid.
+    dJ : array
+        Derivative of solution at points on master sigma grid.
+    intJdsigma : float
+        Integral of J with respect to sigma over the entire spectrum.
+    '''
 
     kappan = n * np.pi / p.radius
     wavenum = kappan * p.Delta / p.k
@@ -164,6 +226,28 @@ def solve(s1, s2, s3, n, p):
     '''
     Iterate to find the eigenfrequency sres and eigenvector Jres(sigma)
     given three frequencies s1, s2, s3.
+
+    Parameters
+    ----------
+    s1 : float
+        Imaginary frequency at the leftmost point.
+    s2 : float
+        Imaginary frequency at the middle point.
+    s3 : float
+        Imaginary frequency at the rightmost point.
+    n : int
+        Spatial eigenmode.
+    p : `Parameters` object
+        Physical parameters of the problem.
+
+    Returns
+    -------
+    sres : float
+        Eigenfrequency of the resonance which has been solved for.
+    Jres : array
+        Eigenfunction at the resonance which has been solved for.
+    nres : float
+        Integrated response with respect to sigma.
     '''
 
     if s1 > s3:
@@ -200,8 +284,24 @@ def solve(s1, s2, s3, n, p):
 
 
 def sweep(p, nmin=1, output_dir=None):
-    # loop over n and s=-i\omega. when you find a maximum in the size of the response, call the solve function
-    # tabulate s(n,m) and J(n,m,sigma).
+    '''
+    Sweeps over n and s=-i\omega to find maxima in the size of the response.
+
+    Parameters
+    ----------
+    p : `Parameters` object
+        Physical parameters of the problem.
+    nmin : int, optional  
+        Starting value of n, built in for parallelization purposes. Default
+        value is 1.
+    output_dir : `pathlib.Path` object
+        Base directory within which outputs will be stored. Default is None 
+        (current working directory).
+
+    Returns
+    -------
+    None. sres, Jres, and intJdsigmares output is saved to file.
+    '''
 
     gamma_const = fc.clight / p.radius / \
         (p.a * p.tau0)**0.333 * np.pi**(13.0 / 6.0) / 2.0**0.333
@@ -239,23 +339,6 @@ def sweep(p, nmin=1, output_dir=None):
                 print("\nds={}".format(s_increment))
             s += s_increment
     return
-
-
-def check_s_eq_0(p):
-    n = 1
-    s = -0.00001
-    kappan = n * np.pi / p.radius
-    wavenum = kappan * p.Delta / p.k
-    J, dJ, intJdsigma = one_s_value(n, s, p)
-    plt.figure()
-    plt.plot(p.sigma, J, 'b-')
-    analytic = np.sqrt(6.0 / np.pi) / 16.0 * p.tau0 * n * p.energy / \
-        (p.k * p.radius**3) * np.exp(-wavenum * np.abs(p.sigma))
-    plt.plot(p.sigma, analytic, 'r--')
-    plt.yscale('log')
-    plt.show()
-    plt.close()
-
 
 if __name__ == "__main__":
     energy = 1.e0
