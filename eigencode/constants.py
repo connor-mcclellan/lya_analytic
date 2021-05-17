@@ -2,6 +2,10 @@ import numpy as np
 
 
 class fundconst:
+    '''
+    A class to store fundamental constants.
+    '''
+
     def __init__(self):			# cgs units
         self.cgrav = 6.67429e-8		# gravitational constant
         self.hplanck = 6.62606896e-27		# h = plancks contstant
@@ -19,6 +23,10 @@ class fundconst:
 
 
 class lymanalpha:
+    '''
+    A class to store line parameters of Lyman Alpha.
+    '''
+
     def __init__(self):
         fc = fundconst()
         self.lambda0 = 1215.6701 * fc.angstrom_in_cm  # wavelenth in cm
@@ -27,31 +35,6 @@ class lymanalpha:
         self.nu0 = fc.clight / self.lambda0			# line center frequency in Hz
 
 
-def main():
-
-    T = 1.e4
-    fc = fundconst()
-    la = lymanalpha(T)
-
-    # print
-    # print "fundamental constants:"
-    # print "cgrav=",fc.cgrav
-    # print "hplanck=",fc.hplanck
-    # print "clight=",fc.clight
-    # print "kboltz=",fc.kboltz
-    # print "charge=",fc.charge
-    # print "abohr=",fc.abohr
-    # print "melectron=",fc.melectron
-    # print "mproton=",fc.mproton
-    # print "amu=",fc.amu
-    # print "light strength=",fc.line_strength
-    # print
-    # print "Lyman alpha stuff:"
-    # print "lambda0=",la.lambda0
-    # print "Gamma=",la.Gamma
-    # print "nu0=",la.nu0
-    # print
-
-
 if __name__ == '__main__':
-    main()
+    fc = fundconst()
+    la = lymanalpha()
