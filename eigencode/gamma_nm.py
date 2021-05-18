@@ -32,13 +32,12 @@ def gamma(n, m, p):
 directory = Path('./data/210507_all').resolve()
 Jsoln, ssoln, intJsoln, p = construct_sol(directory, nmax=100, mmax=100)
 
-color = ['c', 'm', 'k', 'r', 'limegreen', 'b']
 for n in range(1, p.nmax+1):
     gamma_analytic = n**(-4/3)*gamma(n, np.arange(1, p.mmax+1), p)
     gamma_sweep = -n**(-4/3)*ssoln[n-1][:p.mmax]
 
-    plt.plot(np.arange(1, p.mmax+1), 1/gamma_analytic, '--', c=color[n-1], alpha=0.5)#, label='$\gamma_{nm}$ analytic')
-    plt.plot(np.arange(1, p.mmax+1), 1/gamma_sweep, '-', c=color[n-1], alpha=0.5)#, label='$\gamma$ sweep')
+    plt.plot(np.arange(1, p.mmax+1), 1/gamma_analytic, '--', alpha=0.5)#, label='$\gamma_{nm}$ analytic')
+    plt.plot(np.arange(1, p.mmax+1), 1/gamma_sweep, '-', alpha=0.5)#, label='$\gamma$ sweep')
 #plt.title('n={}'.format(n))
 plt.ylabel('$n^{4/3}t_{nm}(s)$')
 plt.xlabel('m')
