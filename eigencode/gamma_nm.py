@@ -29,8 +29,8 @@ def gamma(n, m, p):
 #Jsoln = array[13]
 #p = Parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax,mmax)
 
-directory = Path('./data/210507-1342').resolve()
-Jsoln, ssoln, intJsoln, p = construct_sol(directory, nmax=5, mmax=100)
+directory = Path('./data/210507_all').resolve()
+Jsoln, ssoln, intJsoln, p = construct_sol(directory, nmax=100, mmax=100)
 
 color = ['c', 'm', 'k', 'r', 'limegreen', 'b']
 for n in range(1, p.nmax+1):
