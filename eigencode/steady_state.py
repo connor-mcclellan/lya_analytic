@@ -24,9 +24,9 @@ def fluence(sigma, p, Jsoln=None, ssoln=None, dijkstra=False):
     '''
     Calculates the fluence or luminosity by spatial eigenmode.
     '''
-    xuniform, sigma_to_x = generate_xuniform(sigma, p)
-    sigma_xuniform = xuniform**3 * p.c1
-    phi_xuniform = line_profile(sigma_xuniform, p)
+    #xuniform, sigma_to_x = generate_xuniform(sigma, p)
+    #sigma_xuniform = xuniform**3 * p.c1
+    #phi_xuniform = line_profile(sigma_xuniform, p)
 
     spec = np.zeros((p.nmax, np.shape(sigma)[0]))
     #spec_xuniform = np.zeros((p.nmax, np.shape(xuniform)[0]))
@@ -36,14 +36,11 @@ def fluence(sigma, p, Jsoln=None, ssoln=None, dijkstra=False):
         # STEADY STATE SOLUTION
         for n in range(1, p.nmax+1):
 
-#            spec[n-1:] =  (
             spec[n-1] = (                   ## FACTOR OF 2???
                         -np.sqrt(6) * np.pi / 3. / p.k / p.Delta / phi
                         * p.energy / p.radius * n * (-1)**n 
                         * np.exp(-n * np.pi * p.Delta / p.k / p.radius * np.abs(sigma))
                         )
-            #spec_interp = CubicSpline(sigma_to_x, spec[n-1] * phi) # Interpolate the SUM instead, not here for each mode
-            #spec_xuniform[n-1] = spec_interp(xuniform) / phi_xuniform
 
     elif Jsoln is None and dijkstra is True:
         H0 = (
@@ -62,12 +59,8 @@ def fluence(sigma, p, Jsoln=None, ssoln=None, dijkstra=False):
                              / (3.0 * p.k * p.energy * phi) * (-1)**n
                              * Jsoln[n-1, m-1, :] / ssoln[n-1, m-1]
                              )
-            #spec_interp = interp1d(sigma_to_x, spec[n-1] * phi)
-            #spec_xuniform[n-1] = spec_interp(xuniform) / phi_xuniform
 
-
-    return sigma_to_x, spec#xuniform, spec_xuniform
-#    return sigma, spec
+    return sigma, spec
 
 if __name__ == '__main__':
     directory = Path('./data/210507_all').resolve()
@@ -101,18 +94,18 @@ if __name__ == '__main__':
     for n in range(1, p.nmax):
         fig, ax = plt.subplots(1, 1)
 #        ax.plot(x_t2, 2*np.abs(np.sum(tdep_spec2[:n], axis=0)), 'm--', marker='^', ms=1, alpha=0.7, label=r'$2 \times$ Old code, $m < 20$'.format(n))
-        ax.plot(x_s, np.abs(np.sum(steady_state[:n], axis=0)), '-', marker='s', ms=1, alpha=0.7, label='steady state'.format(n))
-        ax.plot(x_d, np.abs(dijkstra[0]), '-', marker='s', ms=1, alpha=0.7, label=r'dijkstra'.format(n))
+        #ax.plot(x_s, np.abs(np.sum(steady_state[:n], axis=0)), '-', marker='s', ms=1, alpha=0.7, label='steady state'.format(n))
+        #ax.plot(x_d, np.abs(dijkstra[0]), '-', marker='s', ms=1, alpha=0.7, label=r'dijkstra'.format(n))
         ax.plot(x_t, np.abs(np.sum(tdep_spec[:n], axis=0)), 'r-', marker='o', ms=1, alpha=0.7, label=r'New code, all $m < 100$'.format(n))
-        plt.yscale('log')
-        plt.ylim(1e-16, 1e-10)
+        #plt.yscale('log')
+        #plt.ylim(1e-16, 1e-10)
         plt.xlim(0, 30)
         plt.title('abs val of sum to n={}'.format(n))
         plt.xlabel('x')
         plt.legend()
         plt.tight_layout()
-        #plt.show()
-        plt.savefig('timedep_v_steadystate_n{:03d}.pdf'.format(n))
+        plt.show()
+        #plt.savefig('timedep_v_steadystate_n{:03d}.pdf'.format(n))
         plt.close()
 
     '''

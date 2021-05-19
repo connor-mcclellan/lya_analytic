@@ -258,7 +258,7 @@ def solve(s1, s2, s3, n, p):
     J3, dJ3, n3 = one_s_value(n, s3, p)
 
     err = 1.e20
-    while err > 1.e-3:
+    while err > 1.e-3: ## This line may be obsolete after the refinement change
         ratio1 = (n2 - n1) / (n2 - n3)
         ratio2 = ratio1 * (s3 - s2) / (s1 - s2)
         sguess = (s1 * ratio2 - s3) / (ratio2 - 1.0)
