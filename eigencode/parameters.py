@@ -1,5 +1,6 @@
 from constants import fundconst, lymanalpha
 import numpy as np
+from util import make_sigma_grids
 
 fc = fundconst()
 la = lymanalpha()
