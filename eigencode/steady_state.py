@@ -60,52 +60,35 @@ def fluence(sigma, p, Jsoln=None, ssoln=None, dijkstra=False):
                              * Jsoln[n-1, m-1, :] / ssoln[n-1, m-1]
                              )
 
-    return sigma, spec
+    return np.cbrt(sigma/p.c1), spec
 
 if __name__ == '__main__':
+    directory = Path('./data/210519-1213_integrator_precision').resolve()
+    Jsoln, ssoln, intJsoln, p = construct_sol(directory, nmax=8, mmax=100)
+
     directory = Path('./data/210507_all').resolve()
-    Jsoln, ssoln, intJsoln, p = construct_sol(directory, nmax=100, mmax=100)
+    Jsoln2, ssoln2, intJsoln2, p2 = construct_sol(directory, nmax=8, mmax=100)
 
-#    filename2 = './data/old/eigenmode_data_xinit0_tau1e7_n6_m20.npy'
-#    array2 = np.load(filename2, allow_pickle=True, fix_imports=True, )
-#    energy2 = array2[0]
-#    temp2 = array2[1]
-#    tau02 = array2[2]
-#    radius2 = array2[3]
-#    alpha_abs2 = array2[4]
-#    prob_dest2 = array2[5]
-#    xsource2 = array2[6]
-#    nmax2 = array2[7]
-#    mmax2 = array2[8]
-#    nsigma2 = array2[9]
-#    tdiff2 = array2[10]
-#    sigma2 = array2[11]
-#    ssoln2 = array2[12]
-#    Jsoln2 = array2[13]
-#    p2 = Parameters(temp2,tau02,radius2,energy2,xsource2,alpha_abs2,prob_dest2,nsigma2,nmax2,mmax2)
-
-#    x_t2, tdep_spec2 = fluence(sigma2, p2, Jsoln=Jsoln2, ssoln=ssoln2)
-
+    x_t2, tdep_spec2 = fluence(p2.sigma, p2, Jsoln=Jsoln2, ssoln=ssoln2)
     x_t, tdep_spec = fluence(p.sigma, p, Jsoln=Jsoln, ssoln=ssoln)
     x_s, steady_state = fluence(p.sigma, p)
     x_d, dijkstra = fluence(p.sigma, p, dijkstra=True)
 
-
     for n in range(1, p.nmax):
         fig, ax = plt.subplots(1, 1)
-#        ax.plot(x_t2, 2*np.abs(np.sum(tdep_spec2[:n], axis=0)), 'm--', marker='^', ms=1, alpha=0.7, label=r'$2 \times$ Old code, $m < 20$'.format(n))
-        #ax.plot(x_s, np.abs(np.sum(steady_state[:n], axis=0)), '-', marker='s', ms=1, alpha=0.7, label='steady state'.format(n))
-        #ax.plot(x_d, np.abs(dijkstra[0]), '-', marker='s', ms=1, alpha=0.7, label=r'dijkstra'.format(n))
-        ax.plot(x_t, np.abs(np.sum(tdep_spec[:n], axis=0)), 'r-', marker='o', ms=1, alpha=0.7, label=r'New code, all $m < 100$'.format(n))
-        #plt.yscale('log')
-        #plt.ylim(1e-16, 1e-10)
+        ax.plot(x_s, np.abs(np.sum(steady_state[:n], axis=0)), '-', marker='s', ms=1, alpha=0.7, label='steady state'.format(n))
+        ax.plot(x_d, np.abs(dijkstra[0]), '-', marker='s', ms=1, alpha=0.7, label=r'dijkstra'.format(n))
+        ax.plot(x_t, np.abs(np.sum(tdep_spec[:n], axis=0)), 'r-', marker='o', ms=1, alpha=0.7, label=r'High integrator precision, $n < 8$, $m < 100$'.format(n))
+        ax.plot(x_t2, np.abs(np.sum(tdep_spec2[:n], axis=0)), 'm--', marker='^', ms=1, alpha=0.7, label=r'Regular, $n < 8$, $m < 100$'.format(n))
+        plt.yscale('log')
+        plt.ylim(1e-16, 1e-10)
         plt.xlim(0, 30)
         plt.title('abs val of sum to n={}'.format(n))
         plt.xlabel('x')
         plt.legend()
         plt.tight_layout()
-        plt.show()
-        #plt.savefig('timedep_v_steadystate_n{:03d}.pdf'.format(n))
+        #plt.show()
+        plt.savefig('timedep_v_steadystate_n{:03d}.pdf'.format(n))
         plt.close()
 
     '''

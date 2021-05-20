@@ -280,6 +280,12 @@ def solve(s1, s2, s3, n, p):
     sres = s2
     Jres = (J3 - J1) * (s3 - sres) * (s1 - sres) / (s1 - s3)
     nres = (n3 - n1) * (s3 - sres) * (s1 - sres) / (s1 - s3)
+
+
+#    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
+#    ax1.plot(np.cbrt(p.sigma/p.c1), Jres, lw=0.5, alpha=0.75)
+#    ax2.plot(np.cbrt(p.sigma/p.c1), Jres, lw=0.5, alpha=0.75)
+
     return sres, Jres, nres
 
 
@@ -348,8 +354,8 @@ if __name__ == "__main__":
     alpha_abs = 0.0
     prob_dest = 0.0
     xsource = 0.0
-    nmin = 71
-    nmax = 80
+    nmin = 1
+    nmax = 20
     mmax = 100
     nsigma = 1024
 
