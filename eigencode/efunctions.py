@@ -91,7 +91,7 @@ def integrate(sigma_bounds, y_start, n, s, p):
     return sol.y.T, sol.sol
 
 
-def one_s_value(n, s, p):
+def one_s_value(n, s, p, plot=False):
     '''
     Solves for the function's response given n and s.
 
@@ -124,10 +124,10 @@ def one_s_value(n, s, p):
     J = 1.0
     dJ = wavenum * J
     y_start = np.array((J, dJ, 0.0))
-    sol, interp_left = integrate(left, y_start, n, s, p)
-    Jleft = sol[:, 0]
-    dJleft = sol[:, 1]
-    intJdsigmaleft = sol[:, 2]
+    soll, interp_left = integrate(left, y_start, n, s, p)
+    Jleft = soll[:, 0]
+    dJleft = soll[:, 1]
+    intJdsigmaleft = soll[:, 2]
     A = Jleft[-1]    # Set matrix coefficient equal to Jleft's rightmost value
     B = dJleft[-1]
     left_P = intJdsigmaleft[-1]
@@ -136,10 +136,10 @@ def one_s_value(n, s, p):
     J = 1.0
     dJ = -wavenum * J
     y_start = np.array((J, dJ, 0.0))
-    sol, interp_right = integrate(right[::-1], y_start, n, s, p)
-    Jright = sol[:, 0]
-    dJright = sol[:, 1]
-    intJdsigmaright = sol[:, 2]
+    solr, interp_right = integrate(right[::-1], y_start, n, s, p)
+    Jright = solr[:, 0]
+    dJright = solr[:, 1]
+    intJdsigmaright = solr[:, 2]
     C = Jright[-1]   # Set matrix coefficient equal to Jright's leftmost value
     D = dJright[-1]
     right_P = intJdsigmaright[-1]
@@ -155,10 +155,10 @@ def one_s_value(n, s, p):
         y_start = np.array((J, dJ, left_P))
 
         # Find solution in middle region
-        sol, interp_middle = integrate(middle, y_start, n, s, p)
-        Jmiddle = sol[:, 0]
-        dJmiddle = sol[:, 1]
-        intJdsigmamiddle = sol[:, 2]
+        solm, interp_middle = integrate(middle, y_start, n, s, p)
+        Jmiddle = solm[:, 0]
+        dJmiddle = solm[:, 1]
+        intJdsigmamiddle = solm[:, 2]
 
         # Set coefficients of matrix equation at the source
         A = Jmiddle[-1]    # Overwrite previous matrix coefficients
@@ -219,6 +219,19 @@ def one_s_value(n, s, p):
         J[inds], dJ[inds], _ = interps[i](p.sigma[mask]) * scales[i]
     intJdsigma = left_P * scale_left - right_P * scale_right
 
+    if plot:
+        sigmas = np.concatenate([interp_left.ts, interp_right.ts[::-1]])
+        Js = np.concatenate([soll[:, 0]*scale_left, solr[:, 0][::-1]*scale_right])
+        fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
+        ax1.plot(np.cbrt(sigmas/p.c1), Js, marker='+', ms=3, alpha=0.5)
+        ax2.plot(np.cbrt(sigmas/p.c1), np.abs(Js), marker='+', ms=3, alpha=0.5)
+        ax2.set_xlabel('x')
+        ax2.set_yscale('log')
+        ax1.set_ylabel('J(x)')
+        ax2.set_ylabel('|J(x)|')
+        plt.suptitle('n={}, s={:.4f}'.format(n, s))
+        plt.savefig('Jres_n={}_s={:08.3f}.pdf'.format(n, s))
+        plt.close()
     return J, dJ, intJdsigma
 
 
@@ -281,7 +294,7 @@ def solve(s1, s2, s3, n, p):
     Jres = (J3 - J1) * (s3 - sres) * (s1 - sres) / (s1 - s3)
     nres = (n3 - n1) * (s3 - sres) * (s1 - sres) / (s1 - s3)
 
-
+    one_s_value(n, sres, p, plot=True)
 #    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
 #    ax1.plot(np.cbrt(p.sigma/p.c1), Jres, lw=0.5, alpha=0.75)
 #    ax2.plot(np.cbrt(p.sigma/p.c1), Jres, lw=0.5, alpha=0.75)
@@ -354,8 +367,8 @@ if __name__ == "__main__":
     alpha_abs = 0.0
     prob_dest = 0.0
     xsource = 0.0
-    nmin = 1
-    nmax = 20
+    nmin = 30
+    nmax = 31
     mmax = 100
     nsigma = 1024
 
