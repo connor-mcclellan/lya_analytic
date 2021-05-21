@@ -294,7 +294,7 @@ def solve(s1, s2, s3, n, p):
     Jres = (J3 - J1) * (s3 - sres) * (s1 - sres) / (s1 - s3)
     nres = (n3 - n1) * (s3 - sres) * (s1 - sres) / (s1 - s3)
 
-    one_s_value(n, sres, p, plot=True)
+    one_s_value(n, sres, p)#, plot=True)
 #    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
 #    ax1.plot(np.cbrt(p.sigma/p.c1), Jres, lw=0.5, alpha=0.75)
 #    ax2.plot(np.cbrt(p.sigma/p.c1), Jres, lw=0.5, alpha=0.75)
@@ -376,7 +376,7 @@ if __name__ == "__main__":
     import pickle
     import argparse
 
-    parser = argparse.Argument_Parser()
+    parser = argparse.ArgumentParser()
     parser.add_argument('--start', type=int)
     parser.add_argument('--end', type=int)
     args = parser.parse_args()
