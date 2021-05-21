@@ -367,15 +367,23 @@ if __name__ == "__main__":
     alpha_abs = 0.0
     prob_dest = 0.0
     xsource = 0.0
-    nmin = 30
-    nmax = 31
-    mmax = 100
+    mmax = 500
     nsigma = 1024
 
     from pathlib import Path
     from datetime import datetime
     import time
     import pickle
+    import argparse
+
+    parser = argparse.Argument_Parser()
+    parser.add_argument('--start', type=int)
+    parser.add_argument('--end', type=int)
+    args = parser.parse_args()
+
+    nmin = args.start
+    nmax = args.end
+
     datestr = datetime.today().strftime('%y%m%d-%H%M')
     output_dir = Path("./data/{}".format(datestr)).resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
