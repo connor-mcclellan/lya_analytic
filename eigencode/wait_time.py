@@ -118,7 +118,7 @@ def wait_time_line(ax, sigma, ssoln, Jsoln, Pnmsoln, times, p, nmax, mmax,alpha=
 
     # TODO; Eq 113 is for a single frequency, not a range of frequencies
 
-    P = np.zeros((len(times), len(sigma)))
+    P = np.zeros(len(times))
 #    denom = np.zeros((len(times), len(sigma)))
 
     for i, t in enumerate(times):
@@ -132,9 +132,18 @@ def wait_time_line(ax, sigma, ssoln, Jsoln, Pnmsoln, times, p, nmax, mmax,alpha=
                 ### EQ 112
                 P[i] += - Pnmsoln[n-1, m-1] * ssoln[n-1, m-1] * np.exp(ssoln[n-1, m-1] * t) * p.Delta
 
+    # Renormalize P(t)
+    try:
+        rightmost_positive = len(P) - [i for i,v in enumerate(P[::-1]) if v<0][0]
+    except:
+        rightmost_positive = 0
+    dt = midpoint_diff(times)
+    norm = np.sum(dt[rightmost_positive:]*P[rightmost_positive:])
+    P = P/norm
+
     if label is None:
         label = '({},{})'.format(nmax, mmax)
-    line = ax.plot(times/tlc,P*tlc,label=label, alpha=1, lw=1)
+    line = ax.plot(times/tlc,P*tlc,label=label, alpha=alpha, lw=1)
 
     return line
 
@@ -198,7 +207,7 @@ def wait_time_freq_dependence(ssoln,Jsoln,Pnmsoln,times,p,bounds,):
         freq_min = bounds[i]
         freq_max = bounds[i+1]
         xbounds = np.around(np.cbrt(np.array([freq_min, freq_max])/p.c1))
-        pdb.set_trace()
+
         # Get probability in between frequency bounds
         mask = np.logical_and(np.abs(p.sigma) >= freq_min, np.abs(p.sigma) <= freq_max)
         try:
@@ -208,7 +217,7 @@ def wait_time_freq_dependence(ssoln,Jsoln,Pnmsoln,times,p,bounds,):
         J_masked = Jsoln[:, :, mask]
 
         # Load Monte Carlo data, plot spectrum scatter points and normalize
-        tdata, xdata, poly = mc_wait_time(mc_dir, bounds=xbounds)
+        tdata, xdata, poly = mc_wait_time(mc_dir)#, bounds=xbounds)
         t, y_t = tdata
         x, y_x = xdata
         ax2.scatter(x, y_x, color='k', s=1)
@@ -224,7 +233,7 @@ def wait_time_freq_dependence(ssoln,Jsoln,Pnmsoln,times,p,bounds,):
         ax2.fill_between(-np.cbrt(np.linspace(freq_min, freq_max)/p.c1), 10*np.max(spec), facecolor=line[-1].get_color(), alpha=0.5)
 
         # Plot wait time scatter points
-        ax1.scatter(t, y, s=1, marker='^', c=line[-1].get_color(), label='MC ${} < |x| < {}$'.format(*xbounds))
+        ax1.scatter(t, y, s=1, marker='^', c='k')#line[-1].get_color(), label='MC ${} < |x| < {}$'.format(*xbounds))
 
     # Add exponential fit lines
 #        exp_fit = np.exp(poly[1]) * np.exp(poly[0]*times)
@@ -271,7 +280,7 @@ if __name__ == "__main__":
 
   #  peak = 60
   #  x_bounds = np.array([0, peak/2, peak, 3*peak/2, 160])
-    x_bounds = np.array([0, 20, 40, 60])
+    x_bounds = np.array([0, 10, 20, 30])
     sigma_bounds = p.c1 * x_bounds**3.
 
     wait_time_freq_dependence(ssoln, Jsoln, Pnmsoln, times, p, sigma_bounds)
