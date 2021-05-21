@@ -77,13 +77,12 @@ def mfluence(sigma, p, Jsoln=None, ssoln=None, dijkstra=False):
 
     if Jsoln is None and dijkstra is False:
         # STEADY STATE SOLUTION
-#        for n in range(1, p.nmax+1):
-        n=10
-        spec[0] += (                   ## FACTOR OF 2???
-                    -np.sqrt(6) * np.pi / 3. / p.k / p.Delta / phi
-                    * p.energy / p.radius * n * (-1)**n 
-                    * np.exp(-n * np.pi * p.Delta / p.k / p.radius * np.abs(sigma))
-                    )
+        for n in range(1, p.nmax+1):
+            spec[0] += (                   ## FACTOR OF 2???
+                        -np.sqrt(6) * np.pi / 3. / p.k / p.Delta / phi
+                        * p.energy / p.radius * n * (-1)**n 
+                        * np.exp(-n * np.pi * p.Delta / p.k / p.radius * np.abs(sigma))
+                        )
 
     elif Jsoln is None and dijkstra is True:
         H0 = (
@@ -95,28 +94,27 @@ def mfluence(sigma, p, Jsoln=None, ssoln=None, dijkstra=False):
 
     else:
         # TIME DEPENDENT SOLUTION
-        #for n in range(1, p.nmax+1):
-        n=10
-        for m in range(1, p.mmax+1):
-            spec[m-1] += (
-                         16. * np.pi**2 * p.radius
-                         / (3.0 * p.k * p.energy * phi) * (-1)**n
-                         * Jsoln[n-1, m-1, :] / ssoln[n-1, m-1]
-                         )
+        for n in range(1, p.nmax+1):
+          for m in range(1, p.mmax+1):
+              spec[m-1] += (
+                           16. * np.pi**2 * p.radius
+                           / (3.0 * p.k * p.energy * phi) * (-1)**n
+                           * Jsoln[n-1, m-1, :] / ssoln[n-1, m-1]
+                           )
 
     return np.cbrt(sigma/p.c1), spec
 
 
 
 if __name__ == '__main__':
-    directory = Path('./data/210521-1400_finer_sigma').resolve()
-    Jsoln, ssoln, intJsoln, p = construct_sol(directory, nmax=2, mmax=70)
+    directory = Path('./data/210521-1642_dop853').resolve()
+    Jsoln, ssoln, intJsoln, p = construct_sol(directory, nmax=5, mmax=100)
 
     directory = Path('./data/210507_all').resolve()
-    Jsoln2, ssoln2, intJsoln2, p2 = construct_sol(directory, nmax=10, mmax=70)
+    Jsoln2, ssoln2, intJsoln2, p2 = construct_sol(directory, nmax=5, mmax=100)
 
     x_t2, tdep_spec2 = mfluence(p2.sigma, p2, Jsoln=Jsoln2, ssoln=ssoln2)
-    #x_t, tdep_spec = mfluence(p.sigma, p, Jsoln=Jsoln, ssoln=ssoln)
+    x_t, tdep_spec = mfluence(p.sigma, p, Jsoln=Jsoln, ssoln=ssoln)
     x_s, steady_state = mfluence(p.sigma, p)
     x_d, dijkstra = mfluence(p.sigma, p, dijkstra=True)
 
@@ -125,8 +123,8 @@ if __name__ == '__main__':
         fig, ax = plt.subplots(1, 1)
         ax.plot(x_s, np.abs(np.sum(steady_state[:n], axis=0)), '-', marker='s', ms=1, alpha=0.7, label='steady state'.format(n))
         ax.plot(x_d, np.abs(dijkstra[0]), '-', marker='s', ms=1, alpha=0.7, label=r'dijkstra'.format(n))
-        ax.plot(x_t, np.abs(np.sum(tdep_spec[:n], axis=0)), 'r-', marker='o', ms=1, alpha=0.7, label=r'2x wider integration bounds, $n < 19$, $m < 100$'.format(n))
-        ax.plot(x_t2, np.abs(np.sum(tdep_spec2[:n], axis=0)), 'm--', marker='^', ms=1, alpha=0.7, label=r'Regular, $n < 19$, $m < 100$'.format(n))
+        ax.plot(x_t, np.abs(np.sum(tdep_spec[:n], axis=0)), 'r-', marker='o', ms=1, alpha=0.7, label=r'LSODA, $n < 5$, $m < 100$'.format(n))
+        ax.plot(x_t2, np.abs(np.sum(tdep_spec2[:n], axis=0)), 'm--', marker='^', ms=1, alpha=0.7, label=r'RK45, $n < 5$, $m < 100$'.format(n))
         plt.yscale('log')
         plt.ylim(1e-16, 1e-10)
         plt.xlim(0, 30)
@@ -134,17 +132,17 @@ if __name__ == '__main__':
         plt.xlabel('x')
         plt.legend()
         plt.tight_layout()
-        #plt.show()
-        plt.savefig('timedep_v_steadystate_n{:03d}.pdf'.format(n))
+        plt.show()
+        #plt.savefig('timedep_v_steadystate_n{:03d}.pdf'.format(n))
         plt.close()
     '''
 
     for m in range(1, p.mmax):
         fig, ax = plt.subplots(1, 1)
-        ax.plot(x_s, np.abs(np.sum(steady_state[:2], axis=0)), '-', marker='s', ms=1, alpha=0.7, label='steady state')
+        ax.plot(x_s, np.abs(np.sum(steady_state[:5], axis=0)), '-', marker='s', ms=1, alpha=0.7, label='steady state')
         ax.plot(x_d, np.abs(dijkstra[0]), '-', marker='s', ms=1, alpha=0.7, label=r'dijkstra')
-        #ax.plot(x_t, np.abs(np.sum(tdep_spec[:m], axis=0)), 'r-', marker='o', ms=1, alpha=0.7, label=r'2x finer sigma, $n < 2$, $m < 70$')
-        ax.plot(x_t2, np.abs(np.sum(tdep_spec2[:m], axis=0)), 'm--', marker='^', ms=1, alpha=0.7, label=r'Regular, $n < 2$, $m < 70$')
+        ax.plot(x_t, np.abs(np.sum(tdep_spec[:m], axis=0)), 'r-', marker='o', ms=1, alpha=0.7, label=r'LSODA, $n < 5$, $m < 100$')
+        ax.plot(x_t2, np.abs(np.sum(tdep_spec2[:m], axis=0)), 'm--', marker='^', ms=1, alpha=0.7, label=r'RK45, $n < 5$, $m < 100$')
         plt.yscale('log')
         plt.ylim(1e-16, 1e-10)
         plt.xlim(0, 30)
