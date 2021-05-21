@@ -21,15 +21,27 @@ def midpoint_diff(t):
   dt = np.append(dt, midpoints[-1] - midpoints[-2])
   return dt
 
-def get_Pnm(ssoln,sigma,Jsoln,p):
-  dsigma = midpoint_diff(sigma)
-  Pnmsoln=np.zeros((p.nmax,p.mmax))
-  for n in range(1,p.nmax+1):
-    for i in range(1,p.mmax+1): ### EQ 110 --- don't make as a function of frequency. Coefficients of n and m already integrated over sigma
-      Pnmsoln[n-1,i-1] = np.sqrt(1.5) * 16.0*np.pi**2 * p.radius * p.Delta\
-                         / (3.0 * p.k * p.energy) * (-1.0)**(n) / ssoln[n-1, i-1]\
-                         * np.sum(Jsoln[n-1,i-1,:] * dsigma)
+def get_Pnm(ssoln,sigma,Jsoln,p,intJdsigma=None):
 
+  if intJdsigma is None:
+    dsigma = midpoint_diff(sigma)
+    Pnmsoln=np.zeros((p.nmax,p.mmax,p.nsigma))
+    for k in range(p.nsigma):
+      for n in range(1,p.nmax+1):
+        for i in range(1,p.mmax+1):
+          Pnmsoln[n-1,i-1,k] = np.sqrt(1.5) * 16.0*np.pi**2 * p.radius * p.Delta\
+                             / (3.0 * p.k * p.energy) * (-1.0)**(n) / ssoln[n-1, i-1]\
+                             * Jsoln[n-1,i-1,k] * dsigma[k]
+  else:
+    print('Using intJdsigma...')
+    dsigma = midpoint_diff(sigma)
+    Pnmsoln=np.zeros((p.nmax,p.mmax))
+    for n in range(1,p.nmax+1):
+      for i in range(1,p.mmax+1):
+        Pnmsoln[n-1,i-1] = np.sqrt(1.5) * 16.0*np.pi**2 * p.radius * p.Delta\
+                           / (3.0 * p.k * p.energy) * (-1.0)**(n) / ssoln[n-1, i-1]\
+                           * intJdsigma[n-1,i-1]
+  '''
   filename = "./data/damping_times.data"
   fname=open(filename,'w')
   fname.write('%5s\t%5s\t%10s\t%10s\t%10s\t%10s\t%10s\n' % ('n','m','s(Hz)','t(s)','Pnm','-Pnm/snm','cumul prob') )
@@ -70,7 +82,7 @@ def get_Pnm(ssoln,sigma,Jsoln,p):
   plt.legend(loc='best')
   plt.savefig('./plots/Pnm_over_ssm_vs_m.pdf')
   plt.close()
-
+  '''
   return Pnmsoln
 
 
@@ -122,8 +134,8 @@ def wait_time_line(ax, sigma, ssoln, Jsoln, Pnmsoln, times, p, nmax, mmax,alpha=
 
     if label is None:
         label = '({},{})'.format(nmax, mmax)
-    line = ax.plot(times/tlc,P*tlc,label=label, alpha=alpha, lw=1, c='k')
-    
+    line = ax.plot(times/tlc,P*tlc,label=label, alpha=1, lw=1)
+
     return line
 
 
@@ -181,40 +193,43 @@ def wait_time_freq_dependence(ssoln,Jsoln,Pnmsoln,times,p,bounds,):
 
     mc_dir = '/home/connor/Documents/lya_analytic/data/1m_tau0_10000000.0_xinit_0.0_temp_10000.0_probabs_0.0/'
 
-    #for i in range(len(bounds)-1):
+    for i in range(len(bounds)-1):
 
-    freq_min = bounds[0]
-    freq_max = bounds[1]
-    xbounds = np.around(np.cbrt(np.array([freq_min, freq_max])/p.c1))
-
+        freq_min = bounds[i]
+        freq_max = bounds[i+1]
+        xbounds = np.around(np.cbrt(np.array([freq_min, freq_max])/p.c1))
+        pdb.set_trace()
         # Get probability in between frequency bounds
-        #mask = np.logical_and(np.abs(p.sigma) >= freq_min, np.abs(p.sigma) <= freq_max)
-    Pnm_masked = Pnmsoln#[:, :]
-    J_masked = Jsoln#[:, :, mask]
+        mask = np.logical_and(np.abs(p.sigma) >= freq_min, np.abs(p.sigma) <= freq_max)
+        try:
+            Pnm_masked = np.sum(Pnmsoln[:, :, mask], axis=2)
+        except:
+            Pnm_masked = Pnmsoln
+        J_masked = Jsoln[:, :, mask]
 
-    # Load Monte Carlo data, plot spectrum scatter points and normalize
-    tdata, xdata, poly = mc_wait_time(mc_dir)#, bounds=xbounds)
-    t, y_t = tdata
-    x, y_x = xdata
-    ax2.scatter(x, y_x, color='k', s=1)
-    dt = midpoint_diff(t)
-    y = y_t/np.sum(y_t*dt)
+        # Load Monte Carlo data, plot spectrum scatter points and normalize
+        tdata, xdata, poly = mc_wait_time(mc_dir, bounds=xbounds)
+        t, y_t = tdata
+        x, y_x = xdata
+        ax2.scatter(x, y_x, color='k', s=1)
+        dt = midpoint_diff(t)
+        y = y_t/np.sum(y_t*dt)
 
-    # Plot analytic escape time distribution
-    label = 'Analytic $n_{{max}}={}$ $m_{{max}}={}$'.format(p.nmax,p.mmax)
-    line = wait_time_line(ax1, p.sigma, ssoln, J_masked, Pnm_masked, times, p, nmax=p.nmax, mmax=p.mmax, alpha=0.5, label=label)
+        # Plot analytic escape time distribution
+        label = 'Analytic $n_{{max}}={}$ $m_{{max}}={}$'.format(p.nmax,p.mmax)
+        line = wait_time_line(ax1, p.sigma, ssoln, J_masked, Pnm_masked, times, p, nmax=p.nmax, mmax=p.mmax, alpha=0.5, label=label)
 
-    # Shade spectrum inbetween frequency bounds
-    #ax2.fill_between(np.cbrt(np.linspace(freq_min, freq_max)/p.c1), 10*np.max(spec), facecolor=line[-1].get_color(), alpha=0.5, label="${} < |x| < {}$".format(*xbounds))
-    #ax2.fill_between(-np.cbrt(np.linspace(freq_min, freq_max)/p.c1), 10*np.max(spec), facecolor=line[-1].get_color(), alpha=0.5)
+        # Shade spectrum inbetween frequency bounds
+        ax2.fill_between(np.cbrt(np.linspace(freq_min, freq_max)/p.c1), 10*np.max(spec), facecolor=line[-1].get_color(), alpha=0.5, label="${} < |x| < {}$".format(*xbounds))
+        ax2.fill_between(-np.cbrt(np.linspace(freq_min, freq_max)/p.c1), 10*np.max(spec), facecolor=line[-1].get_color(), alpha=0.5)
 
-    # Plot wait time scatter points
-    ax1.scatter(t, y, s=1, marker='^', label='MC', c='k')# (${} < |x| < {}$)'.format(*xbounds))
+        # Plot wait time scatter points
+        ax1.scatter(t, y, s=1, marker='^', c=line[-1].get_color(), label='MC ${} < |x| < {}$'.format(*xbounds))
 
     # Add exponential fit lines
 #        exp_fit = np.exp(poly[1]) * np.exp(poly[0]*times)
 #        ax1.plot(times, exp_fit, '--', c=line[-1].get_color(), alpha=0.75, lw=1, label='${:.1f} e^{{-t/{:.1f}}}$'.format(np.exp(poly[1]), -1/poly[0]))
-    print("mc exp fit: ", np.exp(poly[1]), -1/poly[0])
+#    print("mc exp fit: ", np.exp(poly[1]), -1/poly[0])
 
 
     # Set limits and labels of spectrum plot
@@ -247,8 +262,8 @@ def wait_time_freq_dependence(ssoln,Jsoln,Pnmsoln,times,p,bounds,):
 if __name__ == "__main__":
     from pathlib import Path
 
-    directory = Path('./data/210519-1213_integrator_precision').resolve()
-    Jsoln, ssoln, intJsoln, p = construct_sol(directory, 8, 100)
+    directory = Path('./data/210507_all').resolve()
+    Jsoln, ssoln, intJsoln, p = construct_sol(directory, 50, 100)
 
     Pnmsoln = get_Pnm(ssoln,p.sigma,Jsoln,p)
     times = p.radius/fc.clight * np.arange(0.1,140.0,0.1)
@@ -256,7 +271,7 @@ if __name__ == "__main__":
 
   #  peak = 60
   #  x_bounds = np.array([0, peak/2, peak, 3*peak/2, 160])
-    x_bounds = np.array([0, 60])
+    x_bounds = np.array([0, 20, 40, 60])
     sigma_bounds = p.c1 * x_bounds**3.
 
     wait_time_freq_dependence(ssoln, Jsoln, Pnmsoln, times, p, sigma_bounds)

@@ -26,14 +26,12 @@ def mc_wait_time(mc_dir, bounds=None):
 
     mask = np.logical_and(np.abs(x)>freq_min, np.abs(x)<freq_max)
     t = time[mask]
-    try:
-        n, bins, _ = plt.hist(t, bins=np.logspace(np.log10(min(t)), np.log10(max(t)), nbins), density=True)
-        bincenters = 0.5*(bins[1:] + bins[:-1])
-        plt.close()
-        poly = fit_mc_exp(n, bincenters)
-        return (bincenters, n), (bincenters_x, n_x), poly 
-    except:
-        pass
+
+    n, bins, _ = plt.hist(t, bins=np.logspace(np.log10(min(t)), np.log10(max(t)), nbins), density=True)
+    bincenters = 0.5*(bins[1:] + bins[:-1])
+    plt.close()
+    poly = fit_mc_exp(n, bincenters)
+    return (bincenters, n), (bincenters_x, n_x), poly 
 
 if __name__=='__main__':
     pass
