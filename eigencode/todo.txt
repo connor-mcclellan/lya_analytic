@@ -1,0 +1,47 @@
+[X] run to very high m --- 500 or so for n=20
+[ ] find bug - interpolation is bad?
+[X] Use intJdsigma to calculate escape time distribution, use full frequency range
+[X] separate code that does integrals over specific frequencies (0-10, 10-20, 20 and above), compare with monte carlo
+[X] do same thing but integrate over all frequencies to compare to intJdsigma. Find the differences
+[ ] Don't renormalize frequency bins --- show absolute counts
+[ ] Write code to start at m=501
+    [ ] Confirm that starting at m=101 matches previous run's eigenvalues
+[ ] Go to m=1000, get pretty plot for paper
+
+
+Demonstrate that this numerical method works in the paper.
+
+For the wait time distribution, we have to have a parameterized solution in terms of a, tau0, etc.
+Figure out the lowest order eigemnode decay time and normalization out front. Have a fitting formula.
+There are other parameters that we have to make sure we understand. If we do different rns with
+different tau0 or different a, does it still look good? 
+
+Shape of the formula might change at different parameter values. We need a fitting formula that 
+represents them well.
+
+Need enough runs at different values of tau0 to be able to prove that our fitting function works well.
+
+
+Don't want to be doing a bunch of week=long calculations for m and n. The wait time distribution 
+converges for a much smaller value of m and n than for the fluence --- FIND THOSE VALUES. Show 
+convergence.
+
+MC acceleration: are we going to use the same wait time distribution for all photon frequencies, or
+are we going to break it up by frequency?
+
+
+Need to model what frequency of photon comes out of a grid cell.
+
+
+parameters: 
+source frequency in doppler widths
+line center optical depth of sphere, 
+a (ratio of doppler to natural damping, function of temperature)
+
+Takes ~10 minutes for one calculation, so doing a million would be computationally
+intensive.
+
+How do we want to be doing the sampling for escape time and frequency? Good place to
+talk about it in this paper.
+
+Calculating escape time distribution using 
