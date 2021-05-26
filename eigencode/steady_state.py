@@ -107,24 +107,24 @@ def mfluence(sigma, p, Jsoln=None, ssoln=None, dijkstra=False):
 
 
 if __name__ == '__main__':
-    directory = Path('./data/210521-1642_dop853').resolve()
-    Jsoln, ssoln, intJsoln, p = construct_sol(directory, nmax=5, mmax=100)
+    directory = Path('./data/210521_m500').resolve()
+    Jsoln, ssoln, intJsoln, p = construct_sol(directory, nmax=20, mmax=500)
 
     directory = Path('./data/210507_all').resolve()
-    Jsoln2, ssoln2, intJsoln2, p2 = construct_sol(directory, nmax=5, mmax=100)
+    Jsoln2, ssoln2, intJsoln2, p2 = construct_sol(directory, nmax=20, mmax=100)
 
-    x_t2, tdep_spec2 = mfluence(p2.sigma, p2, Jsoln=Jsoln2, ssoln=ssoln2)
-    x_t, tdep_spec = mfluence(p.sigma, p, Jsoln=Jsoln, ssoln=ssoln)
-    x_s, steady_state = mfluence(p.sigma, p)
-    x_d, dijkstra = mfluence(p.sigma, p, dijkstra=True)
+    x_t2, tdep_spec2 = fluence(p2.sigma, p2, Jsoln=Jsoln2, ssoln=ssoln2)
+    x_t, tdep_spec = fluence(p.sigma, p, Jsoln=Jsoln, ssoln=ssoln)
+    x_s, steady_state = fluence(p.sigma, p)
+    x_d, dijkstra = fluence(p.sigma, p, dijkstra=True)
 
-    '''
+    
     for n in range(1, p.nmax):
         fig, ax = plt.subplots(1, 1)
         ax.plot(x_s, np.abs(np.sum(steady_state[:n], axis=0)), '-', marker='s', ms=1, alpha=0.7, label='steady state'.format(n))
         ax.plot(x_d, np.abs(dijkstra[0]), '-', marker='s', ms=1, alpha=0.7, label=r'dijkstra'.format(n))
-        ax.plot(x_t, np.abs(np.sum(tdep_spec[:n], axis=0)), 'r-', marker='o', ms=1, alpha=0.7, label=r'LSODA, $n < 5$, $m < 100$'.format(n))
-        ax.plot(x_t2, np.abs(np.sum(tdep_spec2[:n], axis=0)), 'm--', marker='^', ms=1, alpha=0.7, label=r'RK45, $n < 5$, $m < 100$'.format(n))
+        ax.plot(x_t, np.abs(np.sum(tdep_spec[:n], axis=0)), 'r-', marker='o', ms=1, alpha=0.7, label=r'$n < 20$, $m < 500$'.format(n))
+        ax.plot(x_t2, np.abs(np.sum(tdep_spec2[:n], axis=0)), 'm--', marker='^', ms=1, alpha=0.7, label=r'$n < 20$, $m < 100$'.format(n))
         plt.yscale('log')
         plt.ylim(1e-16, 1e-10)
         plt.xlim(0, 30)
@@ -156,7 +156,7 @@ if __name__ == '__main__':
 
 
 
-    '''
+    
     import matplotlib.pylab as pl
     fig, ax = plt.subplots(1, 1)
     colors = pl.cm.jet(np.linspace(0,1,p.nmax))
