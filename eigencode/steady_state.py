@@ -125,7 +125,7 @@ if __name__ == '__main__':
         ax.plot(x_d, np.abs(dijkstra[0]), '-', marker='s', ms=1, alpha=0.7, label=r'dijkstra'.format(n))
         ax.plot(x_t, np.abs(np.sum(tdep_spec[:n], axis=0)), 'r-', marker='o', ms=1, alpha=0.7, label=r'$n < 20$, $m < 500$'.format(n))
         ax.plot(x_t2, np.abs(np.sum(tdep_spec2[:n], axis=0)), 'm--', marker='^', ms=1, alpha=0.7, label=r'$n < 20$, $m < 100$'.format(n))
-        plt.yscale('log')
+        #plt.yscale('log')
         plt.ylim(1e-16, 1e-10)
         plt.xlim(0, 30)
         plt.title('abs val of sum to n={}'.format(n))
