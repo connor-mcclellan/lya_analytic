@@ -302,7 +302,7 @@ def solve(s1, s2, s3, n, p):
     return sres, Jres, nres
 
 
-def sweep(p, nmin=1, output_dir=None):
+def sweep(p, nmin=1, s_start=-0.000001, output_dir=None):
     '''
     Sweeps over n and s=-i\omega to find maxima in the size of the response.
 
@@ -313,6 +313,8 @@ def sweep(p, nmin=1, output_dir=None):
     nmin : int, optional  
         Starting value of n, built in for parallelization purposes. Default
         value is 1.
+    s_start : float, optional
+        Starting value of the sweep, build in for parallelization.
     output_dir : `pathlib.Path` object
         Base directory within which outputs will be stored. Default is None 
         (current working directory).
@@ -328,7 +330,7 @@ def sweep(p, nmin=1, output_dir=None):
     for n in range(nmin, p.nmax + 1):
         print("n=", n)
         nsoln = 1
-        s = -0.000001
+        s = s_start
         if nmin == 1:
             s_increment = -0.01
         else:
@@ -367,26 +369,58 @@ if __name__ == "__main__":
     alpha_abs = 0.0
     prob_dest = 0.0
     xsource = 0.0
-    mmax = 500
     nsigma = 1024
 
     from pathlib import Path
     from datetime import datetime
+    from glob import glob
     import time
     import pickle
     import argparse
 
+    # Create and parse command line arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('--start', type=int)
-    parser.add_argument('--end', type=int)
+    parser.add_argument('--nmax', type=int)
+    parser.add_argument('--mmax', type=int)
+    parser.add_argument('--nmin', nargs='?', type=int, default=1)
+    parser.add_argument('--mmin', nargs='?', type=int, default=1)
+    parser.add_argument('-p', '--path', nargs='?', type=str)
     args = parser.parse_args()
 
-    nmin = args.start
-    nmax = args.end
+    nmin = args.nmin
+    nmax = args.nmax
+    mmin = args.mmin
+    mmax = args.mmax
+    path = args.path
 
-    datestr = datetime.today().strftime('%y%m%d-%H%M')
-    output_dir = Path("./data/{}".format(datestr)).resolve()
-    output_dir.mkdir(parents=True, exist_ok=True)
+    ###
+    # Command line call should look like this:
+
+    # python efunctions.py --nmax 20 --mmax 500 -p ./data/sample_run
+
+    # Then, to continue up to m=1000 for all the same n, you would do this:
+
+
+
+    # If no directory is provided, make one using the current date
+    if path is None:
+        datestr = datetime.today().strftime('%y%m%d-%H%M')
+        output_dir = Path("./data/{}".format(datestr)).resolve()
+        output_dir.mkdir(parents=True, exist_ok=True)
+    else:
+        output_dir = Path(path).resolve()
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+    # If continuing a previously calculated solution, start where the sweep
+    # left off
+    if mmin != 1:
+        data_fname = sorted(glob(output_dir/'*.npy'))[-1]
+        data = np.load(data_fname, allow_pickle=True).item()
+        s = data['s']
+    else:
+        s = -0.000001
+
+    # Set up the parameters object and the clock and begin sweeping
     start = time.time()
     p = Parameters(
         temp,
@@ -400,7 +434,7 @@ if __name__ == "__main__":
         nmax,
         mmax)
     pickle.dump(p, open(output_dir / 'parameters.p', 'wb'))
-    sweep(p, nmin=nmin, output_dir=output_dir)
+    sweep(p, nmin=nmin, s_start=s, output_dir=output_dir)
     stop = time.time()
     with open(output_dir / 'time.txt', 'w') as f:
         f.write(str(stop - start))
