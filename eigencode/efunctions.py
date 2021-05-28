@@ -335,7 +335,7 @@ def sweep(p, nmin=1, mmin=1, output_dir=None):
         # Set starting s based on what eigenmode solution number we're starting
         # on. If no previous solution has been calculated, start close to 0.
         if mmin != 1:
-            data_fname = sorted(glob(output_dir/'n{:03d}_*.npy'.format(n)))[-1]
+            data_fname = sorted(glob(str(output_dir/'n{:03d}_*.npy'.format(n))))[-1]
             data = np.load(data_fname, allow_pickle=True).item()
             s = data['s']
         else:
