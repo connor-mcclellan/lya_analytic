@@ -302,7 +302,7 @@ def solve(s1, s2, s3, n, p):
     return sres, Jres, nres
 
 
-def sweep(p, nmin=1, s_start=-0.000001, output_dir=None):
+def sweep(p, nmin=1, mmin=1, output_dir=None):
     '''
     Sweeps over n and s=-i\omega to find maxima in the size of the response.
 
@@ -313,8 +313,9 @@ def sweep(p, nmin=1, s_start=-0.000001, output_dir=None):
     nmin : int, optional  
         Starting value of n, built in for parallelization purposes. Default
         value is 1.
-    s_start : float, optional
-        Starting value of the sweep, build in for parallelization.
+    mmin : int, optional
+        Starting eigenmode number of the sweep, build in for continuing old 
+        runs.
     output_dir : `pathlib.Path` object
         Base directory within which outputs will be stored. Default is None 
         (current working directory).
@@ -329,34 +330,36 @@ def sweep(p, nmin=1, s_start=-0.000001, output_dir=None):
 
     for n in range(nmin, p.nmax + 1):
         print("n=", n)
-        nsoln = 1
-        s = s_start
-        if nmin == 1:
+        nsoln = mmin
+
+        # Set starting s based on what eigenmode solution number we're starting
+        # on. If no previous solution has been calculated, start close to 0.
+        if mmin != 1:
+            data_fname = sorted(glob(output_dir/'n{:03d}_*.npy'.format(n)))[-1]
+            data = np.load(data_fname, allow_pickle=True).item()
+            s = data['s']
+        else:
+            s = -0.000001
+
+        # Set starting sweep increment in s based on the dispersion relation.
+        if n == 1:
             s_increment = -0.01
         else:
             s_increment = -0.25 * gamma_const * \
                 n**(4.0 / 3.0) * 0.667 * (1 + 1.0 / 8.0)**(-1.0 / 3.0)
 
+        # Sweep, check resonance, save outputs
         norm = []
         while nsoln < p.mmax + 1:
-
             J, dJ, intJdsigma = one_s_value(n, s, p)
             norm.append(np.abs(intJdsigma))
             print("nsoln,n,s,response=", nsoln, n, s, norm[-1])
             if len(norm) > 2 and norm[-3] < norm[-2] and norm[-1] < norm[-2]:
-                sres, Jres, intJdsigmares = solve(
-                    s - 2 * s_increment, s - s_increment, s, n, p)
+                sres, Jres, intJdsigmares = solve(s - 2 * s_increment, s - s_increment, s, n, p)
                 out = {"s": sres, "J": Jres, "Jint": intJdsigmares}
-                np.save(
-                    output_dir /
-                    'n{:03d}_m{:03d}.npy'.format(
-                        n,
-                        nsoln),
-                    out)
-
+                np.save(output_dir/'n{:03d}_m{:03d}.npy'.format(n, nsoln), out)
                 nsoln = nsoln + 1
-                s_increment = -0.25 * gamma_const * \
-                    n**(4.0 / 3.0) * 0.667 * (nsoln + 1.0 / 8.0)**(-1.0 / 3.0)
+                s_increment = -0.25 * gamma_const * n**(4.0 / 3.0) * 0.667 * (nsoln + 1.0 / 8.0)**(-1.0 / 3.0)
                 print("\nds={}".format(s_increment))
             s += s_increment
     return
@@ -411,14 +414,6 @@ if __name__ == "__main__":
         output_dir = Path(path).resolve()
         output_dir.mkdir(parents=True, exist_ok=True)
 
-    # If continuing a previously calculated solution, start where the sweep
-    # left off
-    if mmin != 1:
-        data_fname = sorted(glob(output_dir/'*.npy'))[-1]
-        data = np.load(data_fname, allow_pickle=True).item()
-        s = data['s']
-    else:
-        s = -0.000001
 
     # Set up the parameters object and the clock and begin sweeping
     start = time.time()
@@ -434,7 +429,7 @@ if __name__ == "__main__":
         nmax,
         mmax)
     pickle.dump(p, open(output_dir / 'parameters.p', 'wb'))
-    sweep(p, nmin=nmin, s_start=s, output_dir=output_dir)
+    sweep(p, nmin=nmin, mmin=mmin, output_dir=output_dir)
     stop = time.time()
     with open(output_dir / 'time.txt', 'w') as f:
         f.write(str(stop - start))
