@@ -33,11 +33,15 @@ def construct_sol(directory, nmax, mmax):
 
     return Jsoln, ssoln, intJsoln, p
 
-def waittime(Jsoln, ssoln, intJsoln, t, p):
+def get_Pnm(ssoln, intJsoln, p):
     n = np.arange(1, p.nmax+1)
     Pnmsoln = (np.sqrt(1.5) * 16.0*np.pi**2 * p.radius * p.Delta 
               / (3.0 * p.k * p.energy) * (-1.0)**(n) / ssoln.T
               * intJsoln.T).T
+    return Pnmsoln
+
+def waittime(Jsoln, ssoln, intJsoln, t, p):
+    Pnmsoln = get_Pnm(ssoln, intJsoln, p)
     P = np.sum(np.sum(
          - np.expand_dims(Pnmsoln, 2) * np.expand_dims(ssoln, 2)
          * np.exp(np.expand_dims(ssoln, 2) * t) * p.Delta,
