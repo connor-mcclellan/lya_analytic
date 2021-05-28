@@ -302,7 +302,7 @@ def solve(s1, s2, s3, n, p):
     return sres, Jres, nres
 
 
-def sweep(p, nmin=1, mmin=1, output_dir=None):
+def sweep(p, nmin=1, output_dir=None):
     '''
     Sweeps over n and s=-i\omega to find maxima in the size of the response.
 
@@ -313,12 +313,10 @@ def sweep(p, nmin=1, mmin=1, output_dir=None):
     nmin : int, optional  
         Starting value of n, built in for parallelization purposes. Default
         value is 1.
-    mmin : int, optional
-        Starting eigenmode number of the sweep, build in for continuing old 
-        runs.
     output_dir : `pathlib.Path` object
         Base directory within which outputs will be stored. Default is None 
-        (current working directory).
+        (current working directory). If outputs already exist in the output
+        directory, the sweep will pick up from the last eigenvalue found.
 
     Returns
     -------
@@ -334,11 +332,11 @@ def sweep(p, nmin=1, mmin=1, output_dir=None):
 
         # Set starting s based on what eigenmode solution number we're starting
         # on. If no previous solution has been calculated, start close to 0.
-        if mmin != 1:
+        try:
             data_fname = sorted(glob(str(output_dir/'n{:03d}_*.npy'.format(n))))[-1]
             data = np.load(data_fname, allow_pickle=True).item()
             s = data['s']
-        else:
+        except:
             s = -0.000001
 
         # Set starting sweep increment in s based on the dispersion relation.
@@ -386,24 +384,21 @@ if __name__ == "__main__":
     parser.add_argument('--nmax', type=int)
     parser.add_argument('--mmax', type=int)
     parser.add_argument('--nmin', nargs='?', type=int, default=1)
-    parser.add_argument('--mmin', nargs='?', type=int, default=1)
     parser.add_argument('-p', '--path', nargs='?', type=str)
     args = parser.parse_args()
 
     nmin = args.nmin
     nmax = args.nmax
-    mmin = args.mmin
     mmax = args.mmax
     path = args.path
 
     ###
     # Command line call should look like this:
-
-    # python efunctions.py --nmax 20 --mmax 500 -p ./data/sample_run
-
+        # python efunctions.py --nmax 20 --mmax 500 -p ./data/sample_run
     # Then, to continue up to m=1000 for all the same n, you would do this:
-
-
+        # python efunctions.py --nmax 20 --mmax 1000 -p ./data/sample_run
+    # The code will start at n=1, m=501 and sweep through the remaining modes.
+    ###
 
     # If no directory is provided, make one using the current date
     if path is None:
