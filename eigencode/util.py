@@ -33,6 +33,17 @@ def construct_sol(directory, nmax, mmax):
 
     return Jsoln, ssoln, intJsoln, p
 
+def waittime(Jsoln, ssoln, intJsoln, t, p):
+    n = np.arange(1, p.nmax+1)
+    Pnmsoln = (np.sqrt(1.5) * 16.0*np.pi**2 * p.radius * p.Delta 
+              / (3.0 * p.k * p.energy) * (-1.0)**(n) / ssoln.T
+              * intJdsigma.T).T
+    P = np.sum(np.sum(
+         - np.expand_dims(Pnmsoln, 2) * np.expand_dims(ssoln, 2)
+         * np.exp(np.expand_dims(ssoln, 2) * t) * p.Delta,
+        axis=0), axis=0)
+    return t, P
+
 def line_profile(sigma, p):					# units of Hz^{-1}
     x = (np.abs(sigma) / p.c1)**(1.0 / 3.0)
     # line_profile = ( np.exp(-x**2)/np.sqrt(np.pi) + p.a/np.pi/(0.01+x**2) )

@@ -133,13 +133,13 @@ def wait_time_line(ax, sigma, ssoln, Jsoln, Pnmsoln, times, p, nmax, mmax,alpha=
                 P[i] += - Pnmsoln[n-1, m-1] * ssoln[n-1, m-1] * np.exp(ssoln[n-1, m-1] * t) * p.Delta
 
     # Renormalize P(t)
-    try:
-        rightmost_positive = len(P) - [i for i,v in enumerate(P[::-1]) if v<0][0]
-    except:
-        rightmost_positive = 0
-    dt = midpoint_diff(times)
-    norm = np.sum(dt[rightmost_positive:]*P[rightmost_positive:])
-    P = P/norm
+    #try:
+    #    rightmost_positive = len(P) - [i for i,v in enumerate(P[::-1]) if v<0][0]
+    #except:
+    #    rightmost_positive = 0
+    #dt = midpoint_diff(times)
+    #norm = np.sum(dt[rightmost_positive:]*P[rightmost_positive:])
+    #P = P/norm
 
     if label is None:
         label = '({},{})'.format(nmax, mmax)
