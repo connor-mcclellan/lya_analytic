@@ -33,9 +33,17 @@ Pnmsoln = get_Pnm(ssoln, intJsoln, p)
 expfalloff = -ssoln[0, 0] * Pnmsoln[0, 0] * np.exp(ssoln[0, 0] * t) * p.Delta
 plt.plot(t/tlc, expfalloff*tlc, '--', label=r'$s_{00}P_{00}e^{s_{00} t}$')
 
+tdiff = tlc * np.cbrt(p.a * p.tau0)
+
+#for a in np.linspace(1, 10):
+plt.plot(t/tlc, np.sqrt((t-tlc**2)/tdiff)*expfalloff * tlc, '--', label=r'$[(t-(R/c)^2)/t_{diff}]^{1/2} s_{00}P_{00}e^{s_{00} t}$')
+#plt.plot(t/tlc, (t/tdiff)**3, '--', label=r'$t/tdiff$')
+#plt.plot(t/tlc, np.exp(-(tdiff/t)**2), '--', label=r'$e^{-t_{diff}/t}$')
+
 # Plotting
 plt.yscale('log')
 plt.xlabel(r'$ct/R$')
 plt.ylabel('$(R/c)\, P(t)$')
+plt.ylim(1e-6, 5e-1)
 plt.legend()
 plt.show()
