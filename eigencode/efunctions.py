@@ -332,10 +332,11 @@ def sweep(p, nmin=1, output_dir=None):
         # Set starting s based on what eigenmode solution number we're starting
         # on. If no previous solution has been calculated, start close to 0.
         try:
+            pdb.set_trace()
             data_fname = sorted(glob(str(output_dir/'n{:03d}_*.npy'.format(n))))[-1]
             data = np.load(data_fname, allow_pickle=True).item()
             s = data['s']
-            nsoln = int(data_fname.split('.npy')[0].split('_')[1])
+            nsoln = int(data_fname.split('.npy')[0].split('_m')[-1])
         except:
             s = -0.000001
             nsoln = 1
