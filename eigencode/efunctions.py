@@ -425,7 +425,7 @@ if __name__ == "__main__":
         nmax,
         mmax)
     pickle.dump(p, open(output_dir / 'parameters.p', 'wb'))
-    sweep(p, nmin=nmin, mmin=mmin, output_dir=output_dir)
+    sweep(p, nmin=nmin, output_dir=output_dir)
     stop = time.time()
     with open(output_dir / 'time.txt', 'w') as f:
         f.write(str(stop - start))
