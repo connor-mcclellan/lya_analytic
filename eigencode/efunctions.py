@@ -328,7 +328,6 @@ def sweep(p, nmin=1, output_dir=None):
 
     for n in range(nmin, p.nmax + 1):
         print("n=", n)
-        nsoln = mmin
 
         # Set starting s based on what eigenmode solution number we're starting
         # on. If no previous solution has been calculated, start close to 0.
@@ -336,8 +335,10 @@ def sweep(p, nmin=1, output_dir=None):
             data_fname = sorted(glob(str(output_dir/'n{:03d}_*.npy'.format(n))))[-1]
             data = np.load(data_fname, allow_pickle=True).item()
             s = data['s']
+            nsoln = int(data_fname.split('.npy')[0].split('_')[1])
         except:
             s = -0.000001
+            nsoln = 1
 
         # Set starting sweep increment in s based on the dispersion relation.
         if n == 1:
