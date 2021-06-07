@@ -334,14 +334,14 @@ def sweep(p, nmin=1, output_dir=None):
         try:
             data_fname = sorted(glob(str(output_dir/'n{:03d}_*.npy'.format(n))))[-1]
             data = np.load(data_fname, allow_pickle=True).item()
-            s = data['s']
-            nsoln = int(data_fname.split('.npy')[0].split('_m')[-1])
+            nsoln = int(data_fname.split('.npy')[0].split('_m')[-1]) + 1
+            s = data['s'] - 0.25 * gamma_const * n**(4.0 / 3.0) * 0.667 * (nsoln + 1.0 / 8.0)**(-1.0 / 3.0)
         except:
             s = -0.000001
             nsoln = 1
 
         # Set starting sweep increment in s based on the dispersion relation.
-        if n == 1:
+        if n == 1 and nsoln == 1:
             s_increment = -0.01
         else:
             s_increment = -0.25 * gamma_const * \
@@ -357,6 +357,7 @@ def sweep(p, nmin=1, output_dir=None):
                 sres, Jres, intJdsigmares = solve(s - 2 * s_increment, s - s_increment, s, n, p)
                 out = {"s": sres, "J": Jres, "Jint": intJdsigmares}
                 np.save(output_dir/'n{:03d}_m{:03d}.npy'.format(n, nsoln), out)
+                pdb.set_trace()
                 nsoln = nsoln + 1
                 s_increment = -0.25 * gamma_const * n**(4.0 / 3.0) * 0.667 * (nsoln + 1.0 / 8.0)**(-1.0 / 3.0)
                 print("\nds={}".format(s_increment))
