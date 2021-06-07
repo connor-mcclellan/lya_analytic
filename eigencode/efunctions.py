@@ -345,7 +345,7 @@ def sweep(p, nmin=1, output_dir=None):
             s_increment = -0.01
         else:
             s_increment = -0.25 * gamma_const * \
-                n**(4.0 / 3.0) * 0.667 * (1 + 1.0 / 8.0)**(-1.0 / 3.0)
+                n**(4.0 / 3.0) * 0.667 * (nsoln + 1.0 / 8.0)**(-1.0 / 3.0)
 
         # Sweep, check resonance, save outputs
         norm = []
