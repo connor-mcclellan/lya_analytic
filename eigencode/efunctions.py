@@ -357,7 +357,7 @@ def sweep(p, nmin=1, output_dir=None):
                 sres, Jres, intJdsigmares = solve(s - 2 * s_increment, s - s_increment, s, n, p)
                 out = {"s": sres, "J": Jres, "Jint": intJdsigmares}
                 np.save(output_dir/'n{:03d}_m{:03d}.npy'.format(n, nsoln), out)
-                pdb.set_trace()
+                #pdb.set_trace()
                 nsoln = nsoln + 1
                 s_increment = -0.25 * gamma_const * n**(4.0 / 3.0) * 0.667 * (nsoln + 1.0 / 8.0)**(-1.0 / 3.0)
                 print("\nds={}".format(s_increment))
