@@ -126,14 +126,14 @@ def bin_x(x, n, mytitle, filename, tau0, xinit, temp, radius, L, delta, a, p):
 #    plt.savefig("./plots/1m_x_pdf_subtracted.pdf", format='pdf')
 #    plt.close()
 
-#    return (xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp)
-    return (x_ft, Hp_ft*norm, Hsp_ft*norm, Hh_ft*norm, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp)
+    return (xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, a, tau0)
+#    return (x_ft, Hp_ft*norm, Hsp_ft*norm, Hh_ft*norm, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp)
 
 
 def residual_plot(xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, logscale=False):
 
 #    color = plt.cm.coolwarm(np.arange(4)/3)
-    color = ['b', 'r', 'orange', 'purple', 'gray']
+    color = ['b', 'r', 'purple', 'gray']
     alpha = 0.7
 
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True, gridspec_kw={'height_ratios': [2, 2, 1]}, figsize=(7, 5))
@@ -194,35 +194,36 @@ wspace=0.0)
     plt.close()
 
 
-def comparison_plot(*args):
+def comparison_plot(*args, tauax=True):
 
     color = ['b', 'r', 'orange', 'purple', 'gray']
     alpha = 0.7
 
     fig, ax = plt.subplots(3, 1, sharex=True, gridspec_kw={'height_ratios': [1, 1, 1]}, figsize=(7, 5))
     for i, arg in enumerate(args):
-        xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp = arg
+        xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, a, tau0 = arg
         axi = ax[i]
         
+        tauscale = np.cbrt(a * tau0) if tauax else 1
+
         #linear-scale solutions
         axi.axvline(xinit, c=color[4], lw=1, alpha=0.5)
-        axi.plot(xuniform, hp_xuniform, '--', label=r'$H_{\rm d}$', alpha=alpha, c=color[0], linewidth=1)
-        axi.plot(xuniform, hsp_xuniform + hh_xuniform, '-', label=r'$H_{\rm 0+bc}$', alpha=alpha, c=color[1], linewidth=1)
-        axi.plot(xuniform, hsp_xuniform, '-.', label=r'$H_0$', alpha=alpha, c=color[2], linewidth=1)
-        axi.errorbar(xc, count, yerr=err, fmt='.', label="MC", alpha=0.75, ms=3., c='k', elinewidth=0.25, capsize=0.5)
-
+        axi.plot(xuniform/tauscale, hp_xuniform, '--', label=r'$H_{\rm d}$', alpha=alpha, c=color[0], linewidth=1)
+        axi.plot(xuniform/tauscale, hsp_xuniform + hh_xuniform, '-', label=r'$H_{\rm 0+bc}$', alpha=alpha, c=color[1], linewidth=1)
+        axi.plot(xuniform/tauscale, hsp_xuniform, '-.', label=r'$H_0$', alpha=alpha, c=color[2], linewidth=1)
+        axi.errorbar(xc/tauscale, count, yerr=err, fmt='.', label="MC", alpha=0.75, ms=3., c='k', elinewidth=0.25, capsize=0.5)
+        axi.text(0.85, 0.90, r'$\tau_0=${}'.format(scinot(tau0)), fontsize=8, transform=axi.transAxes)
         if i==0:
-            axi.text(xinit+0.5, 0.03, r'x$_{\rm init}$', rotation=90, fontsize=8)
+            axi.text((xinit+0.5)/tauscale, 0.03, r'x$_{\rm init}$', rotation=90, fontsize=8)
             axi.legend(bbox_to_anchor=(1.04, 0.8), loc='upper left', fontsize='x-small', frameon=False)
-        axi.set_xlim((min(xc)-2, max(xc)+2))
+        axi.set_xlim(((min(xc)-2)/tauscale, (max(xc)+2)/tauscale))
         axi.set_ylabel(r'$P(x)$')
         axi.grid(linestyle='--', alpha=0.25)
         axi.set_ylim((ymin-0.005, ymax))
-        axi.plot(xuniform, hh_xuniform, ':', label=r'$H_{\rm bc}$', alpha=alpha, c=color[3], linewidth=1)
-        
+        axi.plot(xuniform/tauscale, hh_xuniform, ':', label=r'$H_{\rm bc}$', alpha=alpha, c=color[3], linewidth=1)
+       
 
-
-    plt.xlabel('$x$')
+    plt.xlabel(r'$x (a\tau_0)^{-1/3}$') if tauax else plt.xlabel('$x$')
     plt.subplots_adjust(top=0.97,
                         bottom=0.11,
                         left=0.11,

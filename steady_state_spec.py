@@ -11,13 +11,13 @@ if __name__ == "__main__":
 #      '1M tau0_10000000.0_xinit_0.0_temp_10000.0_probabs_0.0',
 #      '1M tau0_10000000.0_xinit_6.0_temp_10000.0_probabs_0.0',
 #      '1M tau0_10000000.0_xinit_12.0_temp_10000.0_probabs_0.0',
-       'tau0_10000.0_xinit_0.0_temp_10000.0_probabs_0.0',
+       'tau0_100000.0_xinit_0.0_temp_10000.0_probabs_0.0',
        '1M tau0_1000000.0_xinit_0.0_temp_10000.0_probabs_0.0',
        '1M tau0_10000000.0_xinit_0.0_temp_10000.0_probabs_0.0',
     ]
 
     data_dir = '/home/connor/Documents/lya_analytic/data/'
-    generate_new = True
+    generate_new = False
 
     outputs = []
 
