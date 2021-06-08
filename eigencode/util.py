@@ -21,7 +21,6 @@ def construct_sol(directory, nmax, mmax):
 
     for n in range(1, nmax+1):
         for m in range(1, mmax+1):
-#            data = np.load(directory/"n{:03d}_m{:03d}.npy".format(n, m), allow_pickle=True).item()
             data = np.load(directory/"n{:03d}_m{:03d}.npy".format(n, m), allow_pickle=True).item()
             Jsoln[n-1, m-1, :] = data['J']
             ssoln[n-1, m-1] = data['s']
