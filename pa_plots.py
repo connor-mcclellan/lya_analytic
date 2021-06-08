@@ -194,7 +194,7 @@ wspace=0.0)
     plt.close()
 
 
-def comparison_plot(*args, tauax=True):
+def comparison_plot(*args, tauax=True, divergent=True):
 
     color = ['b', 'r', 'orange', 'purple', 'gray']
     alpha = 0.7
@@ -208,7 +208,8 @@ def comparison_plot(*args, tauax=True):
 
         #linear-scale solutions
         axi.axvline(xinit, c=color[4], lw=1, alpha=0.5)
-        axi.plot(xuniform/tauscale, hp_xuniform, '--', label=r'$H_{\rm d}$', alpha=alpha, c=color[0], linewidth=1)
+        if divergent:
+            axi.plot(xuniform/tauscale, hp_xuniform, '--', label=r'$H_{\rm d}$', alpha=alpha, c=color[0], linewidth=1)
         axi.plot(xuniform/tauscale, hsp_xuniform + hh_xuniform, '-', label=r'$H_{\rm 0+bc}$', alpha=alpha, c=color[1], linewidth=1)
         axi.plot(xuniform/tauscale, hsp_xuniform, '-.', label=r'$H_0$', alpha=alpha, c=color[2], linewidth=1)
         axi.errorbar(xc/tauscale, count, yerr=err, fmt='.', label="MC", alpha=0.75, ms=3., c='k', elinewidth=0.25, capsize=0.5)

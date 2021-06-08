@@ -43,4 +43,4 @@ if __name__ == "__main__":
             binx_output = pickle.load(open('binx_output_tau{:.1f}.p'.format(tau0), 'rb'))
             outputs.append(binx_output)
 
-    comparison_plot(*outputs)
+    comparison_plot(*outputs, divergent=False)
