@@ -212,6 +212,8 @@ def comparison_plot(*args, tauax=True, divergent=True):
         print("Hd norm: ", np.sum(hp_xuniform * dx))
         print('mc norm: ', np.sum(count * midpoint_diff(xc)))
 
+        axi.plot(xuniform/tauscale, tauscale*hh_xuniform / hsp_xuniform, label='Hbc/H0')
+
         tauscale = np.cbrt(a * tau0) if tauax else 1
 
         #linear-scale solutions
