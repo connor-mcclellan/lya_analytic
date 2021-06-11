@@ -32,6 +32,13 @@ def construct_sol(directory, nmax, mmax):
 
     return Jsoln, ssoln, intJsoln, p
 
+def midpoint_diff(t):
+  midpoints = 0.5*(t[1:]+t[:-1])
+  dt = np.diff(midpoints)
+  dt = np.insert(dt, 0, midpoints[1] - midpoints[0])
+  dt = np.append(dt, midpoints[-1] - midpoints[-2])
+  return dt
+
 def get_Pnm(ssoln, intJsoln, p):
     n = np.arange(1, p.nmax+1)
     Pnmsoln = (np.sqrt(1.5) * 16.0*np.pi**2 * p.radius * p.Delta 

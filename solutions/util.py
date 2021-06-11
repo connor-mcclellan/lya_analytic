@@ -95,6 +95,12 @@ class Params(object):
         else:
             print('    '*(indent)+'},')
 
+def midpoint_diff(t):
+  midpoints = 0.5*(t[1:]+t[:-1])
+  dt = np.diff(midpoints)
+  dt = np.insert(dt, 0, midpoints[1] - midpoints[0])
+  dt = np.append(dt, midpoints[-1] - midpoints[-2])
+  return dt
 
 def read_bin(path):
     filenames = sorted(glob(path + '*.bin'))

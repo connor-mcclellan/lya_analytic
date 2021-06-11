@@ -217,9 +217,6 @@ def surface_solution_numerical():  # inward extension of J=-J_p at r=R.
 def surface_solution_analytic():
   global n,Jp,kx,L,delta,radius,sigmai,phix
   global Hs_analytic,Hsp_analytic,Jsp_analytic 
-  # CM: Functions should always have clear inputs and outputs: global variables
-  # are a Python no-no since they make it nearly impossible to track down the
-  # origin of every one of them
 
   Jprefac = np.sqrt(6.0)/(16.0*np.pi**3) * kx**2*L/delta
   Hs_analytic = np.zeros(n,dtype=np.double)

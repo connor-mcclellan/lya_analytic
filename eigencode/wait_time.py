@@ -9,17 +9,10 @@ from scipy.interpolate import interp1d
 import pdb
 import matplotlib
 matplotlib.rcParams['text.usetex'] = True
-from util import construct_sol
+from util import construct_sol, midpoint_diff
 
 fc=fundconst()
 la=lymanalpha()
-
-def midpoint_diff(t):
-  midpoints = 0.5*(t[1:]+t[:-1])
-  dt = np.diff(midpoints)
-  dt = np.insert(dt, 0, midpoints[1] - midpoints[0])
-  dt = np.append(dt, midpoints[-1] - midpoints[-2])
-  return dt
 
 def get_Pnm(ssoln,sigma,Jsoln,p,intJdsigma=None):
 
