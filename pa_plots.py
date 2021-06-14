@@ -4,10 +4,11 @@ from scipy.interpolate import interp1d
 import math
 import numpy as np
 import astropy.constants as c
-from solutions.util import read_bin, voigtx_fast, Line, Params, scinot, midpoint_diff
+from solutions.util import read_bin, voigtx_fast, Line, Params, scinot, midpoint_diff, voigtx
 from solutions import ftsoln
 from solutions import fits
 from solutions.prob_ct_tau import prob_ct_tau
+from solutions.ftsoln import sigma_func, get_sigma
 import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.rc('text', usetex=True)
@@ -88,12 +89,12 @@ def bin_x(x, n, mytitle, filename, tau0, xinit, temp, radius, L, delta, a, p):
     xuniform = np.linspace(np.min(x_ft), np.max(x_ft), len(x_ft))
 
     # Find sigma at each x-value
-    sigma_xuniform = (p.beta / a) * xuniform**3.
+    sigma_xuniform = get_sigma(xuniform)
 
     # Calculate line profile at all the x points needed
-    phix = voigtx_fast(a, x_ft)
-    phix_xuniform = voigtx_fast(a, xuniform)
-    phix_xc = voigtx_fast(a, xc)
+    phix = voigtx(a, x_ft)
+    phix_xuniform = voigtx(a, xuniform)
+    phix_xc = voigtx(a, xc)
 
     # Interpolate solutions from _ft points
     hsp_interp = interp1d(x_ft, Hsp_ft * phix * norm)
@@ -202,7 +203,7 @@ def comparison_plot(*args, tauax=True, divergent=True):
     for i, arg in enumerate(args):
         xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, a, tau0 = arg
         axi = ax[i]
-        pdb.set_trace()
+
         # Check normalization
         print("\ntau0={}, xinit={}".format(tau0, xinit))
         dx = midpoint_diff(xuniform)

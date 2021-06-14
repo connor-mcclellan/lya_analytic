@@ -139,7 +139,7 @@ def get_arrays_uniform_in_sigma_slow():
   x[n-1]=oldx[n-1]
   for i in range(1,n-1):
     x[i] = f(sigma[i])
-  pdb.set_trace()
+
   print("Done!")
 # use analytic sigma(x) = beta*x**3/a
 def get_arrays_uniform_in_sigma_fast():

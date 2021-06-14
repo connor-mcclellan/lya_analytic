@@ -17,7 +17,7 @@ if __name__ == "__main__":
     ]
 
     data_dir = '/home/connor/Documents/lya_analytic/data/'
-    generate_new = False
+    generate_new = True
     vary_tau = True
     outputs = []
 

@@ -1,6 +1,7 @@
 import numpy as np
 from glob import glob
 from scipy.io import FortranFile
+from scipy.special import wofz
 from scipy.interpolate import interp1d
 import pdb
 
@@ -132,6 +133,12 @@ def voigtx_fast(a, x):
     return a / np.pi / (0.01 + x**2)
 
   #np.exp(-x**2) / np.sqrt(np.pi) + a / np.pi / (0.01 + x**2)
+
+def voigtx(a, x):
+    z = x + a*1j
+    H = np.real(wofz(z))
+    line_profile = H/np.sqrt(np.pi)
+    return line_profile
 
 def tanf(x, tau):
     return np.tan(x) - x / (1. - 1.5 * tau)
