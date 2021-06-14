@@ -212,9 +212,13 @@ def comparison_plot(*args, tauax=True, divergent=True):
         print("Hd norm: ", np.sum(hp_xuniform * dx))
         print('mc norm: ', np.sum(count * midpoint_diff(xc)))
 
-        axi.plot(xuniform/tauscale, tauscale*hh_xuniform / hsp_xuniform, label='Hbc/H0')
-
         tauscale = np.cbrt(a * tau0) if tauax else 1
+
+
+
+        axi.plot(xuniform/tauscale, np.abs(tauscale*hh_xuniform / hsp_xuniform), label='Hbc/H0')
+
+
 
         #linear-scale solutions
         axi.axvline(xinit, c=color[4], lw=1, alpha=0.5)
@@ -228,10 +232,11 @@ def comparison_plot(*args, tauax=True, divergent=True):
         if i==0:
             axi.text((xinit+0.2)/tauscale, 0.03*tauscale, r'x$_{\rm init}$', rotation=90, fontsize=8)
             axi.legend(bbox_to_anchor=(1.04, 0.8), loc='upper left', fontsize='x-small', frameon=False)
-        axi.set_xlim(((min(xc)-2)/tauscale, (max(xc)+2)/tauscale))
+        #axi.set_xlim(((min(xc)-2)/tauscale, (max(xc)+2)/tauscale))
         axi.set_ylabel(r'$(a\tau_0)^{1/3}P(x)$') if tauax else axi.set_ylabel('$P(x)$')
         axi.grid(linestyle='--', alpha=0.25)
-        axi.set_ylim((-.1, 1.0)) if tauax else axi.set_ylim(((ymin-0.005), ymax)) 
+        #axi.set_ylim((-.1, 5.0))# if tauax else axi.set_ylim(((ymin-0.005), ymax)) 
+        axi.set_yscale('log')
 
     plt.xlabel(r'$x (a\tau_0)^{-1/3}$') if tauax else plt.xlabel('$x$')
     plt.subplots_adjust(top=0.97,

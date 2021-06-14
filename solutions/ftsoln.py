@@ -5,6 +5,7 @@ from scipy import integrate as integrate
 from scipy.special import spherical_in
 from scipy import interpolate
 from scipy import linalg
+from util import voigtx_fast
 import matplotlib.pyplot as plt
 
 # fundamental constants
@@ -59,16 +60,12 @@ def voigtx(x):                                                        # Voigt li
   line_profile = H/np.sqrt(np.pi)
   return line_profile
 
-def voigtx_fast(x):
-  global a
-  line_profile = np.exp(-x**2)/np.sqrt(np.pi) + a/np.pi/(0.01+x**2)
-  return line_profile
-
 def test_line_profile():
+  global a
   x=np.arange(-100.0,100.0,0.1)
   plt.plot(x,voigtx(x),label='voigt')
-  plt.plot(x,voigtx_fast(x),label='approx voigt')
-  plt.plot(x,np.abs(voigtx(x)-voigtx_fast(x)),label='diff')
+  plt.plot(x,voigtx_fast(a, x),label='approx voigt')
+  plt.plot(x,np.abs(voigtx(x)-voigtx_fast(a, x)),label='diff')
   #plt.plot(x,gaussianx(x))
   #plt.plot(x,lorentzianx(x))
   plt.legend()
@@ -371,7 +368,7 @@ def ftsoln_wrapper(tau0_in,xi_in,temp_in,radius_in,L_in):
   norm = 4.0*np.pi*radius_in**2.*delta*4.0*np.pi/L_in
   #get_arrays_uniform_in_sigma_slow()
   get_arrays_uniform_in_sigma_fast()
-  phix = voigtx_fast(x)
+  phix = voigtx_fast(a, x)
   get_s()
   particular_solution(radius)
   #surface_solution_numerical()
