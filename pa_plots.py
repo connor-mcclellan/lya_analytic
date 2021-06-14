@@ -202,7 +202,7 @@ def comparison_plot(*args, tauax=True, divergent=True):
     for i, arg in enumerate(args):
         xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, a, tau0 = arg
         axi = ax[i]
-        
+        pdb.set_trace()
         # Check normalization
         print("\ntau0={}, xinit={}".format(tau0, xinit))
         dx = midpoint_diff(xuniform)
@@ -214,12 +214,6 @@ def comparison_plot(*args, tauax=True, divergent=True):
 
         tauscale = np.cbrt(a * tau0) if tauax else 1
 
-
-
-        axi.plot(xuniform/tauscale, np.abs(tauscale*hh_xuniform / hsp_xuniform), label='Hbc/H0')
-
-
-
         #linear-scale solutions
         axi.axvline(xinit, c=color[4], lw=1, alpha=0.5)
         if divergent:
@@ -227,16 +221,16 @@ def comparison_plot(*args, tauax=True, divergent=True):
         axi.plot(xuniform/tauscale, tauscale*hsp_xuniform, '-', label=r'$H_0$', alpha=alpha, c=color[2], linewidth=1.5)
         axi.plot(xuniform/tauscale, tauscale*(hsp_xuniform + hh_xuniform), '-.', label=r'$H_{\rm 0+bc}$', alpha=alpha, c=color[1], linewidth=1.5)
         axi.errorbar(xc/tauscale, tauscale*count, yerr=err, fmt='.', label="MC", alpha=0.75, ms=3., c='k', elinewidth=0.25, capsize=0.5)
-        axi.text(0.85, 0.90, r'$\tau_0=${}'.format(scinot(tau0)), fontsize=8, transform=axi.transAxes)
+        axi.text(0.85, 0.85, r'$\tau_0=${}'.format(scinot(tau0)), fontsize=8, transform=axi.transAxes)
         axi.plot(xuniform/tauscale, tauscale*hh_xuniform, ':', label=r'$H_{\rm bc}$', alpha=alpha, c=color[3], linewidth=1.5)
         if i==0:
             axi.text((xinit+0.2)/tauscale, 0.03*tauscale, r'x$_{\rm init}$', rotation=90, fontsize=8)
             axi.legend(bbox_to_anchor=(1.04, 0.8), loc='upper left', fontsize='x-small', frameon=False)
-        #axi.set_xlim(((min(xc)-2)/tauscale, (max(xc)+2)/tauscale))
+        axi.set_xlim(((min(xc)-2)/tauscale, (max(xc)+2)/tauscale))
         axi.set_ylabel(r'$(a\tau_0)^{1/3}P(x)$') if tauax else axi.set_ylabel('$P(x)$')
         axi.grid(linestyle='--', alpha=0.25)
-        #axi.set_ylim((-.1, 5.0))# if tauax else axi.set_ylim(((ymin-0.005), ymax)) 
-        axi.set_yscale('log')
+        axi.set_ylim((-.2, .8)) if tauax else axi.set_ylim(((ymin-0.005), ymax)) 
+        #axi.set_yscale('log')
 
     plt.xlabel(r'$x (a\tau_0)^{-1/3}$') if tauax else plt.xlabel('$x$')
     plt.subplots_adjust(top=0.97,

@@ -5,8 +5,9 @@ from scipy import integrate as integrate
 from scipy.special import spherical_in
 from scipy import interpolate
 from scipy import linalg
-from util import voigtx_fast
+from solutions.util import voigtx_fast
 import matplotlib.pyplot as plt
+import pdb
 
 # fundamental constants
 
@@ -121,7 +122,7 @@ def get_arrays_uniform_in_x():
 def get_arrays_uniform_in_sigma_slow():
   global n,sigmamax
   global x,sigma,dsigma
-
+  print("Getting arrays uniform in sigma...")
   get_arrays_uniform_in_x()	# use these for interpolation
   oldx=x
   oldsigma=sigma
@@ -138,7 +139,8 @@ def get_arrays_uniform_in_sigma_slow():
   x[n-1]=oldx[n-1]
   for i in range(1,n-1):
     x[i] = f(sigma[i])
-
+  pdb.set_trace()
+  print("Done!")
 # use analytic sigma(x) = beta*x**3/a
 def get_arrays_uniform_in_sigma_fast():
   global n,sigmamax,a,beta,xmax
@@ -366,9 +368,10 @@ def ftsoln_wrapper(tau0_in,xi_in,temp_in,radius_in,L_in):
   init()
   sigmai = beta*xi_in**3/a # get_sigma(xi_in)
   norm = 4.0*np.pi*radius_in**2.*delta*4.0*np.pi/L_in
-  #get_arrays_uniform_in_sigma_slow()
-  get_arrays_uniform_in_sigma_fast()
-  phix = voigtx_fast(a, x)
+  get_arrays_uniform_in_sigma_slow()
+
+  #get_arrays_uniform_in_sigma_fast()
+  phix = voigtx(x)
   get_s()
   particular_solution(radius)
   #surface_solution_numerical()
