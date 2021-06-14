@@ -28,7 +28,7 @@ if __name__ == "__main__":
         delta = lya.nu0 * vth / c.c.cgs.value
         a = lya.gamma / (4.0 * np.pi * delta)
 
-        p = Params(line=lya, temp=temp, tau0=tau0, num_dens=1701290465.5139434, 
+        p = Params(line=lya, temp=temp, tau0=tau0,
                energy=1., R=radius, sigma_source=0., n_points=1e4)
         L = 1.0
     

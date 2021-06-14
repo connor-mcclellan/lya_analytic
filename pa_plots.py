@@ -89,7 +89,7 @@ def bin_x(x, n, mytitle, filename, tau0, xinit, temp, radius, L, delta, a, p):
     xuniform = np.linspace(np.min(x_ft), np.max(x_ft), len(x_ft))
 
     # Find sigma at each x-value
-    sigma_xuniform = get_sigma(xuniform)
+    sigma_xuniform = np.array([get_sigma(xpt) for xpt in xuniform])
 
     # Calculate line profile at all the x points needed
     phix = voigtx(a, x_ft)
@@ -126,8 +126,8 @@ def bin_x(x, n, mytitle, filename, tau0, xinit, temp, radius, L, delta, a, p):
 #    plt.savefig("./plots/1m_x_pdf_subtracted.pdf", format='pdf')
 #    plt.close()
 
-#    return (xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, a, tau0)
-    return (x_ft, Hp_ft*norm, Hsp_ft*norm, Hh_ft*norm, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, a, tau0)
+    return (xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, a, tau0)
+#    return (x_ft, Hp_ft*norm, Hsp_ft*norm, Hh_ft*norm, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, a, tau0)
 
 
 def residual_plot(xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, logscale=False):

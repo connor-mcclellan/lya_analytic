@@ -357,7 +357,7 @@ def ftsoln_wrapper(tau0_in,xi_in,temp_in,radius_in,L_in):
   global Jh,Hh
   global Hsp_analytic,Hsp
 
-  n=2**10 + 1 # 1025 # 2049 # 513 # 257 # 2049 # 1025   # number of points used in solution
+  n=2**12 + 1 # 1025 # 2049 # 513 # 257 # 2049 # 1025   # number of points used in solution
 
   tau0=tau0_in
   #sigmai=sigmai_in
