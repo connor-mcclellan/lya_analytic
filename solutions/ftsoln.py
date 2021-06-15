@@ -256,10 +256,40 @@ def test_surface_particular_solution():
 
 ##########################################################################################################
 
-
-def get_homo_soln():
+def get_homo_soln_slow():
   global n,Hsp,kx,radius,s,ds,sigma,phix
-  global Jh,Hh
+
+  b=np.zeros(n,dtype=np.cdouble)
+  b=np.sqrt(3.0)*Hsp
+  M = np.zeros((n,n),dtype=np.cdouble)
+  for i in range(n):
+    for j in range(n):
+      z = np.abs(kx*radius*s[j])
+      i0=spherical_in(0,z,derivative=False)
+      di0=spherical_in(0,z,derivative=True)
+      rat = di0/i0
+      M[i,j]=(ds/2.0/np.pi)*np.exp(1j*s[j]*sigma[i])*(1.0+np.abs(s[j])*rat/np.sqrt(3.0)/phix[i])
+  for i in range(n):                            # scale each row
+    maxval=np.amax(np.absolute(M[i,:]))
+    M[i,:]=M[i,:]/maxval
+    b[i]=b[i]/maxval
+  amp = linalg.solve(M,b,debug=True) # fourier coefficients
+  check=np.dot(M,amp)
+
+  Jh=np.zeros(Jp.size,dtype=np.cdouble)
+  Hh=np.zeros(Hp.size,dtype=np.cdouble)
+  for i in range(n):
+    for j in range(n):
+      z = np.abs(kx*radius*s[j])
+      i0=spherical_in(0,z,derivative=False)
+      di0=spherical_in(0,z,derivative=True)
+      rat = di0/i0
+      Jh[i]=Jh[i] + (ds/2.0/np.pi)*np.exp(1j*s[j]*sigma[i])*amp[j]
+      Hh[i]=Hh[i] + (ds/2.0/np.pi)*np.exp(1j*s[j]*sigma[i])*amp[j]*(-np.abs(s[j])/(3.0*phix[i]))*rat
+  return Jh, Hh
+
+def get_homo_soln_fast():
+  global n,Hsp,kx,radius,s,ds,sigma,phix
 
   b=np.zeros(n,dtype=np.cdouble)
   b=np.sqrt(3.0)*Hsp
@@ -280,9 +310,9 @@ def get_homo_soln():
   amp = linalg.solve(M,b,debug=True) # fourier coefficients
   check=np.dot(M,amp)
 
-  Jh = np.sum((ds/2.0/np.pi)*np.exp(1j*s[:, None]*sigma[:])*amp[:, None], axis=1)
-  Hh = np.sum((ds/2.0/np.pi)*np.exp(1j*s[:, None]*sigma[:])*amp[:, None]*(-np.abs(s[:, None])/(3.0*phix[:]))*rat, axis=1)
-
+  Jh = np.sum((ds/2.0/np.pi)*np.exp(1j*s[:]*sigma[:, None])*amp[:], axis=1)
+  Hh = np.sum((ds/2.0/np.pi)*np.exp(1j*s[:]*sigma[:, None])*amp[:]*(-np.abs(s[:])/(3.0*phix[:, None]))*rat[:], axis=1)
+  return Jh, Hh
 
 def test_full_solution_linear(filename):
   global x,sigma,tau0,Hsp,Hh,Jh,a
@@ -353,7 +383,6 @@ def ftsoln_wrapper(tau0_in,xi_in,temp_in,radius_in,L_in):
   global s,ds
   global Jp,Hp
   global Js,Jscheck,Hs
-  global Jh,Hh
   global Hsp_analytic,Hsp
 
   n=2**10 + 1 # 1025 # 2049 # 513 # 257 # 2049 # 1025   # number of points used in solution
@@ -379,7 +408,8 @@ def ftsoln_wrapper(tau0_in,xi_in,temp_in,radius_in,L_in):
   Hsp=Hsp_analytic	# fast and more accurate
   Jsp=np.zeros(n)
   
-  get_homo_soln()
+  Jh, Hh = get_homo_soln_fast()
+
   #filename = "JH_" + str(tau0) + "_tau0_" + str(sigmai) + "_sigmai_linear.pdf"
   #test_full_solution_linear(filename)
   #filename = "JH_" + str(tau0) + "_tau0_" + str(sigmai) + "_sigmai_log.pdf"
