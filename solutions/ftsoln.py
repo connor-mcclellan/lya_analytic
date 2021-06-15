@@ -117,9 +117,7 @@ def get_arrays_uniform_in_x():
   for i in range(x.size):
     sigma[i]=get_sigma(x[i])		# uses numerical integration and is slow
 
-
 # slow version with numerical integration for sigma(x) and then interpolation
-
 def get_arrays_uniform_in_sigma_slow():
   global n,sigmamax
   global x,sigma,dsigma
@@ -142,21 +140,17 @@ def get_arrays_uniform_in_sigma_slow():
     x[i] = f(sigma[i])
 
   print("Done!")
+
 # use analytic sigma(x) = beta*x**3/a
 def get_arrays_uniform_in_sigma_fast():
   global n,sigmamax,a,beta,xmax
   global x,sigma,dsigma
 
   sigmamax=beta*xmax**3/a
-  dsigma=2.0*sigmamax/(n-1)
-  sigma=np.zeros(n)
-  x=np.zeros(n)
-  for i in range(n):
-    sigma[i]=-sigmamax+dsigma*i
-    if sigma[i]>=0.0:
-      x[i] = (sigma[i]*a/beta)**(1.0/3.0)
-    else:
-      x[i] = -(np.abs(sigma[i])*a/beta)**(1.0/3.0)
+  sigma = np.linspace(-sigmamax, sigmamax, n)
+  dsigma = np.diff(sigma)[0]
+  x = np.cbrt(sigma*a/beta)
+
 
 def get_s():                       # assumes sigma array is evenly spaced, from get_sigma_x_arrays
   global n,dsigma,sigma
@@ -385,7 +379,7 @@ def ftsoln_wrapper(tau0_in,xi_in,temp_in,radius_in,L_in):
   global Js,Jscheck,Hs
   global Hsp_analytic,Hsp
 
-  n=2**10 + 1 # 1025 # 2049 # 513 # 257 # 2049 # 1025   # number of points used in solution
+  n=2**12 + 1 # 1025 # 2049 # 513 # 257 # 2049 # 1025   # number of points used in solution
 
   tau0=tau0_in
   #sigmai=sigmai_in
