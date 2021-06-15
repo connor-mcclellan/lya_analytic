@@ -230,7 +230,7 @@ def comparison_plot(*args, tauax=True, divergent=True):
         axi.set_xlim(((min(xc)-2)/tauscale, (max(xc)+2)/tauscale))
         axi.set_ylabel(r'$(a\tau_0)^{1/3}P(x)$') if tauax else axi.set_ylabel('$P(x)$')
         axi.grid(linestyle='--', alpha=0.25)
-        axi.set_ylim((-.2, .8)) if tauax else axi.set_ylim(((ymin-0.005), ymax)) 
+        axi.set_ylim((-.2, 1.0)) if tauax else axi.set_ylim(((ymin-0.005), ymax)) 
         #axi.set_yscale('log')
 
     plt.xlabel(r'$x (a\tau_0)^{-1/3}$') if tauax else plt.xlabel('$x$')
@@ -296,7 +296,7 @@ if __name__ == '__main__':
     generate_new = False
 
     lya = Line(1215.6701, 0.4164, 6.265e8)
-    p = Params(line=lya, temp=1e4, tau0=1e7, num_dens=1701290465.5139434, 
+    p = Params(line=lya, temp=1e4, tau0=1e7, 
            energy=1., R=1e11, sigma_source=0., n_points=1e4)
     L = 1.0
     tau0, temp, xinit, prob_abs, radius = get_input_info(data_dir + 'input')

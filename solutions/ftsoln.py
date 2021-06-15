@@ -8,6 +8,7 @@ from scipy import linalg
 from solutions.util import voigtx_fast
 import matplotlib.pyplot as plt
 import pdb
+from astropy.utils.console import ProgressBar
 
 # fundamental constants
 
@@ -204,6 +205,8 @@ def surface_solution_numerical():  # inward extension of J=-J_p at r=R.
   amps = - np.pi * Jprefac / (kx*radius) * np.exp( -kx*radius*np.abs(s) - 1j*s*sigmai )
   Jscheck=np.zeros(n,dtype=np.cdouble)
   Hs=np.zeros(n,dtype=np.cdouble)
+  print('Solving surface solution...\n')
+  pb = ProgressBar(n*n)
   for i in range(n):
     for j in range(n):
       z = np.abs(kx*radius*s[j])
@@ -212,6 +215,7 @@ def surface_solution_numerical():  # inward extension of J=-J_p at r=R.
       rat = di0/i0
       Hs[i]=Hs[i]+(ds/2.0/np.pi)*np.exp(1j*s[j]*sigma[i])*amps[j]*(-np.abs(s[j])*rat/3.0/phix[i])
       Jscheck[i]=Jscheck[i]+(ds/2.0/np.pi)*np.exp(1j*s[j]*sigma[i])*amps[j]
+      pb.update()
 
 def surface_solution_analytic():
   global n,Jp,kx,L,delta,radius,sigmai,phix
@@ -259,18 +263,18 @@ def get_homo_soln():
 
   b=np.zeros(n,dtype=np.cdouble)
   b=np.sqrt(3.0)*Hsp
-  M = np.zeros((n,n),dtype=np.cdouble)
-  for i in range(n):
-    for j in range(n):
-      z = np.abs(kx*radius*s[j])
-      i0=spherical_in(0,z,derivative=False)
-      di0=spherical_in(0,z,derivative=True)
-      rat = di0/i0
-      M[i,j]=(ds/2.0/np.pi)*np.exp(1j*s[j]*sigma[i])*(1.0+np.abs(s[j])*rat/np.sqrt(3.0)/phix[i])
+  z = np.abs(kx*radius*s)
+  i0=spherical_in(0,z,derivative=False)
+  di0=spherical_in(0,z,derivative=True)
+  rat = di0/i0
+  M=(ds/2.0/np.pi)*np.exp(1j*s[:]*sigma[:, None])*(1.0+np.abs(s[:])*rat/np.sqrt(3.0)/phix[:, None])
+  pdb.set_trace()
+
   for i in range(n):                            # scale each row
     maxval=np.amax(np.absolute(M[i,:]))
     M[i,:]=M[i,:]/maxval
     b[i]=b[i]/maxval
+  print('Solving matrix equation...\n')
   amp = linalg.solve(M,b,debug=True) # fourier coefficients
   check=np.dot(M,amp)
 
@@ -357,7 +361,7 @@ def ftsoln_wrapper(tau0_in,xi_in,temp_in,radius_in,L_in):
   global Jh,Hh
   global Hsp_analytic,Hsp
 
-  n=2**12 + 1 # 1025 # 2049 # 513 # 257 # 2049 # 1025   # number of points used in solution
+  n=2**10 + 1 # 1025 # 2049 # 513 # 257 # 2049 # 1025   # number of points used in solution
 
   tau0=tau0_in
   #sigmai=sigmai_in
