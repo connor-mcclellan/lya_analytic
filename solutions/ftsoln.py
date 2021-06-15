@@ -267,13 +267,15 @@ def get_homo_soln():
   i0=spherical_in(0,z,derivative=False)
   di0=spherical_in(0,z,derivative=True)
   rat = di0/i0
-  M=(ds/2.0/np.pi)*np.exp(1j*s[:]*sigma[:, None])*(1.0+np.abs(s[:])*rat/np.sqrt(3.0)/phix[:, None])
-  pdb.set_trace()
 
-  for i in range(n):                            # scale each row
-    maxval=np.amax(np.absolute(M[i,:]))
-    M[i,:]=M[i,:]/maxval
-    b[i]=b[i]/maxval
+  # Construct matrix using array operations
+  M=(ds/2.0/np.pi)*np.exp(1j*s[:]*sigma[:, None])*(1.0+np.abs(s[:])*rat/np.sqrt(3.0)/phix[:, None])
+
+  # Divide each row by the max value in that row
+  maxvals = np.amax(np.absolute(M), axis=1)
+  M = M/maxvals[:, None]
+  b = b/maxvals[:, None]
+  
   print('Solving matrix equation...\n')
   amp = linalg.solve(M,b,debug=True) # fourier coefficients
   check=np.dot(M,amp)
@@ -288,6 +290,7 @@ def get_homo_soln():
       rat = di0/i0
       Jh[i]=Jh[i] + (ds/2.0/np.pi)*np.exp(1j*s[j]*sigma[i])*amp[j]
       Hh[i]=Hh[i] + (ds/2.0/np.pi)*np.exp(1j*s[j]*sigma[i])*amp[j]*(-np.abs(s[j])/(3.0*phix[i]))*rat
+  pdb.set_trace()
 
 def test_full_solution_linear(filename):
   global x,sigma,tau0,Hsp,Hh,Jh,a
