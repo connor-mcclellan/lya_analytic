@@ -274,23 +274,15 @@ def get_homo_soln():
   # Divide each row by the max value in that row
   maxvals = np.amax(np.absolute(M), axis=1)
   M = M/maxvals[:, None]
-  b = b/maxvals[:, None]
+  b = b/maxvals
   
   print('Solving matrix equation...\n')
   amp = linalg.solve(M,b,debug=True) # fourier coefficients
   check=np.dot(M,amp)
 
-  Jh=np.zeros(Jp.size,dtype=np.cdouble)
-  Hh=np.zeros(Hp.size,dtype=np.cdouble)
-  for i in range(n):
-    for j in range(n):
-      z = np.abs(kx*radius*s[j])
-      i0=spherical_in(0,z,derivative=False)
-      di0=spherical_in(0,z,derivative=True)
-      rat = di0/i0
-      Jh[i]=Jh[i] + (ds/2.0/np.pi)*np.exp(1j*s[j]*sigma[i])*amp[j]
-      Hh[i]=Hh[i] + (ds/2.0/np.pi)*np.exp(1j*s[j]*sigma[i])*amp[j]*(-np.abs(s[j])/(3.0*phix[i]))*rat
-  pdb.set_trace()
+  Jh = np.sum((ds/2.0/np.pi)*np.exp(1j*s[:, None]*sigma[:])*amp[:, None], axis=1)
+  Hh = np.sum((ds/2.0/np.pi)*np.exp(1j*s[:, None]*sigma[:])*amp[:, None]*(-np.abs(s[:, None])/(3.0*phix[:]))*rat, axis=1)
+
 
 def test_full_solution_linear(filename):
   global x,sigma,tau0,Hsp,Hh,Jh,a
