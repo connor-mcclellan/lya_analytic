@@ -218,12 +218,12 @@ def comparison_plot(*args, tauax=True, divergent=True):
         axi.text(0.85, 0.85, r'$\tau_0=${}'.format(scinot(tau0)), fontsize=8, transform=axi.transAxes)
         axi.plot(xuniform/tauscale, tauscale*hh_xuniform, ':', label=r'$H_{\rm bc}$', alpha=alpha, c=color[3], linewidth=1.5)
         if i==0:
-            axi.text((xinit+0.2)/tauscale, 0.03*tauscale, r'x$_{\rm init}$', rotation=90, fontsize=8)
+            axi.text((xinit+0.1)/tauscale, 0.07*tauscale, r'$\rm x_{\rm s}=\rm x_0$', rotation=90, fontsize=8)
             axi.legend(bbox_to_anchor=(1.04, 0.8), loc='upper left', fontsize='x-small', frameon=False)
         axi.set_xlim(((min(xc)-2)/tauscale, (max(xc)+2)/tauscale))
         axi.set_ylabel(r'$(a\tau_0)^{1/3}P(x)$') if tauax else axi.set_ylabel('$P(x)$')
         axi.grid(linestyle='--', alpha=0.25)
-        axi.set_ylim((-.3, 1.2)) if tauax else axi.set_ylim(((ymin-0.005), ymax)) 
+        axi.set_ylim((-.3, 1.2)) if tauax else axi.set_ylim((-.01, 0.06)) 
         #axi.set_yscale('log')
 
     plt.xlabel(r'$x (a\tau_0)^{-1/3}$') if tauax else plt.xlabel('$x$')
@@ -297,7 +297,7 @@ if __name__ == '__main__':
     delta = lya.nu0 * vth / c.c.cgs.value
     a = lya.gamma / (4.0 * np.pi * delta)
     
-    mytitle = r'$\tau_0=${}'.format(scinot(tau0))+'\n'+r'$x_{{\rm init}}={:.1f}$'.format(xinit)+'\n'+'$T=${}'.format(scinot(temp))
+    mytitle = r'$\tau_0=${}'.format(scinot(tau0))+'\n'+r'$x_{{0}}={:.1f}$'.format(xinit)+'\n'+'$T=${}'.format(scinot(temp))
     
 
     #mu, x, time = read_bin(data_dir)
