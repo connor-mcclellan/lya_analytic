@@ -81,6 +81,8 @@ def bin_x(x, n, mytitle, filename, tau0, xinit, temp, radius, L, delta, a, p):
     norm = 4.0 * np.pi * radius**2 * delta * 4.0 * np.pi / L
     print('norm: ', norm)
     print("check norm of data=", np.sum(count) * dx)
+    print("check norm of bc solution=", np.sum(Hh_ft * np.sqrt(3/2.) * norm* np.diff(sigma_ft)[0] * voigtx(a, x_ft)))
+    print("check norm of H0 solution=", np.sum(Hsp_ft * np.sqrt(3/2.) *norm* np.diff(sigma_ft)[0] * voigtx(a, x_ft)))
 
     # CM: Interpolate phix*H on uniform x grid
     print('Interpolating solutions on uniform x grid...\n')
@@ -203,15 +205,6 @@ def comparison_plot(*args, tauax=True, divergent=True):
     for i, arg in enumerate(args):
         xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, a, tau0 = arg
         axi = ax[i]
-
-        # Check normalization
-        print("\ntau0={}, xinit={}".format(tau0, xinit))
-        dx = midpoint_diff(xuniform)
-        print("Hbc norm: ", np.sum(hh_xuniform * dx))
-        print("H0 norm: ", np.sum(hsp_xuniform * dx))
-        print("H0+bc norm: ", np.sum((hsp_xuniform + hh_xuniform) * dx))
-        print("Hd norm: ", np.sum(hp_xuniform * dx))
-        print('mc norm: ', np.sum(count * midpoint_diff(xc)))
 
         tauscale = np.cbrt(a * tau0) if tauax else 1
 
