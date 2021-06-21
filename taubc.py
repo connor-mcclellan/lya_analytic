@@ -9,6 +9,8 @@ import pickle
 import numpy as np
 import astropy.constants as c
 import pdb
+import matplotlib.pyplot as plt
+
 
 # Line parameters object
 lya = Line(1215.6701, 0.4164, 6.265e8)
@@ -50,6 +52,8 @@ if __name__ == "__main__":
         xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, a, tau0 = bin_x(x, 64, mytitle, filename, tau0, xinit, temp, radius, L, delta, a, p, mcgrid=True)
         h0_minus_mc = hsp_xuniform - count
 
-        ax.errorbar(xc, h0_minux_mc, yerr=err, fmt='.', label=r'$H_0 - \rm MC$', alpha=alpha, c=color[1])
-        ax.plot(xc, )
+        ax.errorbar(xc, h0_minus_mc, yerr=err, fmt='.', label=r'$H_0 - \rm MC$', alpha=alpha, c=color[2])
+        ax.plot(xuniform, hh_xuniform, '-.', alpha=alpha, c=color[1], label=r'$H_{\rm bc}$')
+    plt.legend()
+    plt.show()
         

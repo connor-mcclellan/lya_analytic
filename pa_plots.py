@@ -106,7 +106,7 @@ def bin_x(x, n, mytitle, filename, tau0, xinit, temp, radius, L, delta, a, p, mc
     # Apply interpolation to uniformly distributed x values, divide by line
     # profile at those x positions
     if mcgrid:
-        hsp_xuniform = hsp_interm(xc) / phix_xc
+        hsp_xuniform = hsp_interp(xc) / phix_xc
     else:
         hsp_xuniform = hsp_interp(xuniform) / phix_xuniform
     hp_xuniform = hp_interp(xuniform) / phix_xuniform
