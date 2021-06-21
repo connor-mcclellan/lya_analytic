@@ -1,5 +1,5 @@
 from pa_plots import bin_x, comparison_plot, get_input_info
-from solutions.util import read_bin, voigtx_fast, Line, Params, scinot
+from solutions.util import read_bin, Line, Params, scinot
 import pickle
 import numpy as np
 import astropy.constants as c

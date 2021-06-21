@@ -1,4 +1,4 @@
-from util import Line, read_bin, voigtx_fast, Params
+from util import Line, read_bin, voigtx, Params
 from scipy import linalg
 from scipy.special import spherical_in
 import astropy.units as u
@@ -36,7 +36,7 @@ def hsp_analytic(x, line, p, temp=1e4, radius=1e11,
     delta = line.nu0 * vth / c.c.cgs.value
     a = line.gamma / (4.0 * np.pi * delta)
     print('a: ', a)
-    phix = voigtx_fast(a, x)
+    phix = voigtx(a, x)
     sigma = p.beta * x**3. / a
     sigma0 = line.strength / (np.sqrt(np.pi) * delta)
     sigmai = p.beta * xi**3. / a
@@ -64,7 +64,7 @@ def h_bc(x, line, p, temp=1e4, radius=1e11, L=1., tau0=1e7, xi=0.0, **kwargs):
     vth = np.sqrt(2.0 * c.k_B.cgs.value * temp / c.m_p.cgs.value)
     delta = line.nu0 * vth / c.c.cgs.value
     a = line.gamma / (4.0 * np.pi * delta)
-    phix = voigtx_fast(a, x)
+    phix = voigtx(a, x)
     sigma = p.beta * x**3. / a
     sigma0 = line.strength / (np.sqrt(np.pi) * delta)
     numden = tau0 / (sigma0 * radius)

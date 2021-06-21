@@ -5,7 +5,7 @@ from scipy import integrate as integrate
 from scipy.special import spherical_in
 from scipy import interpolate
 from scipy import linalg
-from solutions.util import voigtx_fast
+from solutions.util import voigtx
 import matplotlib.pyplot as plt
 import pdb
 from astropy.utils.console import ProgressBar
@@ -55,13 +55,6 @@ def lorentzianx(x):
   line_profile = a/np.pi/(x**2 + a**2)
   return line_profile
 
-def voigtx(x):                                                        # Voigt line profile in x units
-  global a
-  z = x + a*1j
-  H = np.real(wofz(z))
-  line_profile = H/np.sqrt(np.pi)
-  return line_profile
-
 def test_line_profile():
   global a
   x=np.arange(-100.0,100.0,0.1)
@@ -78,7 +71,8 @@ def test_line_profile():
   plt.show()
 
 def sigma_func(x):
-  phix = voigtx(x)
+  global a
+  phix = voigtx(a, x)
   integrand = np.sqrt(2.0/3.0)/phix
   return integrand
 
@@ -379,7 +373,7 @@ def ftsoln_wrapper(tau0_in,xi_in,temp_in,radius_in,L_in):
   global Js,Jscheck,Hs
   global Hsp_analytic,Hsp
 
-  n=2**10 + 1 # 1025 # 2049 # 513 # 257 l# 2049 # 1025   # number of points used in solution
+  n=2**12 + 1 # 1025 # 2049 # 513 # 257 l# 2049 # 1025   # number of points used in solution
 
   tau0=tau0_in
   #sigmai=sigmai_in
@@ -393,7 +387,7 @@ def ftsoln_wrapper(tau0_in,xi_in,temp_in,radius_in,L_in):
   get_arrays_uniform_in_sigma_slow()
 
   #get_arrays_uniform_in_sigma_fast()
-  phix = voigtx(x)
+  phix = voigtx(a, x)
   get_s()
   particular_solution(radius)
   #surface_solution_numerical()

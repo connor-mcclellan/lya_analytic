@@ -62,7 +62,7 @@ class Params(object):
             self.sigma_grid = np.concatenate([np.linspace(-self.sigma_max, self.sigma_source, int(self.n_points / 2)), 
                                               np.linspace(self.sigma_source, self.sigma_max, int(self.n_points / 2)+1)[1:]])
         self.x_grid = np.cbrt(self.a / self.beta * self.sigma_grid)
-        self.phi_grid = voigtx_fast(self.a, self.x_grid) / self.delta
+        self.phi_grid = voigtx(self.a, self.x_grid) / self.delta
         self.phi = interp1d(self.sigma_grid, self.phi_grid)
 
         print("PARAMETER DICT")
@@ -123,13 +123,11 @@ def read_bin(path):
 
     return mu, x, time
 
-
-def voigtx_fast(a, x):
-    return a / np.pi / (0.01 + x**2)
-
-  #np.exp(-x**2) / np.sqrt(np.pi) + a / np.pi / (0.01 + x**2)
-
 def voigtx(a, x):
+    # Just damping wing
+    #return a / np.pi / (0.01 + x**2)
+
+    # Full
     z = x + a*1j
     H = np.real(wofz(z))
     line_profile = H/np.sqrt(np.pi)

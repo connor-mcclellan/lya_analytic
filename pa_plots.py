@@ -4,7 +4,7 @@ from scipy.interpolate import interp1d
 import math
 import numpy as np
 import astropy.constants as c
-from solutions.util import read_bin, voigtx_fast, Line, Params, scinot, midpoint_diff, voigtx
+from solutions.util import read_bin, Line, Params, scinot, midpoint_diff, voigtx
 from solutions import ftsoln
 from solutions import fits
 from solutions.prob_ct_tau import prob_ct_tau
