@@ -52,8 +52,10 @@ if __name__ == "__main__":
         xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, a, tau0 = bin_x(x, 64, mytitle, filename, tau0, xinit, temp, radius, L, delta, a, p, mcgrid=True)
         h0_minus_mc = hsp_xuniform - count
 
-        ax.errorbar(xc, h0_minus_mc, yerr=err, fmt='.', label=r'$H_0 - \rm MC$', alpha=alpha, c=color[2])
-        ax.plot(xuniform, hh_xuniform, '-.', alpha=alpha, c=color[1], label=r'$H_{\rm bc}$')
+        tauscale = np.cbrt(a * tau0)
+
+        ax.errorbar(xc/tauscale, h0_minus_mc*tauscale, yerr=err, fmt='.', label=r'$H_0 - \rm MC$', alpha=alpha, c=color[2])
+        ax.plot(xuniform/tauscale, hh_xuniform*tauscale, '-.', alpha=alpha, c=color[1], label=r'$H_{\rm bc}$')
     plt.legend()
     plt.show()
         
