@@ -47,7 +47,7 @@ def get_input_info(filename):
         x_init), np.float(prob_abs), np.float(rmax)
 
 
-def bin_x(x, n, mytitle, filename, tau0, xinit, temp, radius, L, delta, a, p):
+def bin_x(x, n, mytitle, filename, tau0, xinit, temp, radius, L, delta, a, p, mcgrid=False):
     count = np.zeros(n)
     x0 = 2.0 * (a * tau0)**0.333
     # n bins, n+1 bin edges
@@ -105,7 +105,10 @@ def bin_x(x, n, mytitle, filename, tau0, xinit, temp, radius, L, delta, a, p):
 
     # Apply interpolation to uniformly distributed x values, divide by line
     # profile at those x positions
-    hsp_xuniform = hsp_interp(xuniform) / phix_xuniform
+    if mcgrid:
+        hsp_xuniform = hsp_interm(xc) / phix_xc
+    else:
+        hsp_xuniform = hsp_interp(xuniform) / phix_xuniform
     hp_xuniform = hp_interp(xuniform) / phix_xuniform
     hh_xuniform = hh_interp(xuniform) / phix_xuniform
 
