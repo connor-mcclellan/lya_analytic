@@ -132,19 +132,20 @@ def bin_x(x, n, mytitle, filename, tau0, xinit, temp, radius, L, delta, a, p):
 #    return (x_ft, Hp_ft*norm, Hsp_ft*norm, Hh_ft*norm, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, a, tau0)
 
 
-def residual_plot(xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, logscale=False):
+def residual_plot(xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, a, tau, logscale=False):
 
 #    color = plt.cm.coolwarm(np.arange(4)/3)
-    color = ['b', 'r', 'purple', 'gray']
-    alpha = 0.7
+    color = ['xkcd:darkish red', 'xkcd:darkish green', 'xkcd:golden rod', 'xkcd:blue', 'xkcd:grey']
+    alpha = 0.8
 
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True, gridspec_kw={'height_ratios': [2, 2, 1]}, figsize=(7, 5))
 
     # Top left panel: linear-scale solutions
     ax1.axvline(xinit, c=color[4], lw=1, alpha=0.5)
+    ax1.plot(xuniform, hsp_xuniform, '-', label=r'$H_0$', alpha=alpha, c=color[2], linewidth=1)
     ax1.plot(xuniform, hp_xuniform, '--', label=r'$H_{\rm d}$', alpha=alpha, c=color[0], linewidth=1)
-    ax1.plot(xuniform, hsp_xuniform + hh_xuniform, '-', label=r'$H_{\rm 0+bc}$', alpha=alpha, c=color[1], linewidth=1)
-    ax1.plot(xuniform, hsp_xuniform, '-.', label=r'$H_0$', alpha=alpha, c=color[2], linewidth=1)
+    ax1.plot(xuniform, hsp_xuniform + hh_xuniform, '-.', label=r'$H_{\rm 0+bc}$', alpha=alpha, c=color[1], linewidth=1)
+
     ax1.errorbar(xc, count, yerr=err, fmt='.', label="MC", alpha=0.75, ms=3., c='k', elinewidth=0.25, capsize=0.5)
 
     ax1.text(xinit+0.5, 0.03, r'x$_{\rm init}$', rotation=90, fontsize=8)
@@ -156,9 +157,9 @@ def residual_plot(xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, e
     ax1.legend(bbox_to_anchor=(1.04, 0.8), loc='upper left', fontsize='x-small', frameon=False)
 
     # Top right panel: log-scale solutions
+    ax2.plot(xuniform, hsp_xuniform, '-', label=r'$H_0$', alpha=alpha, c=color[2], linewidth=1)
     ax2.plot(xuniform, hp_xuniform, '--', label=r'$H_{\rm d}$', alpha=alpha, c=color[0], linewidth=1)
-    ax2.plot(xuniform, hsp_xuniform + hh_xuniform, '-', label=r'$H_{\rm 0+bc}$', alpha=alpha, c=color[1], linewidth=1)
-    ax2.plot(xuniform, hsp_xuniform, '-.', label=r'$H_0$', alpha=alpha, c=color[2], linewidth=1)
+    ax2.plot(xuniform, hsp_xuniform + hh_xuniform, '-.', label=r'$H_{\rm 0+bc}$', alpha=alpha, c=color[1], linewidth=1)
     ax2.errorbar(xc, count, yerr=err, fmt='.', label="MC", alpha=0.75, ms=3., c='k', elinewidth=0.25, capsize=0.5)
     ax2.axvline(xinit, c=color[4], lw=1, alpha=0.5)
     ax2.set_xlim((min(xc)-2, max(xc)+2))
@@ -174,9 +175,10 @@ def residual_plot(xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, e
     # Bottom left panel: linear-scale residuals
 #    ax3.set_ylim((-0.1, 1))
     ax3.axvline(xinit, c=color[4], lw=1, alpha=0.5)
+    ax3.plot(xc, hsp_interp(xc)/phix_xc - count, '.', label=r'$H_{0} - \rm MC$', alpha=alpha, c=color[2], linewidth=1, marker='o', markersize=2)
     ax3.plot(xc, hp_interp(xc)/phix_xc - count, '.', label=r'$H_{\rm d} - \rm MC$', alpha=alpha, c=color[0], linewidth=1, marker='^', markersize=2)
     ax3.plot(xc, (hsp_interp(xc) + hh_interp(xc))/phix_xc - count, '.', label=r'$H_{\rm 0 + bc} - \rm MC$', alpha=alpha, c=color[1], linewidth=1, marker='s', markersize=2)
-    ax3.plot(xc, hsp_interp(xc)/phix_xc - count, '.', label=r'$H_{0} - \rm MC$', alpha=alpha, c=color[2], linewidth=1, marker='o', markersize=2)
+
 
     ax3.grid(linestyle='--', alpha=0.25)
     ax3.set_xlabel(r'$x$')
@@ -281,7 +283,7 @@ def multiplot_time(tc, t0, tau0):
 
 if __name__ == '__main__':
 
-    filename = '1M tau0_10000000.0_xinit_6.0_temp_10000.0_probabs_0.0'
+    filename = '1M tau0_10000000.0_xinit_0.0_temp_10000.0_probabs_0.0'
     data_dir = '/home/connor/Documents/lya_analytic/data/'+filename+'/'
 #    Path("./plots/"+filename).mkdir(parents=True, exist_ok=True)
 
@@ -306,10 +308,10 @@ if __name__ == '__main__':
     if generate_new:
         mu, x, time = np.load(data_dir + 'mu_x_time.npy')  
         binx_output = bin_x(x, 64, mytitle, filename, tau0, xinit, temp, radius, L, delta, a, p)
-        pickle.dump(binx_output, open('binx_output_xinit{:.1f}.p'.format(xinit), 'wb'))
+#        pickle.dump(binx_output, open('binx_output_xinit{:.1f}.p'.format(xinit), 'wb'))
         residual_plot(*binx_output)
     else:
-        binx_output = pickle.load(open('binx_output_xinit{:.1f}.p'.format(xinit), 'rb'))
+        binx_output = pickle.load(open('binx_output_tau{:.1f}.p'.format(tau0), 'rb'))
         residual_plot(*binx_output)
     # Test convergence of solution
 #    print('RMS Deviation: ', rms_error(mc, soln))
