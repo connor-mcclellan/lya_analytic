@@ -11,6 +11,8 @@ import astropy.constants as c
 import pdb
 import matplotlib.pyplot as plt
 import matplotlib.pylab as pl
+from matplotlib.patches import Patch
+from matplotlib.lines import Line2D
 
 
 # Line parameters object
@@ -32,6 +34,7 @@ if __name__ == "__main__":
     outputs = []
 
     fig, ax = plt.subplots(1, 1, figsize=(7, 5))
+    colorlegend = []
 
     for i, filename in enumerate(filenames):
         # Load input parameters for the monte carlo data
@@ -64,9 +67,17 @@ if __name__ == "__main__":
 
         tauscale = np.cbrt(a * tau0)
 
-        ax.errorbar(xc/tauscale, mc_minus_h0*tauscale**2, yerr=err, fmt='.', label=r'$H_0 - \rm MC$, $\tau_0=${}'.format(scinot(tau0)), alpha=alpha, c=colors[i])
-        ax.plot(xuniform/tauscale, hh_xuniform*tauscale**2, '--', alpha=alpha, c=colors[i], label=r'$H_{{\rm bc}}$, $\tau_0=${}'.format(scinot(tau0)))
+        ax.errorbar(xc/tauscale, mc_minus_h0*tauscale**2, fmt='+', label=r'$H_0 - \rm MC$, $\tau_0=${}'.format(scinot(tau0)), alpha=alpha, c=colors[i])
+        ax.plot(xuniform/tauscale, hh_xuniform*tauscale**2, '-', alpha=alpha, c=colors[i], label=r'$H_{{\rm bc}}$, $\tau_0=${}'.format(scinot(tau0)))
+        colorlegend.append(Patch(facecolor=colors[i], label=r'$\tau_0=${}'.format(scinot(tau0))))
 
-    plt.legend()
+    formatlegend = [Line2D([], [], color='k', label=r'$H_{\rm bc}$'), Line2D([], [], linestyle='', marker='+', color='k', label='MC - $H_0$')]
+    plt.xlim((-2.8, 2.8))
+    clegend = plt.legend(handles=colorlegend, loc='lower right')
+    plt.legend(handles=formatlegend, loc='upper right')
+    plt.gca().add_artist(clegend)
+    plt.xlabel(r'$x (a\tau_0)^{-1/3}$')
+    plt.ylabel(r'$(a\tau_0)^{2/3}P(x)$')
     plt.show()
+
         
