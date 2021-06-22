@@ -5,7 +5,7 @@ from scipy import integrate as integrate
 from scipy.special import spherical_in
 from scipy import interpolate
 from scipy import linalg
-from solutions.util import voigtx
+from solutions.util import voigtx, midpoint_diff
 import matplotlib.pyplot as plt
 import pdb
 from astropy.utils.console import ProgressBar
@@ -110,6 +110,7 @@ def get_arrays_uniform_in_x():
   sigma=np.zeros(x.size)
   for i in range(x.size):
     sigma[i]=get_sigma(x[i])		# uses numerical integration and is slow
+  dsigma = midpoint_diff(sigma)
 
 # slow version with numerical integration for sigma(x) and then interpolation
 def get_arrays_uniform_in_sigma_slow():
@@ -154,7 +155,17 @@ def get_s():                       # assumes sigma array is evenly spaced, from 
   s=np.zeros(n)
   for j in range(n):
     s[j]=-smax + ds*j
+  pdb.set_trace()
 
+
+def get_s_nonuniform():
+  global n, dsigma, sigma
+  global s, ds
+  ds = 2.0*np.pi/(n*midpoint_diff(sigma))
+  smax = np.pi*(n-1)**2/(2*n*np.abs(sigma[0]))
+  s = np.concatenate((np.array([-smax]), -smax + np.cumsum(ds[1:])))
+  pdb.set_trace()
+  dsigma = midpoint_diff(sigma)
 ##########################################################################################################
 
 
@@ -287,6 +298,7 @@ def get_homo_soln_fast():
   rat = di0/i0
 
   # Construct matrix using array operations
+  pdb.set_trace()
   M=(ds/2.0/np.pi)*np.exp(1j*s[:]*sigma[:, None])*(1.0+np.abs(s[:])*rat/np.sqrt(3.0)/phix[:, None])
 
   # Divide each row by the max value in that row
@@ -384,11 +396,12 @@ def ftsoln_wrapper(tau0_in,xi_in,temp_in,radius_in,L_in):
   init()
   sigmai = beta*xi_in**3/a # get_sigma(xi_in)
   norm = 4.0*np.pi*radius_in**2.*delta*4.0*np.pi/L_in
-  get_arrays_uniform_in_sigma_slow()
-
+#  get_arrays_uniform_in_sigma_slow()
+  get_arrays_uniform_in_x()
   #get_arrays_uniform_in_sigma_fast()
   phix = voigtx(a, x)
-  get_s()
+#  get_s()
+  get_s_nonuniform()
   particular_solution(radius)
   #surface_solution_numerical()
   surface_solution_analytic()
