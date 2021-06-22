@@ -5,6 +5,7 @@
 
 from pa_plots import bin_x, comparison_plot, get_input_info
 from solutions.util import read_bin, Line, Params, scinot
+import solutions.ftsoln as ftsoln
 import pickle
 import numpy as np
 import astropy.constants as c
@@ -70,6 +71,16 @@ if __name__ == "__main__":
         ax.errorbar(xc/tauscale, mc_minus_h0*tauscale**2, fmt='+', label=r'$H_0 - \rm MC$, $\tau_0=${}'.format(scinot(tau0)), alpha=alpha, c=colors[i])
         ax.plot(xuniform/tauscale, hh_xuniform*tauscale**2, '-', alpha=alpha, c=colors[i], label=r'$H_{{\rm bc}}$, $\tau_0=${}'.format(scinot(tau0)))
         colorlegend.append(Patch(facecolor=colors[i], label=r'$\tau_0=${}'.format(scinot(tau0))))
+
+    ### PLOT ADDITIONAL THEORY LINES
+#    for i, tau in enumerate([1e4, 1e8, 1e9]):
+#        tau0, xinit, temp, radius, L = (tau, 0.0, 1e4, 1e11, 1.)
+#        x_ft, sigma_ft, Jp_ft, Hp_ft, Jsp_ft, Hsp_ft, Jh_ft, Hh_ft = ftsoln.ftsoln_wrapper(tau0, xinit, temp, radius, L)
+#        norm = 4.0 * np.pi * radius**2 * p.delta * 4.0 * np.pi / L
+#        tauscale = np.cbrt(a * tau0)
+#        ax.plot(x_ft/tauscale, norm*Hh_ft*tauscale**2, alpha=alpha, c=color[i])
+#        colorlegend.append(Patch(facecolor=color[i], label=r'$\tau_0=${}'.format(scinot(tau0))))
+
 
     formatlegend = [Line2D([], [], color='k', label=r'$H_{\rm bc}$'), Line2D([], [], linestyle='', marker='+', color='k', label='MC - $H_0$')]
     plt.xlim((-2.8, 2.8))
