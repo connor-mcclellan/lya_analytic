@@ -21,7 +21,7 @@ lya = Line(1215.6701, 0.4164, 6.265e8)
 
 color = ['xkcd:darkish red', 'xkcd:darkish green', 'xkcd:golden rod', 'xkcd:blue', 'xkcd:grey']
 alpha = 0.8
-generate_new = False
+generate_new = True
 
 if __name__ == "__main__":
 
@@ -81,7 +81,7 @@ if __name__ == "__main__":
         ax.plot(x_ft/tauscale, norm*Hh_ft*tauscale**2, alpha=alpha, c=colors[i])
         colorlegend.append(Patch(facecolor=colors[i], label=r'$\tau_0=${}'.format(scinot(tau0))))
 
-
+    pdb.set_trace()
     formatlegend = [Line2D([], [], color='k', label=r'$H_{\rm bc}$'), Line2D([], [], linestyle='', marker='+', color='k', label='MC - $H_0$')]
     plt.xlim((-2.8, 2.8))
     clegend = plt.legend(handles=colorlegend, loc='lower right')

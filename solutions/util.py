@@ -125,13 +125,13 @@ def read_bin(path):
 
 def voigtx(a, x):
     # Just damping wing
-    #return a / np.pi / (0.01 + x**2)
+    return a / np.pi / (0.01 + x**2)
 
     # Full
-    z = x + a*1j
-    H = np.real(wofz(z))
-    line_profile = H/np.sqrt(np.pi)
-    return line_profile
+    #z = x + a*1j
+    #H = np.real(wofz(z))
+    #line_profile = H/np.sqrt(np.pi)
+    #return line_profile
 
 def tanf(x, tau):
     return np.tan(x) - x / (1. - 1.5 * tau)
