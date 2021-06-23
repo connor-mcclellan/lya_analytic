@@ -211,7 +211,7 @@ def comparison_plot(*args, tauax=True, divergent=True):
         axi.text(0.85, 0.85, r'$\tau_0=${}'.format(scinot(tau0)), fontsize=8, transform=axi.transAxes)
         axi.plot(xuniform/tauscale, tauscale*hh_xuniform, ':', label=r'$H_{\rm bc}$', alpha=alpha, c=color[3], linewidth=1.5)
         if i==0:
-            axi.text((xinit+0.1)/tauscale, 0.07*tauscale, r'$\rm x_{\rm s}=\rm x_0$', rotation=90, fontsize=8)
+            axi.text((xinit+0.1)/tauscale, 0.07*tauscale, r'$\rm x_{\rm s}= 0$', rotation=90, fontsize=8)
             axi.legend(bbox_to_anchor=(1.04, 0.8), loc='upper left', fontsize='x-small', frameon=False)
         axi.set_xlim(((min(xc)-2)/tauscale, (max(xc)+2)/tauscale))
         axi.set_ylabel(r'$(a\tau_0)^{1/3}P(x)$') if tauax else axi.set_ylabel('$P(x)$')
