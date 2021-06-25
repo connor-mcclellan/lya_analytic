@@ -107,6 +107,7 @@ def bin_x(x, n, mytitle, filename, tau0, xinit, temp, radius, L, delta, a, p, mc
     # profile at those x positions
     if mcgrid:
         hsp_xuniform = hsp_interp(xc) / phix_xc
+        Hsp_ft = hsp_interp(xc) / phix_xc / norm
     else:
         hsp_xuniform = hsp_interp(xuniform) / phix_xuniform
     hp_xuniform = hp_interp(xuniform) / phix_xuniform
@@ -118,15 +119,15 @@ def bin_x(x, n, mytitle, filename, tau0, xinit, temp, radius, L, delta, a, p, mc
     ymax4 = np.amax(count)
     ymax = max([ymax1, ymax2, ymax3, ymax4]) * 1.1
     ymin = np.amin(Hh_ft * norm) * 1.1
-
-    return (xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, a, tau0)
-#    return (x_ft, Hp_ft*norm, Hsp_ft*norm, Hh_ft*norm, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, a, tau0)
+    pdb.set_trace()
+#    return (xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, a, tau0)
+    return (x_ft, Hp_ft*norm, Hsp_ft*norm, Hh_ft*norm, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, a, tau0)
 
 
 def residual_plot(xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, a, tau, logscale=False):
 
 #    color = plt.cm.coolwarm(np.arange(4)/3)
-    color = ['xkcd:darkish red', 'xkcd:darkish green', 'xkcd:golden rod', 'xkcd:blue', 'xkcd:grey']
+    color = ['xkcd:grey', 'xkcd:darkish green', 'xkcd:golden rod', 'xkcd:blue', 'xkcd:grey']
     alpha = 0.8
 
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True, gridspec_kw={'height_ratios': [2, 2, 1]}, figsize=(7, 5))
@@ -134,12 +135,12 @@ def residual_plot(xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, e
     # Top left panel: linear-scale solutions
     ax1.axvline(xinit, c=color[4], lw=1, alpha=0.5)
     ax1.plot(xuniform, hsp_xuniform, '-', label=r'$H_0$', alpha=alpha, c=color[2], linewidth=1)
-    ax1.plot(xuniform, hp_xuniform, '--', label=r'$H_{\rm d}$', alpha=alpha, c=color[0], linewidth=1)
+    ax1.plot(xuniform, hp_xuniform, '--', label=r'$H_{\rm d}$', alpha=alpha-0.2, c=color[0], linewidth=0.8)
     ax1.plot(xuniform, hsp_xuniform + hh_xuniform, '-.', label=r'$H_{\rm 0+bc}$', alpha=alpha, c=color[1], linewidth=1)
 
     ax1.errorbar(xc, count, yerr=err, fmt='.', label="MC", alpha=0.75, ms=3., c='k', elinewidth=0.25, capsize=0.5)
 
-    ax1.text(xinit+0.5, 0.03, r'x$_{\rm init}$', rotation=90, fontsize=8)
+    ax1.text(xinit+0.5, 0.02, r'x$_{\rm s} = 0.0$', rotation=90, fontsize=8, color='gray')
     ax1.set_xlim((min(xc)-2, max(xc)+2))
     ax1.set_ylabel(r'$P(x)$')
     ax1.grid(linestyle='--', alpha=0.25)
@@ -166,9 +167,9 @@ def residual_plot(xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, e
     # Bottom left panel: linear-scale residuals
 #    ax3.set_ylim((-0.1, 1))
     ax3.axvline(xinit, c=color[4], lw=1, alpha=0.5)
-    ax3.plot(xc, hsp_interp(xc)/phix_xc - count, '.', label=r'$H_{0} - \rm MC$', alpha=alpha, c=color[2], linewidth=1, marker='o', markersize=2)
-    ax3.plot(xc, hp_interp(xc)/phix_xc - count, '.', label=r'$H_{\rm d} - \rm MC$', alpha=alpha, c=color[0], linewidth=1, marker='^', markersize=2)
-    ax3.plot(xc, (hsp_interp(xc) + hh_interp(xc))/phix_xc - count, '.', label=r'$H_{\rm 0 + bc} - \rm MC$', alpha=alpha, c=color[1], linewidth=1, marker='s', markersize=2)
+    ax3.plot(xc, count - hsp_interp(xc)/phix_xc, '.', label=r'$\rm MC - H_{0}$', alpha=alpha, c=color[2], linewidth=1, marker='o', markersize=2)
+    ax3.plot(xc, count - hp_interp(xc)/phix_xc, '.', label=r'$\rm MC - H_{\rm d}$', alpha=alpha, c=color[0], linewidth=1, marker='^', markersize=2)
+    ax3.plot(xc, count - (hsp_interp(xc) + hh_interp(xc))/phix_xc, '.', label=r'$\rm MC - H_{\rm 0 + bc}$', alpha=alpha, c=color[1], linewidth=1, marker='s', markersize=2)
 
 
     ax3.grid(linestyle='--', alpha=0.25)
@@ -203,6 +204,13 @@ def comparison_plot(*args, tauax=True, divergent=True):
 
         #linear-scale solutions
         axi.axvline(xinit, c=color[4], lw=1, alpha=0.5)
+        if not tauax:
+            ypos = 0.002 if i==2 else 0.025
+            xpos = xinit+0.5
+        else:
+            ypos = 0.5
+            xpos = 0.05
+        axi.text(xpos, ypos, r'$\rm x_{{\rm s}}= {:.1f}$'.format(xinit), rotation=90, fontsize=8, color='gray')
         if divergent:
             axi.plot(xuniform/tauscale, tauscale*hp_xuniform, '--', label=r'$H_{\rm d}$', alpha=alpha, c=color[0], linewidth=1.5)
         axi.plot(xuniform/tauscale, tauscale*hsp_xuniform, '-', label=r'$H_0$', alpha=alpha, c=color[2], linewidth=1.5)
@@ -211,12 +219,12 @@ def comparison_plot(*args, tauax=True, divergent=True):
         axi.text(0.85, 0.85, r'$\tau_0=${}'.format(scinot(tau0)), fontsize=8, transform=axi.transAxes)
         axi.plot(xuniform/tauscale, tauscale*hh_xuniform, ':', label=r'$H_{\rm bc}$', alpha=alpha, c=color[3], linewidth=1.5)
         if i==0:
-            axi.text((xinit+0.1)/tauscale, 0.07*tauscale, r'$\rm x_{\rm s}= 0$', rotation=90, fontsize=8)
             axi.legend(bbox_to_anchor=(1.04, 0.8), loc='upper left', fontsize='x-small', frameon=False)
+
         axi.set_xlim(((min(xc)-2)/tauscale, (max(xc)+2)/tauscale))
         axi.set_ylabel(r'$(a\tau_0)^{1/3}P(x)$') if tauax else axi.set_ylabel('$P(x)$')
         axi.grid(linestyle='--', alpha=0.25)
-        axi.set_ylim((-.3, 1.2)) if tauax else axi.set_ylim((-.01, 0.06)) 
+        axi.set_ylim((-.2, 1.0)) if tauax else axi.set_ylim((-.01, 0.06)) 
         #axi.set_yscale('log')
 
     plt.xlabel(r'$x (a\tau_0)^{-1/3}$') if tauax else plt.xlabel('$x$')
@@ -279,7 +287,7 @@ if __name__ == '__main__':
 #    Path("./plots/"+filename).mkdir(parents=True, exist_ok=True)
 
 
-    generate_new = False
+    generate_new = True
 
     lya = Line(1215.6701, 0.4164, 6.265e8)
     p = Params(line=lya, temp=1e4, tau0=1e7, 

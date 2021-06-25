@@ -26,11 +26,12 @@ generate_new = True
 if __name__ == "__main__":
 
     filenames = [
-       'tau0_100000.0_xinit_0.0_temp_10000.0_probabs_0.0',
+       '1M tau0_100000.0_xinit_0.0_temp_10000.0_probabs_0.0',
+#       'tau0_100000.0_xinit_0.0_temp_10000.0_probabs_0.0',
        '1M tau0_1000000.0_xinit_0.0_temp_10000.0_probabs_0.0',
        '1M tau0_10000000.0_xinit_0.0_temp_10000.0_probabs_0.0',
     ]
-    colors = pl.cm.viridis_r(np.linspace(1/3, 1, 7))
+    colors = pl.cm.viridis_r(np.linspace(1/3, 1, 3))
     data_dir = '/home/connor/Documents/lya_analytic/data/'
     outputs = []
 
@@ -68,20 +69,19 @@ if __name__ == "__main__":
 
         tauscale = np.cbrt(a * tau0)
 
-#        ax.errorbar(xc/tauscale, mc_minus_h0*tauscale**2, fmt='+', label=r'$H_0 - \rm MC$, $\tau_0=${}'.format(scinot(tau0)), alpha=alpha, c=colors[i])
-#        ax.plot(xuniform/tauscale, hh_xuniform*tauscale**2, '-', alpha=alpha, c=colors[i], label=r'$H_{{\rm bc}}$, $\tau_0=${}'.format(scinot(tau0)))
-#        colorlegend.append(Patch(facecolor=colors[i], label=r'$\tau_0=${}'.format(scinot(tau0))))
-
-    ### PLOT ADDITIONAL THEORY LINES
-    for i, tau in enumerate([1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10]):
-        tau0, xinit, temp, radius, L = (tau, 0.0, 1e4, 1e11, 1.)
-        x_ft, sigma_ft, Jp_ft, Hp_ft, Jsp_ft, Hsp_ft, Jh_ft, Hh_ft = ftsoln.ftsoln_wrapper(tau0, xinit, temp, radius, L)
-        norm = 4.0 * np.pi * radius**2 * p.delta * 4.0 * np.pi / L
-        tauscale = np.cbrt(a * tau0)
-        ax.plot(x_ft/tauscale, norm*Hh_ft*tauscale**2, alpha=alpha, c=colors[i])
+        ax.errorbar(xc/tauscale, mc_minus_h0*tauscale**2, fmt='+', label=r'$H_0 - \rm MC$, $\tau_0=${}'.format(scinot(tau0)), alpha=alpha, c=colors[i])
+        ax.plot(xuniform/tauscale, hh_xuniform*tauscale**2, '-', alpha=alpha, c=colors[i], label=r'$H_{{\rm bc}}$, $\tau_0=${}'.format(scinot(tau0)), marker='s', ms=1, lw=1)
         colorlegend.append(Patch(facecolor=colors[i], label=r'$\tau_0=${}'.format(scinot(tau0))))
 
-    pdb.set_trace()
+    ### PLOT ADDITIONAL THEORY LINES
+#    for i, tau in enumerate([1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10]):
+#        tau0, xinit, temp, radius, L = (tau, 0.0, 1e4, 1e11, 1.)
+#        x_ft, sigma_ft, Jp_ft, Hp_ft, Jsp_ft, Hsp_ft, Jh_ft, Hh_ft = ftsoln.ftsoln_wrapper(tau0, xinit, temp, radius, L)
+#        norm = 4.0 * np.pi * radius**2 * p.delta * 4.0 * np.pi / L
+#        tauscale = np.cbrt(a * tau0)
+#        ax.plot(x_ft/tauscale, norm*Hh_ft*tauscale**2, alpha=alpha, c=colors[i])
+#        colorlegend.append(Patch(facecolor=colors[i], label=r'$\tau_0=${}'.format(scinot(tau0))))
+
     formatlegend = [Line2D([], [], color='k', label=r'$H_{\rm bc}$'), Line2D([], [], linestyle='', marker='+', color='k', label='MC - $H_0$')]
     plt.xlim((-2.8, 2.8))
     clegend = plt.legend(handles=colorlegend, loc='lower right')
