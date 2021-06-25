@@ -308,7 +308,7 @@ def get_homo_soln_fast():
   check=np.dot(M,amp)
 
   Jh = np.sum((ds/2.0/np.pi)*np.exp(1j*s[:]*sigma[:, None])*amp[:], axis=1)
-  Hh = np.sum((ds/2.0/np.pi)*np.exp(1j*s[:]*sigma[:, None])*amp[:]*(-np.abs(s[:])/(3.0*phix[:, None]))*rat[:], axis=1)
+  Hh = np.sum((ds/2.0/np.pi)*np.exp(1j*s[:]*sigma[:, None])*amp[:]*(-np.abs(s[:])/(3.0*phix_full[:, None]))*rat[:], axis=1)
   return Jh, Hh
 
 def test_full_solution_linear(filename):
