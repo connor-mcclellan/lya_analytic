@@ -119,7 +119,7 @@ def bin_x(x, n, mytitle, filename, tau0, xinit, temp, radius, L, delta, a, p, mc
     ymax4 = np.amax(count)
     ymax = max([ymax1, ymax2, ymax3, ymax4]) * 1.1
     ymin = np.amin(Hh_ft * norm) * 1.1
-    pdb.set_trace()
+
 #    return (xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, a, tau0)
     return (x_ft, Hp_ft*norm, Hsp_ft*norm, Hh_ft*norm, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, a, tau0)
 

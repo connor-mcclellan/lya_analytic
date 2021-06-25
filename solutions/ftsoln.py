@@ -5,7 +5,7 @@ from scipy import integrate as integrate
 from scipy.special import spherical_in
 from scipy import interpolate
 from scipy import linalg
-from solutions.util import voigtx, midpoint_diff
+from solutions.util import voigtx, voigtx_full, midpoint_diff
 import matplotlib.pyplot as plt
 import pdb
 from astropy.utils.console import ProgressBar
@@ -168,12 +168,12 @@ def get_s_nonuniform():
 
 
 def particular_solution(r):
-  global kx,sigma,sigmai,L,delta,phix
+  global kx,sigma,sigmai,L,delta,phix_full
   global Jp,Hp
   r4sq = (kx*r)**2 + (sigma-sigmai)**2
   Jprefac = np.sqrt(6.0)/(16.0*np.pi**3) * kx**2*L/delta
   Jp = Jprefac / r4sq
-  Hp = 1.0/(3.0*kx*phix)*Jprefac*(2.0*r*kx**2) / r4sq**2
+  Hp = 1.0/(3.0*kx*phix_full)*Jprefac*(2.0*r*kx**2) / r4sq**2
 
 def test_particular_solution():
   global x,Jp,Hp
@@ -193,7 +193,7 @@ def f_surf(z):
   return f
 
 def surface_solution_numerical():  # inward extension of J=-J_p at r=R.
-  global n,Jp,kx,L,delta,radius,s,sigmai,phix
+  global n,Jp,kx,L,delta,radius,s,sigmai,phix_full
   global Js,Jscheck,Hs
 
   Js=-Jp
@@ -210,22 +210,22 @@ def surface_solution_numerical():  # inward extension of J=-J_p at r=R.
       i0=spherical_in(0,z,derivative=False)
       di0=spherical_in(0,z,derivative=True)
       rat = di0/i0
-      Hs[i]=Hs[i]+(ds/2.0/np.pi)*np.exp(1j*s[j]*sigma[i])*amps[j]*(-np.abs(s[j])*rat/3.0/phix[i])
+      Hs[i]=Hs[i]+(ds/2.0/np.pi)*np.exp(1j*s[j]*sigma[i])*amps[j]*(-np.abs(s[j])*rat/3.0/phix_full[i])
       Jscheck[i]=Jscheck[i]+(ds/2.0/np.pi)*np.exp(1j*s[j]*sigma[i])*amps[j]
       pb.update()
 
 def surface_solution_analytic():
-  global n,Jp,kx,L,delta,radius,sigmai,phix
+  global n,Jp,kx,L,delta,radius,sigmai,phix_full
   global Hs_analytic,Hsp_analytic,Jsp_analytic 
 
   Jprefac = np.sqrt(6.0)/(16.0*np.pi**3) * kx**2*L/delta
   Hs_analytic = np.zeros(n,dtype=np.double)
-  Hs_analytic_prefac = Jprefac/(3.0*phix*(kx*radius)**3)
-  z = (sigma-sigmai)/(kx*radius)  # CM: Where is sigma coming from? It's not a global
+  Hs_analytic_prefac = Jprefac/(3.0*phix_full*(kx*radius)**3)
+  z = (sigma-sigmai)/(kx*radius)
   Js_analytic = -Jp
   Hs_analytic = Hs_analytic_prefac * f_surf( z )
   Jsp_analytic=np.zeros(n)
-  Hsp_analytic = Jprefac/(3.0*phix) / (kx*radius)**3 * (np.pi**2/2.0)/(1.0+np.cosh(np.pi*z))
+  Hsp_analytic = Jprefac/(3.0*phix_full) / (kx*radius)**3 * (np.pi**2/2.0)/(1.0+np.cosh(np.pi*z))
   norm = 4.0*np.pi*radius**2.*delta*4.0*np.pi/L
 
 
@@ -254,7 +254,7 @@ def test_surface_particular_solution():
 ##########################################################################################################
 
 def get_homo_soln_slow():
-  global n,Hsp,kx,radius,s,ds,sigma,phix
+  global n,Hsp,kx,radius,s,ds,sigma,phix,phix_full
 
   b=np.zeros(n,dtype=np.cdouble)
   b=np.sqrt(3.0)*Hsp
@@ -282,11 +282,11 @@ def get_homo_soln_slow():
       di0=spherical_in(0,z,derivative=True)
       rat = di0/i0
       Jh[i]=Jh[i] + (ds/2.0/np.pi)*np.exp(1j*s[j]*sigma[i])*amp[j]
-      Hh[i]=Hh[i] + (ds/2.0/np.pi)*np.exp(1j*s[j]*sigma[i])*amp[j]*(-np.abs(s[j])/(3.0*phix[i]))*rat
+      Hh[i]=Hh[i] + (ds/2.0/np.pi)*np.exp(1j*s[j]*sigma[i])*amp[j]*(-np.abs(s[j])/(3.0*phix_full[i]))*rat
   return Jh, Hh
 
 def get_homo_soln_fast():
-  global n,Hsp,kx,radius,s,ds,sigma,phix
+  global n,Hsp,kx,radius,s,ds,sigma,phix,phix_full
 
   b=np.zeros(n,dtype=np.cdouble)
   b=np.sqrt(3.0)*Hsp
@@ -308,7 +308,7 @@ def get_homo_soln_fast():
   check=np.dot(M,amp)
 
   Jh = np.sum((ds/2.0/np.pi)*np.exp(1j*s[:]*sigma[:, None])*amp[:], axis=1)
-  Hh = np.sum((ds/2.0/np.pi)*np.exp(1j*s[:]*sigma[:, None])*amp[:]*(-np.abs(s[:])/(3.0*phix[:, None]))*rat[:], axis=1)
+  Hh = np.sum((ds/2.0/np.pi)*np.exp(1j*s[:]*sigma[:, None])*amp[:]*(-np.abs(s[:])/(3.0*phix_full[:, None]))*rat[:], axis=1)
   return Jh, Hh
 
 def test_full_solution_linear(filename):
@@ -376,7 +376,7 @@ def ftsoln_wrapper(tau0_in,xi_in,temp_in,radius_in,L_in):
   global tau0,sigmai,temp,radius,L
   global vth,delta,a,sigma0,numden,kx,beta
   global x,sigma,dsigma
-  global phix
+  global phix, phix_full
   global s,ds
   global Jp,Hp
   global Js,Jscheck,Hs
@@ -397,6 +397,7 @@ def ftsoln_wrapper(tau0_in,xi_in,temp_in,radius_in,L_in):
 #  get_arrays_uniform_in_x()
   #get_arrays_uniform_in_sigma_fast()
   phix = voigtx(a, x)
+  phix_full = voigtx_full(a, x)
   get_s()
 #  get_s_nonuniform()
   particular_solution(radius)
