@@ -68,7 +68,7 @@ class Params(object):
         print("PARAMETER DICT")
         print('==============')
         self.print_block(self)
-
+        pdb.set_trace()
     def print_block(self, obj, indent=0):
 
         if indent == 0:
