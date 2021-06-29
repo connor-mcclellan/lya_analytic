@@ -56,8 +56,6 @@ def waittime(Jsoln, ssoln, intJsoln, t, p):
 
 def line_profile(sigma, p):					# units of Hz^{-1}
     x = (np.abs(sigma) / p.c1)**(1.0 / 3.0)
-    # line_profile = ( np.exp(-x**2)/np.sqrt(np.pi) + p.a/np.pi/(0.01+x**2) )
-    # / p.Delta               # doppler and natural
     line_profile = p.a / np.pi / (x**2) / p.Delta
     return line_profile
 
