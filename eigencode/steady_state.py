@@ -7,6 +7,10 @@ from parameters import Parameters
 from util import construct_sol
 from scipy.interpolate import interp1d, CubicSpline
 from pathlib import Path
+import matplotlib
+matplotlib.rcParams['text.usetex'] = True
+matplotlib.rc('font', **{'family': 'serif',
+                         'serif': ['Computer Modern Roman']})
 import matplotlib.pyplot as plt
 import numpy as np
 import pdb
@@ -31,20 +35,21 @@ def fluence(sigma, p, Jsoln=None, ssoln=None, dijkstra=False):
     spec = np.zeros((p.nmax, np.shape(sigma)[0]))
     #spec_xuniform = np.zeros((p.nmax, np.shape(xuniform)[0]))
     phi = line_profile(sigma, p)
+#    norm = (4.0 * np.pi * p.radius**2 * 4.0 * np.pi / p.energy)
 
     if Jsoln is None and dijkstra is False:
         # STEADY STATE SOLUTION
         for n in range(1, p.nmax+1):
 
-            spec[n-1] = (                   ## FACTOR OF 2???
-                        -np.sqrt(6) * np.pi / 3. / p.k / p.Delta / phi
+            spec[n-1] = (
+                        np.sqrt(6) * np.pi / 3. / p.k / phi
                         * p.energy / p.radius * n * (-1)**n 
                         * np.exp(-n * np.pi * p.Delta / p.k / p.radius * np.abs(sigma))
                         )
 
     elif Jsoln is None and dijkstra is True:
         H0 = (
-             np.sqrt(6) * p.energy / (3. * p.k * phi) / 32 / np.pi / p.Delta
+             np.sqrt(6) * p.energy / (3. * p.k * phi) / 32 / np.pi
              / p.radius**3 / (np.cosh(np.pi * p.Delta / p.k / p.radius * sigma) + 1)
              )
         F = 4 * np.pi * H0
@@ -55,7 +60,7 @@ def fluence(sigma, p, Jsoln=None, ssoln=None, dijkstra=False):
         for n in range(1, p.nmax+1):
             for m in range(1, p.mmax+1):
                 spec[n-1] += (
-                             16. * np.pi**2 * p.radius
+                             16. * np.pi**2 * p.radius * p.Delta
                              / (3.0 * p.k * p.energy * phi) * (-1)**n
                              * Jsoln[n-1, m-1, :] / ssoln[n-1, m-1]
                              )
@@ -74,19 +79,20 @@ def mfluence(sigma, p, Jsoln=None, ssoln=None, dijkstra=False):
     spec = np.zeros((p.mmax, np.shape(sigma)[0]))
     #spec_xuniform = np.zeros((p.nmax, np.shape(xuniform)[0]))
     phi = line_profile(sigma, p)
+    norm = 1/(4.0 * np.pi * p.radius**2 * p.Delta * 4.0 * np.pi / p.energy)
 
     if Jsoln is None and dijkstra is False:
         # STEADY STATE SOLUTION
         for n in range(1, p.nmax+1):
             spec[0] += (                   ## FACTOR OF 2???
-                        -np.sqrt(6) * np.pi / 3. / p.k / p.Delta / phi
+                        - norm * np.sqrt(6) * np.pi / 3. / p.k / p.Delta / phi
                         * p.energy / p.radius * n * (-1)**n 
                         * np.exp(-n * np.pi * p.Delta / p.k / p.radius * np.abs(sigma))
                         )
 
     elif Jsoln is None and dijkstra is True:
         H0 = (
-             np.sqrt(6) * p.energy / (3. * p.k * phi) / 32 / np.pi / p.Delta
+             norm * np.sqrt(6) * p.energy / (3. * p.k * phi) / 32 / np.pi / p.Delta
              / p.radius**3 / (np.cosh(np.pi * p.Delta / p.k / p.radius * sigma) + 1)
              )
         F = 4 * np.pi * H0
@@ -97,7 +103,7 @@ def mfluence(sigma, p, Jsoln=None, ssoln=None, dijkstra=False):
         for n in range(1, p.nmax+1):
           for m in range(1, p.mmax+1):
               spec[m-1] += (
-                           16. * np.pi**2 * p.radius
+                           norm * 16. * np.pi**2 * p.radius
                            / (3.0 * p.k * p.energy * phi) * (-1)**n
                            * Jsoln[n-1, m-1, :] / ssoln[n-1, m-1]
                            )
@@ -110,27 +116,28 @@ if __name__ == '__main__':
     directory = Path('./data/210521_m500').resolve()
     Jsoln, ssoln, intJsoln, p = construct_sol(directory, nmax=20, mmax=500)
 
-    directory = Path('./data/210507_all').resolve()
-    Jsoln2, ssoln2, intJsoln2, p2 = construct_sol(directory, nmax=20, mmax=100)
+#    directory = Path('./data/210507_all').resolve()
+#    Jsoln2, ssoln2, intJsoln2, p2 = construct_sol(directory, nmax=20, mmax=100)
 
-    x_t2, tdep_spec2 = fluence(p2.sigma, p2, Jsoln=Jsoln2, ssoln=ssoln2)
+#    x_t2, tdep_spec2 = fluence(p2.sigma, p2, Jsoln=Jsoln2, ssoln=ssoln2)
     x_t, tdep_spec = fluence(p.sigma, p, Jsoln=Jsoln, ssoln=ssoln)
     x_s, steady_state = fluence(p.sigma, p)
     x_d, dijkstra = fluence(p.sigma, p, dijkstra=True)
 
     
-    for n in range(1, p.nmax):
+    for n in range(p.nmax-1, p.nmax):
         fig, ax = plt.subplots(1, 1)
-        ax.plot(x_s, np.abs(np.sum(steady_state[:n], axis=0)), '-', marker='s', ms=1, alpha=0.7, label='steady state'.format(n))
-        ax.plot(x_d, np.abs(dijkstra[0]), '-', marker='s', ms=1, alpha=0.7, label=r'dijkstra'.format(n))
-        ax.plot(x_t, np.abs(np.sum(tdep_spec[:n], axis=0)), 'r-', marker='o', ms=1, alpha=0.7, label=r'$n < 20$, $m < 500$'.format(n))
-        ax.plot(x_t2, np.abs(np.sum(tdep_spec2[:n], axis=0)), 'm--', marker='^', ms=1, alpha=0.7, label=r'$n < 20$, $m < 100$'.format(n))
+        ax.plot(x_t, np.abs(np.sum(tdep_spec[:n], axis=0)), '-', c='gray', marker='s', ms=2, lw=1, alpha=0.5, label='Time-integrated')
+        ax.plot(x_d, np.abs(dijkstra[0]), '-', c='purple', alpha=0.7, lw=3, label=r'Steady State'.format(n))
+        ax.plot(x_s, np.abs(np.sum(steady_state[:n], axis=0)), '--', c='c', lw=3, label='Steady State (Partial Sum)')
+#        ax.plot(x_t2, np.abs(np.sum(tdep_spec2[:n], axis=0)), 'm--', marker='^', ms=1, alpha=0.7, label=r'$n < 20$, $m < 100$'.format(n))
         #plt.yscale('log')
-        plt.ylim(1e-16, 1e-10)
-        plt.xlim(0, 30)
-        plt.title('abs val of sum to n={}'.format(n))
+        plt.ylim(-0.001, 0.05)
+        plt.xlim(8, 30)
+#        plt.title('abs val of sum to n={}'.format(n))
         plt.xlabel('x')
-        plt.legend()
+        plt.ylabel('P(x)')
+        plt.legend(loc=1)
         plt.tight_layout()
         plt.show()
         #plt.savefig('timedep_v_steadystate_n{:03d}.pdf'.format(n))

@@ -4,6 +4,8 @@ from constants import fundconst,lymanalpha
 from mc_visual import mc_wait_time
 from scipy.special import gamma
 import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.rcParams['text.usetex'] = True
 import numpy as np
 import pdb
 
@@ -14,7 +16,7 @@ la=lymanalpha()
 print('Monte Carlo...')
 mc_dir = '/home/connor/Documents/lya_analytic/data/1m_tau0_10000000.0_xinit_0.0_temp_10000.0_probabs_0.0/'
 (bincenters, n), _, _ = mc_wait_time(mc_dir)
-plt.scatter(bincenters, n, s=1, label='Monte Carlo')
+plt.scatter(bincenters, n, c='k', marker='+', label='Monte Carlo', alpha=0.7)
 
 # Eigenfunctions
 print('Loading eigenfunctions...')
@@ -26,13 +28,13 @@ tlc = p.radius/fc.clight
 print('Calculating wait time...')
 t = tlc * np.arange(0.1,140.0,0.1)
 P = waittime(Jsoln, ssoln, intJsoln, t, p)
-plt.plot(t/tlc, P*tlc, label='efunctions')
+plt.plot(t/tlc, P*tlc, label='$ \sum_{nm} P_{nm} \gamma_{nm} e^{-\gamma_{nm}t}$')
 
 # Exponential using lowest order eigenfrequency
 print('Plotting exponential falloff...')
 Pnmsoln = get_Pnm(ssoln, intJsoln, p)
 expfalloff = -ssoln[0, 0] * Pnmsoln[0, 0] * np.exp(ssoln[0, 0] * t) * p.Delta
-plt.plot(t/tlc, expfalloff*tlc, '--', label=r'$s_{00}P_{00}e^{s_{00} t}$')
+plt.plot(t/tlc, expfalloff*tlc, '--', label=r'$\gamma_{00}P_{00}e^{-\gamma_{00} t}$')
 
 tdiff = tlc * np.cbrt(p.a * p.tau0)
 
@@ -78,7 +80,7 @@ while True:
 print(a, b)
 fit2 = gammafunc(t, -a*tdiff*ssoln[0, 0], -b*ssoln[0, 0])
 #plt.plot(t/tlc, fit1*tlc, alpha=0.5, label='a=1')
-plt.plot(t/tlc, fit2*tlc, alpha=0.5, label='gamma distribution')
+plt.plot(t/tlc, fit2*tlc, alpha=0.5, label=r'$\Gamma(a, b)$', ls='-.')
 
 # Plotting
 plt.yscale('log')
