@@ -55,8 +55,7 @@ def waittime(Jsoln, ssoln, intJsoln, t, p):
     return P
 
 def line_profile(sigma, p):					# units of Hz^{-1}
-    x = (np.abs(sigma) / p.c1)**(1.0 / 3.0)
-    line_profile = p.a / np.pi / (x**2) / p.Delta
+    line_profile = (2 * p.a / 27 / np.pi)**(1./3) / (np.abs(sigma)**(2./3)) / p.Delta
     return line_profile
 
 def get_sigma_bounds(n, s, p):
