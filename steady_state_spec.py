@@ -17,7 +17,7 @@ if __name__ == "__main__":
     ]
 
     data_dir = '/home/connor/Documents/lya_analytic/data/'
-    generate_new = False
+    generate_new = True
     vary_tau = False
     outputs = []
 
@@ -31,7 +31,7 @@ if __name__ == "__main__":
         p = Params(line=lya, temp=temp, tau0=tau0,
                energy=1., R=radius, sigma_source=0., n_points=1e4)
         L = 1.0
-    
+        pdb.set_trace()
         mytitle = r'$\tau_0=${}'.format(scinot(tau0))+'\n'+r'$x_{{\rm init}}={:.1f}$'.format(xinit)+'\n'+'$T=${}'.format(scinot(temp))
 
         if generate_new:

@@ -120,8 +120,8 @@ def bin_x(x, n, mytitle, filename, tau0, xinit, temp, radius, L, delta, a, p, mc
     ymax = max([ymax1, ymax2, ymax3, ymax4]) * 1.1
     ymin = np.amin(Hh_ft * norm) * 1.1
 
-    return (xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, a, tau0)
-#    return (x_ft, Hp_ft*norm, Hsp_ft*norm, Hh_ft*norm, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, a, tau0)
+#    return (xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, a, tau0)
+    return (x_ft, Hp_ft*norm, Hsp_ft*norm, Hh_ft*norm, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, a, tau0)
 
 
 def residual_plot(xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, a, tau, logscale=False):
@@ -201,6 +201,7 @@ def comparison_plot(*args, tauax=True, divergent=True):
         axi = ax[i]
 
         tauscale = np.cbrt(a * tau0) if tauax else 1
+        tau_source = voigtx(a, xinit) * tau0
 
         #linear-scale solutions
         axi.axvline(xinit, c=color[4], lw=1, alpha=0.5)
@@ -217,16 +218,16 @@ def comparison_plot(*args, tauax=True, divergent=True):
         axi.plot(xuniform/tauscale, tauscale*(hsp_xuniform + hh_xuniform), '-.', label=r'$H_{\rm 0+bc}$', alpha=alpha, c=color[1], linewidth=1.5)
         axi.errorbar(xc/tauscale, tauscale*count, yerr=err, fmt='.', label="MC", alpha=0.75, ms=3., c='k', elinewidth=0.25, capsize=0.5)
         axi.text(0.85, 0.85, r'$\tau_0=${}'.format(scinot(tau0)), fontsize=8, transform=axi.transAxes)
-        axi.plot(xuniform/tauscale, tauscale*hh_xuniform, ':', label=r'$H_{\rm bc}$', alpha=alpha, c=color[3], linewidth=1.5)
+        axi.plot(xuniform/tauscale, np.abs(tauscale*hh_xuniform), ':', label=r'$H_{\rm bc}$', alpha=alpha, c=color[3], linewidth=1.5)
         if i==0:
             axi.legend(bbox_to_anchor=(1.04, 0.8), loc='upper left', fontsize='x-small', frameon=False)
 
         axi.set_xlim(((min(xc)-2)/tauscale, (max(xc)+2)/tauscale))
-        axi.set_ylabel(r'$(a\tau_0)^{1/3}P(x)$') if tauax else axi.set_ylabel('$P(x)$')
+        axi.set_ylabel(r'$(a\tau_0)^{1/3}P(x)$') if tauax else axi.set_ylabel('log $P(x)$')
         axi.grid(linestyle='--', alpha=0.25)
-        axi.set_ylim((-.2, 1.0)) if tauax else axi.set_ylim((-.01, .15)) 
-        #axi.set_yscale('log')
-
+        #axi.set_ylim((-.2, 1.0)) if tauax else axi.set_ylim((-.01, .15)) 
+        axi.set_yscale('log')
+        print('XINIT: {}    TAU SOURCE: {}'.format(xinit, tau_source))
     plt.xlabel(r'$x (a\tau_0)^{-1/3}$') if tauax else plt.xlabel('$x$')
     plt.subplots_adjust(top=0.97,
                         bottom=0.11,
