@@ -269,7 +269,19 @@ if __name__ == "__main__":
 
     Pnmsoln = get_Pnm(ssoln,p.sigma,Jsoln,p,intJdsigma=intJsoln)
     print("SUM OF PNMSOLN: {}".format(np.sum(Pnmsoln)))
-    pdb.set_trace()
+
+    m = np.arange(p.mmax)
+    plt.figure()
+    for n in range(1,p.nmax):
+        plt.plot(m,np.abs(Pnmsoln[n,:]),label=str(n))
+        plt.xlabel('mode number')
+        plt.ylabel(r'$|P_{nm}|$')
+    plt.plot(m,0.5/(m+1.0/8.0)**(2./3),'--',label=r'$m^{-2/3}$')
+    plt.legend(loc='best')
+    plt.yscale('log')
+    plt.xscale('log')
+    plt.show()
+
     times = p.radius/fc.clight * np.arange(0.1,140.0,0.1)
 #      wait_time_dist = wait_time_vs_time(ssoln,Pnmsoln,times,p) # Uncomment to produce Phil's plots
 
