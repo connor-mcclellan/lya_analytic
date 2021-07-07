@@ -31,7 +31,7 @@ def get_Pnm(ssoln,sigma,Jsoln,p,intJdsigma=None):
     Pnmsoln=np.zeros((p.nmax,p.mmax))
     for n in range(1,p.nmax+1):
       for i in range(1,p.mmax+1):
-        Pnmsoln[n-1,i-1] = np.sqrt(1.5) * 16.0*np.pi**2 * p.radius * p.Delta\
+        Pnmsoln[n-1,i-1] = np.sqrt(1.5) * 16.0*np.pi**2 * p.radius * p.Delta**2 \
                            / (3.0 * p.k * p.energy) * (-1.0)**(n) / ssoln[n-1, i-1]\
                            * intJdsigma[n-1,i-1]
   '''
@@ -267,7 +267,9 @@ if __name__ == "__main__":
     directory = Path('./data/210521_m500').resolve()
     Jsoln, ssoln, intJsoln, p = construct_sol(directory, 20, 500)
 
-    Pnmsoln = get_Pnm(ssoln,p.sigma,Jsoln,p)
+    Pnmsoln = get_Pnm(ssoln,p.sigma,Jsoln,p,intJdsigma=intJsoln)
+    print("SUM OF PNMSOLN: {}".format(np.sum(Pnmsoln)))
+    pdb.set_trace()
     times = p.radius/fc.clight * np.arange(0.1,140.0,0.1)
 #      wait_time_dist = wait_time_vs_time(ssoln,Pnmsoln,times,p) # Uncomment to produce Phil's plots
 
