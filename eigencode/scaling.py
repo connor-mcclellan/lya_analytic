@@ -6,65 +6,43 @@ matplotlib.rcParams['text.usetex']=True
 matplotlib.rcParams['mathtext.fontset'] = 'stix'
 matplotlib.rcParams['font.family'] = 'STIXGeneral'
 from wait_time import *
+import pdb
+from pathlib import Path
 
-
-filenames = [
-  './data/eigenmode_data_xinit0.0_tau1e5.npy',
-  './data/eigenmode_data_xinit0.0_tau1e6.npy',
-  './data/eigenmode_data_xinit0.0_tau1e7.npy',
-  './data/eigenmode_data_xinit0.0_tau1e8.npy',
+dirs = [
+  './data/lowestorder_tau1e5',
+  './data/lowestorder_tau1e6',
+  './data/lowestorder_tau1e7',
+  './data/lowestorder_tau1e8',
+  './data/lowestorder_tau1e9',
 ]
 
-data = np.zeros((4, len(filenames)))
-mcpoints = []
+data = np.zeros((4, len(dirs)))
+for k, directory in enumerate(dirs):
 
-for k, filename in enumerate(filenames):
-    array = np.load(filename, allow_pickle=True, fix_imports=True)
-    energy, temp, tau0, radius, alpha_abs, prob_dest, xsource, nmax, nsigma, nomega, tdiff, sigma, ssoln, Jsoln = array
+    directory = Path(directory).resolve()
+    Jsoln, ssoln, intJsoln, p = construct_sol(directory, 1, 1)
+    eigenfreq = ssoln[0][0]
 
-    taustr = filename.split('_tau')[-1].split('.npy')[0]
-    if taustr in ['1e7', '1e6']:
+    taustr = str(directory).split('_tau')[-1].split('.npy')[0]
+    if taustr in ['1e7', '1e6', '1e5']:
         mcdir = '/home/connor/Documents/lya_analytic/data/1M tau0_'+str(float(taustr))+'_xinit_0.0_temp_10000.0_probabs_0.0/'
-        tdata, _, _ = mc_wait_time(mcdir)
-        t, n = tdata
-        tpeak = t[np.argmax(n)]
-        taufloat = float(taustr)
-        mcpoints.append((taufloat, tpeak))
+        tdata, _, poly = mc_wait_time(mcdir)
+        #t, n = tdata
+        #plt.plot(t, n)
+        #plt.plot(t, np.exp(poly[1]) * np.exp(poly[0]*t))
+        #plt.yscale('log')
+        #plt.show()
 
-    ### For deprecated file format adjustment
-    nmax -= 1
-    ssoln = ssoln[1:]
-    Jsoln = Jsoln[1:]
-    ###
-
-    p = parameters(temp,tau0,radius,energy,xsource,alpha_abs,prob_dest,nsigma,nmax)
-    Pnmsoln = get_Pnm(ssoln,sigma,Jsoln,p)
-    times = p.radius/fc.clight * np.arange(0.1,140.0,0.1)
-
-    P = 0.0*times
-    for i in range(times.size):
-      t=times[i]
-      for n in range(1,p.nmax+1):
-        for m in range(0,20):
-          if any(np.isnan(Pnmsoln[n-1,m,:])):
-            continue
-          else:
-            P[i]=P[i] - np.sum(Pnmsoln[n-1,m,:])*ssoln[n-1,m]*np.exp(ssoln[n-1,m]*t)
-
-
-    data[0][k] = p.a*tau0 # Optical depth
-    data[1][k] = fc.clight/p.radius * times[np.argmax(P)] # Peak of distribution
-    data[2][k] = fc.clight/p.radius * 1/(-ssoln[0][0]) # Lowest order eigenfrequency
+    data[0][k] = p.a*p.tau0 # Optical depth
+    data[1][k] = 1/(-poly[0]) # Monte Carlo exponential fit
+    data[2][k] = fc.clight/p.radius * 1/(-eigenfreq) # Lowest order eigenfrequency
     data[3][k] = p.a
 
 norm = data[2][-1]/(fc.clight/p.radius*(data[0][-1])**(1./3))
 plt.plot(data[0]/data[3], norm*fc.clight/p.radius*(data[0])**(1./3), alpha=0.5, label=r'$t \propto (a\tau_0)^{1/3}$', ls=':', c='k')
-
-plt.plot(data[0]/data[3], data[1], '-', marker='^', ms=3, alpha=0.5, label='Wait Time Peak')
-plt.plot(data[0]/data[3], data[2], '-', marker='o', ms=3, alpha=0.5, label=r'$t_{10} = -(s_{10})^{-1}$')
-
-mcpoints = np.array(mcpoints)
-plt.scatter(mcpoints[:, 0], mcpoints[:, 1], label='Monte Carlo', marker='+')
+plt.plot(data[0]/data[3], data[2], '-', marker='o', ms=3, alpha=0.5, label=r'$(\gamma_{00})^{-1}$')
+plt.scatter(data[0][:3]/data[3][:3], data[1][:3], label='MC Falloff Fit', marker='+')
 
 #plt.plot(data[0], fc.clight/p.radius*(data[0])**(1./2), alpha=0.5, label=r'$t = (a\tau)^{1/2}$', ls=':', c='k')
 plt.xscale('log')
