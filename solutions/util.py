@@ -129,12 +129,10 @@ def voigtx(a, x):
 
 def voigtx_full(a, x):
     # Full
-
-    return a / np.pi / (0.01 + x**2)
-#    z = x + a*1j
-#    H = np.real(wofz(z))
-#    line_profile = H/np.sqrt(np.pi)
-#    return line_profile
+    z = x + a*1j
+    H = np.real(wofz(z))
+    line_profile = H/np.sqrt(np.pi)
+    return line_profile
 
 def tanf(x, tau):
     return np.tan(x) - x / (1. - 1.5 * tau)

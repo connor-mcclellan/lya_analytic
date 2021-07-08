@@ -2,9 +2,8 @@
 # solution for each spatial mode.
 
 from wait_time import get_Pnm
-from efunctions import line_profile
 from parameters import Parameters
-from util import construct_sol
+from util import construct_sol, line_profile
 from scipy.interpolate import interp1d, CubicSpline
 from pathlib import Path
 import matplotlib
@@ -35,6 +34,7 @@ def fluence(sigma, p, Jsoln=None, ssoln=None, dijkstra=False):
     spec = np.zeros((p.nmax, np.shape(sigma)[0]))
     #spec_xuniform = np.zeros((p.nmax, np.shape(xuniform)[0]))
     phi = line_profile(sigma, p)
+    pdb.set_trace()
 #    norm = (4.0 * np.pi * p.radius**2 * 4.0 * np.pi / p.energy)
 
     if Jsoln is None and dijkstra is False:

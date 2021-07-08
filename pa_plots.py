@@ -89,7 +89,7 @@ def bin_x(x, n, mytitle, filename, tau0, xinit, temp, radius, L, delta, a, p, mc
 
     # Make an array of uniformly spaced x-values (min, max, npoints)
     xuniform = np.linspace(np.min(x_ft), np.max(x_ft), len(x_ft))
-
+    pdb.set_trace()
     # Find sigma at each x-value
     sigma_xuniform = np.array([get_sigma(xpt) for xpt in xuniform])
 

@@ -8,9 +8,9 @@ import pdb
 if __name__ == "__main__":
 
     filenames = [
-      '1M tau0_1000000.0_xinit_0.0_temp_10000.0_probabs_0.0',
-      '1M tau0_1000000.0_xinit_6.0_temp_10000.0_probabs_0.0',
-      '1M tau0_1000000.0_xinit_12.0_temp_10000.0_probabs_0.0',
+      '1M tau0_10000000.0_xinit_0.0_temp_10000.0_probabs_0.0',
+      '1M tau0_10000000.0_xinit_6.0_temp_10000.0_probabs_0.0',
+      '1M tau0_10000000.0_xinit_12.0_temp_10000.0_probabs_0.0',
 #       '1M tau0_100000.0_xinit_0.0_temp_10000.0_probabs_0.0',
 #       '1M tau0_1000000.0_xinit_0.0_temp_10000.0_probabs_0.0',
 #       '1M tau0_10000000.0_xinit_0.0_temp_10000.0_probabs_0.0',
@@ -31,7 +31,7 @@ if __name__ == "__main__":
         p = Params(line=lya, temp=temp, tau0=tau0,
                energy=1., R=radius, sigma_source=0., n_points=1e4)
         L = 1.0
-        pdb.set_trace()
+
         mytitle = r'$\tau_0=${}'.format(scinot(tau0))+'\n'+r'$x_{{\rm init}}={:.1f}$'.format(xinit)+'\n'+'$T=${}'.format(scinot(temp))
 
         if generate_new:
