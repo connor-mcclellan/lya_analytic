@@ -9,74 +9,53 @@ from scipy.interpolate import interp1d
 import pdb
 import matplotlib
 matplotlib.rcParams['text.usetex'] = True
-from util import construct_sol, midpoint_diff
+from util import construct_sol, midpoint_diff, get_Pnm
 
 fc=fundconst()
 la=lymanalpha()
 
-def get_Pnm(ssoln,sigma,Jsoln,p,intJdsigma=None):
+'''
+filename = "./data/damping_times.data"
+fname=open(filename,'w')
+fname.write('%5s\t%5s\t%10s\t%10s\t%10s\t%10s\t%10s\n' % ('n','m','s(Hz)','t(s)','Pnm','-Pnm/snm','cumul prob') )
+totalprob=0.0
+for n in range(1,p.nmax+1):
+  for j in range(p.mmax):
+    if ssoln[n-1,j]==0.0:
+      continue
+    totalprob=totalprob - Pnmsoln[n-1,j]/ssoln[n-1,j]
+    fname.write('%5d\t%5d\t%10.3e\t%10.3e\t%10.3e\t%10.3e\t%10.3e\n' % (n,j,ssoln[n-1,j],-1.0/ssoln[n-1,j],Pnmsoln[n-1,j],-Pnmsoln[n-1,j]/ssoln[n-1,j],totalprob) )
+    #print("n,m,snm,- Pnm/ssm,cumulative_prob=",n,j,ssoln[n,j],- Pnmsoln[n-1,j]/ssoln[n,j],totalprob)
+fname.close()
+m=np.arange(0,p.mmax)
 
-  if intJdsigma is None:
-    dsigma = midpoint_diff(sigma)
-    Pnmsoln=np.zeros((p.nmax,p.mmax,p.nsigma))
-    for k in range(p.nsigma):
-      for n in range(1,p.nmax+1):
-        for i in range(1,p.mmax+1):
-          Pnmsoln[n-1,i-1,k] = np.sqrt(1.5) * 16.0*np.pi**2 * p.radius * p.Delta\
-                             / (3.0 * p.k * p.energy) * (-1.0)**(n) / ssoln[n-1, i-1]\
-                             * Jsoln[n-1,i-1,k] * dsigma[k]
-  else:
-    print('Using intJdsigma...')
-    dsigma = midpoint_diff(sigma)
-    Pnmsoln=np.zeros((p.nmax,p.mmax))
-    for n in range(1,p.nmax+1):
-      for i in range(1,p.mmax+1):
-        Pnmsoln[n-1,i-1] = np.sqrt(1.5) * 16.0*np.pi**2 * p.radius * p.Delta**2 \
-                           / (3.0 * p.k * p.energy) * (-1.0)**(n) / ssoln[n-1, i-1]\
-                           * intJdsigma[n-1,i-1]
-  '''
-  filename = "./data/damping_times.data"
-  fname=open(filename,'w')
-  fname.write('%5s\t%5s\t%10s\t%10s\t%10s\t%10s\t%10s\n' % ('n','m','s(Hz)','t(s)','Pnm','-Pnm/snm','cumul prob') )
-  totalprob=0.0
-  for n in range(1,p.nmax+1):
-    for j in range(p.mmax):
-      if ssoln[n-1,j]==0.0:
-        continue
-      totalprob=totalprob - Pnmsoln[n-1,j]/ssoln[n-1,j]
-      fname.write('%5d\t%5d\t%10.3e\t%10.3e\t%10.3e\t%10.3e\t%10.3e\n' % (n,j,ssoln[n-1,j],-1.0/ssoln[n-1,j],Pnmsoln[n-1,j],-Pnmsoln[n-1,j]/ssoln[n-1,j],totalprob) )
-      #print("n,m,snm,- Pnm/ssm,cumulative_prob=",n,j,ssoln[n,j],- Pnmsoln[n-1,j]/ssoln[n,j],totalprob)
-  fname.close()
-  m=np.arange(0,p.mmax)
+plt.figure()
+for n in range(1,p.nmax+1):
+  plt.plot(m,-1.0/ssoln[n-1,:],label=str(n))
+plt.xlabel('mode number')
+plt.ylabel('decay time(s)')
+plt.legend(loc='best')
+plt.savefig('./plots/t_vs_m.pdf')
+plt.close()
 
-  plt.figure()
-  for n in range(1,p.nmax+1):
-    plt.plot(m,-1.0/ssoln[n-1,:],label=str(n))
-  plt.xlabel('mode number')
-  plt.ylabel('decay time(s)')
-  plt.legend(loc='best')
-  plt.savefig('./plots/t_vs_m.pdf')
-  plt.close()
+plt.figure()
+for n in range(1,p.nmax+1):
+  plt.plot(m,Pnmsoln[n-1,:],label=str(n))
+plt.xlabel('mode number')
+plt.ylabel(r'$P_{nm}(s^{-1})$')
+plt.legend(loc='best')
+plt.savefig('./plots/Pnm_vs_m.pdf')
+plt.close()
 
-  plt.figure()
-  for n in range(1,p.nmax+1):
-    plt.plot(m,Pnmsoln[n-1,:],label=str(n))
-  plt.xlabel('mode number')
-  plt.ylabel(r'$P_{nm}(s^{-1})$')
-  plt.legend(loc='best')
-  plt.savefig('./plots/Pnm_vs_m.pdf')
-  plt.close()
-
-  plt.figure()
-  for n in range(1,p.nmax+1):
-    plt.plot(m,-Pnmsoln[n-1,:]/ssoln[n-1,:],label=str(n))
-  plt.xlabel('mode number')
-  plt.ylabel(r'$-P_{nm}/s_{nm}$')
-  plt.legend(loc='best')
-  plt.savefig('./plots/Pnm_over_ssm_vs_m.pdf')
-  plt.close()
-  '''
-  return Pnmsoln
+plt.figure()
+for n in range(1,p.nmax+1):
+  plt.plot(m,-Pnmsoln[n-1,:]/ssoln[n-1,:],label=str(n))
+plt.xlabel('mode number')
+plt.ylabel(r'$-P_{nm}/s_{nm}$')
+plt.legend(loc='best')
+plt.savefig('./plots/Pnm_over_ssm_vs_m.pdf')
+plt.close()
+'''
 
 
 def wait_time_vs_time(ssoln,Pnmsoln,times,p):
@@ -267,7 +246,7 @@ if __name__ == "__main__":
     directory = Path('./data/210521_m500').resolve()
     Jsoln, ssoln, intJsoln, p = construct_sol(directory, 20, 500)
 
-    Pnmsoln = get_Pnm(ssoln,p.sigma,Jsoln,p,intJdsigma=intJsoln)
+    Pnmsoln = get_Pnm(ssoln, intJsoln, p)
     print("SUM OF PNMSOLN: {}".format(np.sum(Pnmsoln)))
 
     m = np.arange(p.mmax)

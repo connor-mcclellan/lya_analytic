@@ -41,7 +41,7 @@ def midpoint_diff(t):
 
 def get_Pnm(ssoln, intJsoln, p):
     n = np.arange(1, p.nmax+1)
-    Pnmsoln = (np.sqrt(1.5) * 16.0*np.pi**2 * p.radius * p.Delta 
+    Pnmsoln = (np.sqrt(1.5) * 16.0*np.pi**2 * p.radius * p.Delta**2 
               / (3.0 * p.k * p.energy) * (-1.0)**(n) / ssoln.T
               * intJsoln.T).T
     return Pnmsoln

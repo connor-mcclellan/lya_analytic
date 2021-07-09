@@ -201,6 +201,7 @@ def one_s_value(n, s, p, plot=False):
         scales = [scale_left, scale_middle, scale_right]
         interps = [interp_left, interp_middle, interp_right]
 
+
     # If source = 0, do nothing
     else:
         scale_right = - 1.0 / (D - B * (C / A)) * np.sqrt(6.0) / \
@@ -216,12 +217,13 @@ def one_s_value(n, s, p, plot=False):
             p.sigma <= interps[i].t_max,
             p.sigma >= interps[i].t_min)
         inds = np.where(mask)
+
         J[inds], dJ[inds], _ = interps[i](p.sigma[mask]) * scales[i]
     intJdsigma = left_P * scale_left - right_P * scale_right
 
     if plot:
-        sigmas = np.concatenate([interp_left.ts, interp_right.ts[::-1]])
-        Js = np.concatenate([soll[:, 0]*scale_left, solr[:, 0][::-1]*scale_right])
+        sigmas = p.sigma
+        Js = J
         fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
         ax1.plot(np.cbrt(sigmas/p.c1), Js, marker='+', ms=3, alpha=0.5)
         ax2.plot(np.cbrt(sigmas/p.c1), np.abs(Js), marker='+', ms=3, alpha=0.5)
@@ -230,8 +232,9 @@ def one_s_value(n, s, p, plot=False):
         ax1.set_ylabel('J(x)')
         ax2.set_ylabel('|J(x)|')
         plt.suptitle('n={}, s={:.4f}'.format(n, s))
-        plt.savefig('Jres_n={}_s={:08.3f}.pdf'.format(n, s))
-        plt.close()
+#        plt.savefig('Jres_n={}_s={:08.3f}.pdf'.format(n, s))
+        plt.show()
+#        plt.close()
     return J, dJ, intJdsigma
 
 
@@ -294,7 +297,7 @@ def solve(s1, s2, s3, n, p):
     Jres = (J3 - J1) * (s3 - sres) * (s1 - sres) / (s1 - s3)
     nres = (n3 - n1) * (s3 - sres) * (s1 - sres) / (s1 - s3)
 
-    one_s_value(n, sres, p)#, plot=True)
+    one_s_value(n, sres, p, plot=True)
 #    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
 #    ax1.plot(np.cbrt(p.sigma/p.c1), Jres, lw=0.5, alpha=0.75)
 #    ax2.plot(np.cbrt(p.sigma/p.c1), Jres, lw=0.5, alpha=0.75)
@@ -371,7 +374,7 @@ if __name__ == "__main__":
     radius = 1.e11
     alpha_abs = 0.0
     prob_dest = 0.0
-    xsource = 0.0
+    xsource = 6.0
     nsigma = 1024
 
     from pathlib import Path
