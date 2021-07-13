@@ -89,7 +89,7 @@ def bin_x(x, n, mytitle, filename, tau0, xinit, temp, radius, L, delta, a, p, mc
 
     # Make an array of uniformly spaced x-values (min, max, npoints)
     xuniform = np.linspace(np.min(x_ft), np.max(x_ft), len(x_ft))
-    pdb.set_trace()
+
     # Find sigma at each x-value
     sigma_xuniform = np.array([get_sigma(xpt) for xpt in xuniform])
 
@@ -206,7 +206,7 @@ def comparison_plot(*args, tauax=True, divergent=True):
         #linear-scale solutions
         axi.axvline(xinit, c=color[4], lw=1, alpha=0.5)
         if not tauax:
-            ypos = 0.002 if i==2 else 0.025
+            ypos = 0.0005 if i==2 else 3e-7
             xpos = xinit+0.5
         else:
             ypos = 0.5
@@ -223,9 +223,9 @@ def comparison_plot(*args, tauax=True, divergent=True):
             axi.legend(bbox_to_anchor=(1.04, 0.8), loc='upper left', fontsize='x-small', frameon=False)
 
         axi.set_xlim(((min(xc)-2)/tauscale, (max(xc)+2)/tauscale))
-        axi.set_ylabel(r'$(a\tau_0)^{1/3}P(x)$') if tauax else axi.set_ylabel('log $P(x)$')
+        axi.set_ylabel(r'$(a\tau_0)^{1/3}P(x)$') if tauax else axi.set_ylabel('log $|P(x)|$')
         axi.grid(linestyle='--', alpha=0.25)
-        #axi.set_ylim((-.2, 1.0)) if tauax else axi.set_ylim((-.01, .15)) 
+        axi.set_ylim((1.4e-8, .05))# if tauax else axi.set_ylim((-.01, .15)) 
         axi.set_yscale('log')
         print('XINIT: {}    TAU SOURCE: {}'.format(xinit, tau_source))
     plt.xlabel(r'$x (a\tau_0)^{-1/3}$') if tauax else plt.xlabel('$x$')
