@@ -46,15 +46,17 @@ for k, directory in enumerate(dirs):
     data[3][k] = p.a
 
 norm = data[2][-1]/(fc.clight/p.radius*(data[0][-1])**(1./3))
+plt.figure(figsize=(5, 3))
 plt.plot(data[0]/data[3], norm*fc.clight/p.radius*(data[0])**(1./3), alpha=0.5, label=r'$t \propto (a\tau_0)^{1/3}$', ls=':', c='k')
-plt.plot(data[0]/data[3], data[2], '-', marker='o', ms=3, alpha=0.5, label=r'$\gamma_{00}^{,-1}$')
-plt.scatter(data[0][:3]/data[3][:3], data[1][:3], label='Monte Carlo', marker='+')
+plt.plot(data[0]/data[3], data[2], '-', marker='s', ms=3, alpha=0.5, label=r'$\gamma_{00}^{\ \ -1}$')
+plt.scatter(data[0][:3]/data[3][:3], data[1][:3], label='Monte Carlo', marker='+', c='k')
 
 #plt.plot(data[0], fc.clight/p.radius*(data[0])**(1./2), alpha=0.5, label=r'$t = (a\tau)^{1/2}$', ls=':', c='k')
 plt.xscale('log')
 plt.yscale('log')
 plt.legend()
 plt.ylabel('$ct/R$')
-plt.xlabel(r'$\tau$')
-plt.title('Characteristic Wait Time Scaling with Optical Depth')
+plt.xlabel(r'$\tau_0$')
+plt.tight_layout()
+
 plt.show()

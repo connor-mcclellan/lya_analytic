@@ -34,7 +34,7 @@ def fluence(sigma, p, Jsoln=None, ssoln=None, dijkstra=False):
     spec = np.zeros((p.nmax, np.shape(sigma)[0]))
     #spec_xuniform = np.zeros((p.nmax, np.shape(xuniform)[0]))
     phi = line_profile(sigma, p)
-    pdb.set_trace()
+
 #    norm = (4.0 * np.pi * p.radius**2 * 4.0 * np.pi / p.energy)
 
     if Jsoln is None and dijkstra is False:
@@ -113,7 +113,7 @@ def mfluence(sigma, p, Jsoln=None, ssoln=None, dijkstra=False):
 
 
 if __name__ == '__main__':
-    directory = Path('./data/210521_m500').resolve()
+    directory = Path('./data/tau1e6_xinit0').resolve()
     Jsoln, ssoln, intJsoln, p = construct_sol(directory, nmax=20, mmax=500)
 
 #    directory = Path('./data/210507_all').resolve()

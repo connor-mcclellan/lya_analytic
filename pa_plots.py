@@ -4,7 +4,7 @@ from scipy.interpolate import interp1d
 import math
 import numpy as np
 import astropy.constants as c
-from solutions.util import read_bin, Line, Params, scinot, midpoint_diff, voigtx
+from solutions.util import read_bin, Line, Params, scinot, midpoint_diff, voigtx, voigtx_full
 from solutions import ftsoln
 from solutions import fits
 from solutions.prob_ct_tau import prob_ct_tau
@@ -94,9 +94,9 @@ def bin_x(x, n, mytitle, filename, tau0, xinit, temp, radius, L, delta, a, p, mc
     sigma_xuniform = np.array([get_sigma(xpt) for xpt in xuniform])
 
     # Calculate line profile at all the x points needed
-    phix = voigtx(a, x_ft)
-    phix_xuniform = voigtx(a, xuniform)
-    phix_xc = voigtx(a, xc)
+    phix = voigtx_full(a, x_ft)
+    phix_xuniform = voigtx_full(a, xuniform)
+    phix_xc = voigtx_full(a, xc)
 
     # Interpolate solutions from _ft points
     hsp_interp = interp1d(x_ft, Hsp_ft * phix * norm)
@@ -206,8 +206,8 @@ def comparison_plot(*args, tauax=True, divergent=True):
         #linear-scale solutions
         axi.axvline(xinit, c=color[4], lw=1, alpha=0.5)
         if not tauax:
-            ypos = 0.0005 if i==2 else 3e-7
-            xpos = xinit+0.5
+            ypos = 0.001 if i==0 else 3e-8
+            xpos = xinit+0.4
         else:
             ypos = 0.5
             xpos = 0.05
@@ -217,7 +217,7 @@ def comparison_plot(*args, tauax=True, divergent=True):
         axi.plot(xuniform/tauscale, tauscale*hsp_xuniform, '-', label=r'$H_0$', alpha=alpha, c=color[2], linewidth=1.5)
         axi.plot(xuniform/tauscale, tauscale*(hsp_xuniform + hh_xuniform), '-.', label=r'$H_{\rm 0+bc}$', alpha=alpha, c=color[1], linewidth=1.5)
         axi.errorbar(xc/tauscale, tauscale*count, yerr=err, fmt='.', label="MC", alpha=0.75, ms=3., c='k', elinewidth=0.25, capsize=0.5)
-        axi.text(0.85, 0.85, r'$\tau_0=${}'.format(scinot(tau0)), fontsize=8, transform=axi.transAxes)
+        axi.text(0.85, 0.87, r'$\tau_0=${}'.format(scinot(tau0)), fontsize=8, transform=axi.transAxes)
         axi.plot(xuniform/tauscale, np.abs(tauscale*hh_xuniform), ':', label=r'$H_{\rm bc}$', alpha=alpha, c=color[3], linewidth=1.5)
         if i==0:
             axi.legend(bbox_to_anchor=(1.04, 0.8), loc='upper left', fontsize='x-small', frameon=False)
@@ -225,7 +225,7 @@ def comparison_plot(*args, tauax=True, divergent=True):
         axi.set_xlim(((min(xc)-2)/tauscale, (max(xc)+2)/tauscale))
         axi.set_ylabel(r'$(a\tau_0)^{1/3}P(x)$') if tauax else axi.set_ylabel('log $|P(x)|$')
         axi.grid(linestyle='--', alpha=0.25)
-        axi.set_ylim((1.4e-8, .05))# if tauax else axi.set_ylim((-.01, .15)) 
+        axi.set_ylim((1.1e-8, 1.25))# if tauax else axi.set_ylim((-.01, .15)) 
         axi.set_yscale('log')
         print('XINIT: {}    TAU SOURCE: {}'.format(xinit, tau_source))
     plt.xlabel(r'$x (a\tau_0)^{-1/3}$') if tauax else plt.xlabel('$x$')

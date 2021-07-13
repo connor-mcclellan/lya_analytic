@@ -50,7 +50,7 @@ def waittime(Jsoln, ssoln, intJsoln, t, p):
     Pnmsoln = get_Pnm(ssoln, intJsoln, p)
     P = np.sum(np.sum(
          - np.expand_dims(Pnmsoln, 2) * np.expand_dims(ssoln, 2)
-         * np.exp(np.expand_dims(ssoln, 2) * t) * p.Delta,
+         * np.exp(np.expand_dims(ssoln, 2) * t),
         axis=0), axis=0)
     return P
 
