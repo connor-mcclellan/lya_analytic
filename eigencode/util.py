@@ -76,6 +76,13 @@ def get_sigma_bounds(n, s, p):
             (min(source-offset, 0), max(source+offset, 0)),
             (max(source+offset, 0), sigma_right))
 
+def scinot(num):
+    ''' 
+    Formats numbers in scientific notation for LaTeX.
+    '''
+    numstrs = '{:.1E}'.format(num).split('E+')
+    return r'${} \times 10^{{{}}}$'.format(numstrs[0], int(numstrs[1]))
+
 def make_sigma_grids(p, xuniform=True): ## Make master sigma grid uniform in x
     
     width = p.c1 * 50 * p.a * p.tau0
