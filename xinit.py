@@ -11,7 +11,7 @@ matplotlib.rcParams['text.usetex'] = True
 
 delta = 105691974558.58401
 a = 0.0004717036097750442
-colors = ['#afafaf', '#696969', '#000000']
+colors = ['#adadad', '#696969', '#000000']
 
 def sigma(x, a):
     return np.sqrt(2.0/3.0)*np.pi*x**3/(3.0*a)
@@ -31,18 +31,21 @@ if __name__ == "__main__":
             norm = 4.0 * np.pi * radius**2 * delta * 4.0 * np.pi / L
             tauscale = (a*tau0)**(1/3.)
             if tau0==1e5:
-                lw = 1.5 
+                lw = 1.5
+                ls = '-'
             elif tau0==1e7:
-                lw = 2.25
+                lw = 2.5
+                ls = '--'
             else:
-                lw = 3
-            ax.plot(x_ft/tauscale, norm*Hh_ft*tauscale**2, alpha=1, lw=lw, c=colors[i], zorder=100-30*i)
+                lw = 3.25
+                ls = '-'
+            ax.plot(x_ft/tauscale, norm*Hh_ft*tauscale**2, alpha=0.9, lw=lw, ls=ls, c=colors[i], zorder=100-30*i)
             if j==0:
 #                ax.axvline(x/tauscale, color=colors[i], lw=1)
                 colorlegend.append(Patch(facecolor=colors[i], label=r'$\sigma_s = {:d}\times \tau_0$'.format(i)))
-    formatlegend = [Line2D([1], [0], color='k', lw=1.5, label=r'$\tau_0=10^5$'), Line2D([1], [1], lw=2.25, color='k', label=r'$\tau_0=10^7$'), Line2D([1], [0], color='k', lw=3, label=r'$\tau_0=10^9$')]
-    fmtlegend = ax.legend(handles=formatlegend, loc='upper left')
-    clegend = ax.legend(handles=colorlegend, loc='lower left')
+    formatlegend = [Line2D([1], [0], color='k', lw=1, label=r'$\tau_0=10^5$'), Line2D([1], [1], lw=2, ls='-', color='k', label=r'$\tau_0=10^7$'), Line2D([1], [0], color='k', lw=3, label=r'$\tau_0=10^9$')]
+    fmtlegend = ax.legend(handles=formatlegend, loc='upper left', frameon=False)
+    clegend = ax.legend(handles=colorlegend, loc='lower left', frameon=False)
     plt.gca().add_artist(clegend)
     plt.gca().add_artist(fmtlegend)
     plt.ylabel(r'$(a\tau_0)^{2/3}P(x)$')
