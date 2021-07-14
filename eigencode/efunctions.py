@@ -223,18 +223,18 @@ def one_s_value(n, s, p, plot=False):
 
     if plot:
         sigmas = p.sigma
-        Js = J
         fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
-        ax1.plot(np.cbrt(sigmas/p.c1), Js, marker='+', ms=3, alpha=0.5)
-        ax2.plot(np.cbrt(sigmas/p.c1), np.abs(Js), marker='+', ms=3, alpha=0.5)
+        ax1.plot(np.cbrt(sigmas/p.c1), dJ, marker='+', ms=3, alpha=0.5)
+        ax2.plot(np.cbrt(sigmas/p.c1), np.abs(dJ), marker='+', ms=3, alpha=0.5)
         ax2.set_xlabel('x')
         ax2.set_yscale('log')
-        ax1.set_ylabel('J(x)')
-        ax2.set_ylabel('|J(x)|')
+        ax1.set_ylabel('dJ(x)/dsigma')
+        ax2.set_ylabel('|dJ(x)/dsigma|')
         plt.suptitle('n={}, s={:.4f}'.format(n, s))
 #        plt.savefig('Jres_n={}_s={:08.3f}.pdf'.format(n, s))
         plt.show()
 #        plt.close()
+
     return J, dJ, intJdsigma
 
 
@@ -273,8 +273,8 @@ def solve(s1, s2, s3, n, p):
     J2, dJ2, n2 = one_s_value(n, s2, p)
     J3, dJ3, n3 = one_s_value(n, s3, p)
 
-    err = 1.e20
-    while err > 1.e-3: ## This line may be obsolete after the refinement change
+    n_iter = 0
+    while n_iter < 5: ## This line may be obsolete after the refinement change
         ratio1 = (n2 - n1) / (n2 - n3)
         ratio2 = ratio1 * (s3 - s2) / (s1 - s2)
         sguess = (s1 * ratio2 - s3) / (ratio2 - 1.0)
@@ -291,13 +291,13 @@ def solve(s1, s2, s3, n, p):
         else:
             s1, J1, n1 = s2, J2, n2
         s2, J2, n2 = sguess, Jguess, nguess
-        err = np.abs((s3 - s1) / s2)
+        n_iter += 1
 
     sres = s2
     Jres = (J3 - J1) * (s3 - sres) * (s1 - sres) / (s1 - s3)
     nres = (n3 - n1) * (s3 - sres) * (s1 - sres) / (s1 - s3)
 
-    one_s_value(n, sres, p, plot=True)
+    one_s_value(n, sres, p)#, plot=True)
 #    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
 #    ax1.plot(np.cbrt(p.sigma/p.c1), Jres, lw=0.5, alpha=0.75)
 #    ax2.plot(np.cbrt(p.sigma/p.c1), Jres, lw=0.5, alpha=0.75)
@@ -370,11 +370,11 @@ def sweep(p, nmin=1, output_dir=None):
 if __name__ == "__main__":
     energy = 1.e0
     temp = 1.e4
-    tau0 = 1.e5
+    tau0 = 1.e6
     radius = 1.e11
     alpha_abs = 0.0
     prob_dest = 0.0
-    xsource = 0.0
+    xsource = 6.0
     nsigma = 1024
 
     from pathlib import Path

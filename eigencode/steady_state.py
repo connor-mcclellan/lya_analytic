@@ -113,8 +113,8 @@ def mfluence(sigma, p, Jsoln=None, ssoln=None, dijkstra=False):
 
 
 if __name__ == '__main__':
-    directory = Path('./data/tau1e6_xinit0').resolve()
-    Jsoln, ssoln, intJsoln, p = construct_sol(directory, nmax=20, mmax=500)
+    directory = Path('./data/tau1e6_xinit6').resolve()
+    Jsoln, ssoln, intJsoln, p = construct_sol(directory, nmax=12, mmax=500)
 
 #    directory = Path('./data/210507_all').resolve()
 #    Jsoln2, ssoln2, intJsoln2, p2 = construct_sol(directory, nmax=20, mmax=100)

@@ -55,7 +55,7 @@ def waittime(Jsoln, ssoln, intJsoln, t, p):
     return P
 
 def line_profile(sigma, p):					# units of Hz^{-1}
-    line_profile = (2 * p.a / 27 / np.pi)**(1./3) / (np.abs(sigma + 0.01)**(2./3)) / p.Delta
+    line_profile = (2 * p.a / 27 / np.pi)**(1./3) / (np.abs(sigma) + 0.01)**(2./3) / p.Delta
     return line_profile
 
 def get_sigma_bounds(n, s, p):
@@ -72,9 +72,9 @@ def get_sigma_bounds(n, s, p):
     source = p.sigmas
     offset = p.sigma_offset
 
-    return ((sigma_left, min(source-offset, 0)), 
-            (min(source-offset, 0), max(source+offset, 0)),
-            (max(source+offset, 0), sigma_right))
+    return ((sigma_left, min(source, 0-offset)), 
+            (min(source, 0+offset), max(source, 0-offset)),
+            (max(source, 0+offset), sigma_right))
 
 def scinot(num):
     ''' 
@@ -89,9 +89,9 @@ def make_sigma_grids(p, xuniform=True): ## Make master sigma grid uniform in x
     print("SIGMA GRID WIDTH: {:.1f}   ({:.0f} * tau0)    (x={:.1f})".format(width, width/p.tau0, np.cbrt(width/p.c1)))
     source = p.sigmas
     offset = p.sigma_offset
-    left, middle, right = ((-width, min(source-offset, 0)), 
-                           (min(source-offset, 0), max(source+offset, 0)),
-                           (max(source+offset, 0), width))
+    left, middle, right = ((-width, min(source, 0-offset)), 
+                           (min(source, 0+offset), max(source, 0-offset)),
+                           (max(source, 0+offset), width))
 
     if xuniform:
         left = np.cbrt(np.array(left)/p.c1)
