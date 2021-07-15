@@ -274,7 +274,8 @@ def solve(s1, s2, s3, n, p):
     J3, dJ3, n3 = one_s_value(n, s3, p)
 
     n_iter = 0
-    while n_iter < 5: ## This line may be obsolete after the refinement change
+    err = 1e20
+    while n_iter < 5 and err > 1e-6:
         ratio1 = (n2 - n1) / (n2 - n3)
         ratio2 = ratio1 * (s3 - s2) / (s1 - s2)
         sguess = (s1 * ratio2 - s3) / (ratio2 - 1.0)
@@ -286,6 +287,8 @@ def solve(s1, s2, s3, n, p):
         print("n:    {:.1e}    {:.1e}    {:.1e}".format(
             nguess / n1, nguess / n2, nguess / n3))
 
+        err = np.abs(s2 - sguess)
+        print("err: {:.7f}".format(err))
         if (sguess - s1) * (sguess - s2) < 0.0:
             s3, J3, n3 = s2, J2, n2
         else:
