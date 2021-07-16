@@ -7,14 +7,23 @@ import pdb
 from pathlib import Path
 from util import construct_sol
 from glob import glob
+import matplotlib
+import matplotlib.pylab as pl
+matplotlib.rcParams['text.usetex'] = True
+matplotlib.rc('font', **{'family': 'serif',
+                         'serif': ['Computer Modern Roman']})
 import pickle
 
+
+
 def gamma(n, m, p): 
-     return 2**(-1/3) * np.pi**(13/6)*n**(4/3)*(m-7/8)**(2/3)*fc.clight/p.radius/(p.a * p.tau0)**(1/3)    
+     return 2**(-1/3) * np.pi**(13/6)*n**(4/3)*(m-7/8)**(2/3)*fc.clight/p.radius/(p.a * p.tau0)**(1/3.)    
 
 directory = Path('./data/210521_m500').resolve()
 nmin = 1
 Jsoln, ssoln, intJsoln, p = construct_sol(directory, nmax=20, mmax=500)
+colors = pl.cm.viridis(np.linspace(0, 1, 20))
+fig = plt.figure()
 
 ### TEMP ###
 #p = pickle.load(open(directory/'parameters.p', 'rb'))
@@ -28,21 +37,35 @@ Jsoln, ssoln, intJsoln, p = construct_sol(directory, nmax=20, mmax=500)
  #       data = np.load(directory/"n{:03d}_m{:03d}.npy".format(n, m), allow_pickle=True).item()
  #       ssoln[n-1, m-1] = data['s']        
 
+linewidths = np.logspace(np.log10(7), np.log10(2), 20)
+
+
 for n in range(nmin, p.nmax+1):
-    gamma_analytic = n**(-4/3)*gamma(n, np.arange(1, p.mmax+1), p)
+
 #    gamma_sweep = -n**(-4/3)*ssoln[n-1][:mmax]
 #    gamma_analytic = gamma(n, np.arange(mmin, mmax+1), p)
+
     gamma_sweep = -n**(-4/3)*ssoln[n-1][:p.mmax]
+    plt.plot(np.arange(1, p.mmax+1), p.radius/fc.clight/(p.a*p.tau0)**(1/3.)/gamma_sweep, '-', lw=linewidths[n-1], c=colors[n-1])#, label='$\gamma$ sweep')
 
-    plt.plot(np.arange(1, p.mmax+1), 1/gamma_analytic, '--', alpha=0.5)#, label='$\gamma_{nm}$ analytic')
-    plt.plot(np.arange(1, p.mmax+1), 1/gamma_sweep, '-', alpha=0.5)#, label='$\gamma$ sweep')
+n=1
+gamma_analytic = n**(-4/3)*gamma(n, np.arange(1, p.mmax+1), p)
+plt.plot(np.arange(1, p.mmax+1), p.radius/fc.clight/(p.a*p.tau0)**(1/3.)/gamma_analytic, 'k--', lw=1, label='Analytic $\gamma_{nm}$')
 
-plt.ylabel('$t_{nm}(s)$')
+sm = plt.cm.ScalarMappable(cmap=pl.cm.viridis, norm=plt.Normalize(vmin=1, vmax=20)) 
+cbar = fig.colorbar(sm) 
+cbar.ax.set_ylabel('n for numerical $\gamma_{nm}$', rotation=90)
+
+bounds = ['1', '5', '10', '15', '20']
+cbar.set_ticks(np.array(bounds).astype(float))
+cbar.set_ticklabels(bounds)
+
+plt.ylabel(r'$Rc^{-1} (a\tau_0)^{-1/3} n^{-4/3} \gamma_{nm}^{\ \ -1}$')
 plt.xlabel('m')
 plt.xscale('log')
 plt.yscale('log')
 plt.tight_layout()
-plt.legend()
+plt.legend(frameon=False)
 plt.show()
 
 ############
