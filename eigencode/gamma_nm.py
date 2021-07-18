@@ -19,7 +19,7 @@ import pickle
 def gamma(n, m, p): 
      return 2**(-1/3) * np.pi**(13/6)*n**(4/3)*(m-7/8)**(2/3)*fc.clight/p.radius/(p.a * p.tau0)**(1/3.)    
 
-directory = Path('./data/210521_m500').resolve()
+directory = Path('./data/tau1e6_xinit6_fixed').resolve()
 nmin = 1
 Jsoln, ssoln, intJsoln, p = construct_sol(directory, nmax=20, mmax=500)
 colors = pl.cm.viridis(np.linspace(0, 1, 20))
