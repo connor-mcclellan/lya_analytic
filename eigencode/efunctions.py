@@ -331,6 +331,7 @@ def sweep(p, nmin=1, output_dir=None):
 
     gamma_const = fc.clight / p.radius / \
         (p.a * p.tau0)**0.333 * np.pi**(13.0 / 6.0) / 2.0**0.333
+    sweep_resolution = 0.005
 
     for n in range(nmin, p.nmax + 1):
         print("n=", n)
@@ -341,16 +342,16 @@ def sweep(p, nmin=1, output_dir=None):
             data_fname = sorted(glob(str(output_dir/'n{:03d}_*.npy'.format(n))))[-1]
             data = np.load(data_fname, allow_pickle=True).item()
             nsoln = int(data_fname.split('.npy')[0].split('_m')[-1]) + 1
-            s = data['s'] - 0.25 * gamma_const * n**(4.0 / 3.0) * 0.667 * (nsoln + 1.0 / 8.0)**(-1.0 / 3.0)
+            s = data['s'] - sweep_resolution * gamma_const * n**(4.0 / 3.0) * 0.667 * (nsoln + 1.0 / 8.0)**(-1.0 / 3.0)
         except:
-            s = -0.000001
+            s = -0.00000001
             nsoln = 1
 
         # Set starting sweep increment in s based on the dispersion relation.
         if n == 1 and nsoln == 1:
-            s_increment = -0.01
+            s_increment = - sweep_resolution
         else:
-            s_increment = -0.25 * gamma_const * \
+            s_increment = - sweep_resolution * gamma_const * \
                 n**(4.0 / 3.0) * 0.667 * (nsoln + 1.0 / 8.0)**(-1.0 / 3.0)
 
         # Sweep, check resonance, save outputs
