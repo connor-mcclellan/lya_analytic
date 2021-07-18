@@ -47,10 +47,16 @@ def efunc(path, nmax, mmax, c, xmin=1):
     colorlegend.append(Patch(facecolor=c, label=r'$x_s={:.1f}$'.format(xinit)))
 
 
-monte_carlo(1e6, 0.0, '#696969')
-xmin = monte_carlo(1e6, 6.0, 'k')
-efunc('./data/tau1e6_xinit0', 20, 500, '#696969')
-efunc('./data/tau1e6_xinit6_fixed', 20, 500, 'k', xmin=xmin)
+colors = ['r', 'g', 'b', 'purple', 'limegreen', 'c']
+for i, xinit in enumerate([0.0, 2.0, 4.0, 6.0, 8.0, 10.0]):
+    monte_carlo(1e6, xinit, colors[i])
+    colorlegend.append(Patch(facecolor=colors[i], label=r'$x_s={:.1f}$'.format(xinit)))
+
+#monte_carlo(1e6, 0.0, '#696969')
+#xmin = monte_carlo(1e6, 6.0, 'k')
+#efunc('./data/tau1e6_xinit0', 20, 500, '#696969')
+#efunc('./data/tau1e6_xinit6_fixed', 20, 500, 'k', xmin=xmin)
+
 
 formatlegend = [Line2D([1], [0], color='k', label='Eigenfunctions'), Line2D([1], [1], ls='--', color='k', label='Fitting function'), Line2D([1], [0], color='k', ls='None', marker='s', ms=2, label='Monte Carlo')]
 fmtlegend = plt.legend(handles=formatlegend, loc='upper left', bbox_to_anchor=(0.7, 0.8), fontsize='x-small', frameon=False)
