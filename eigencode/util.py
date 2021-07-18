@@ -4,7 +4,7 @@ import pickle
 from constants import fundconst
 fc = fundconst()
 
-def construct_sol(directory, nmax, mmax):
+def construct_sol(directory, nmax, mmax, nmin=1):
     '''
     Loads numpy arrays from an output directory and constructs them in memory.
 
@@ -14,12 +14,12 @@ def construct_sol(directory, nmax, mmax):
           
     '''
 
-    data = np.load(directory/"n{:03d}_m{:03d}.npy".format(1, 1), allow_pickle=True).item()
-    Jsoln = np.zeros((nmax, mmax, len(data['J'])))
-    ssoln = np.zeros((nmax, mmax))
-    intJsoln = np.zeros((nmax, mmax))
+    data = np.load(directory/"n{:03d}_m{:03d}.npy".format(nmin, 1), allow_pickle=True).item()
+    Jsoln = np.zeros((nmax-nmin+1, mmax, len(data['J'])))
+    ssoln = np.zeros((nmax-nmin+1, mmax))
+    intJsoln = np.zeros((nmax-nmin+1, mmax))
 
-    for n in range(1, nmax+1):
+    for n in range(nmin, nmax+1):
         for m in range(1, mmax+1):
             data = np.load(directory/"n{:03d}_m{:03d}.npy".format(n, m), allow_pickle=True).item()
             Jsoln[n-1, m-1, :] = data['J']
