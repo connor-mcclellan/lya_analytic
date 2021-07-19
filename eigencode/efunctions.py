@@ -328,7 +328,7 @@ def sweep(p, nmin=1, output_dir=None):
     None. sres, Jres, and intJdsigmares output is saved to file.
     '''
 
-    sweep_resolution = 0.01
+    sweep_resolution = 0.025
 
     for n in range(nmin, p.nmax + 1):
         print("n=", n)
