@@ -22,9 +22,9 @@ def construct_sol(directory, nmax, mmax, nmin=1):
     for n in range(nmin, nmax+1):
         for m in range(1, mmax+1):
             data = np.load(directory/"n{:03d}_m{:03d}.npy".format(n, m), allow_pickle=True).item()
-            Jsoln[n-1, m-1, :] = data['J']
-            ssoln[n-1, m-1] = data['s']
-            intJsoln[n-1, m-1] = data['Jint']
+            Jsoln[n-nmin-1, m-1, :] = data['J']
+            ssoln[n-nmin-1, m-1] = data['s']
+            intJsoln[n-nmin-1, m-1] = data['Jint']
 
     p = pickle.load(open(directory/'parameters.p', 'rb'))
     p.nmax = nmax
@@ -45,6 +45,9 @@ def get_Pnm(ssoln, intJsoln, p):
               / (3.0 * p.k * p.energy) * (-1.0)**(n) / ssoln.T
               * intJsoln.T).T
     return Pnmsoln
+
+def gamma(n, m, p): 
+     return 2**(-1/3) * np.pi**(13/6)*n**(4/3)*(m-7/8)**(2/3)*fc.clight/p.radius/(p.a * p.tau0)**(1/3.) 
 
 def waittime(Jsoln, ssoln, intJsoln, t, p):
     Pnmsoln = get_Pnm(ssoln, intJsoln, p)

@@ -5,23 +5,18 @@ import matplotlib.pyplot as plt
 fc=fundconst()
 import pdb
 from pathlib import Path
-from util import construct_sol
+from util import construct_sol, gamma
 from glob import glob
 import matplotlib
 import matplotlib.pylab as pl
 matplotlib.rcParams['text.usetex'] = True
 matplotlib.rc('font', **{'family': 'serif',
                          'serif': ['Computer Modern Roman']})
-import pickle
+import pickle   
 
-
-
-def gamma(n, m, p): 
-     return 2**(-1/3) * np.pi**(13/6)*n**(4/3)*(m-7/8)**(2/3)*fc.clight/p.radius/(p.a * p.tau0)**(1/3.)    
-
-directory = Path('./data/tau1e6_xinit0').resolve()
-nmin = 1
-Jsoln, ssoln, intJsoln, p = construct_sol(directory, nmax=20, mmax=500)
+directory = Path('./data/partial_fine_sweep').resolve()
+nmin = 18
+Jsoln, ssoln, intJsoln, p = construct_sol(directory, nmax=20, mmax=5, nmin=nmin)
 colors = pl.cm.viridis(np.linspace(0, 1, 20))
 fig = plt.figure()
 
@@ -45,10 +40,10 @@ for n in range(nmin, p.nmax+1):
 #    gamma_sweep = -n**(-4/3)*ssoln[n-1][:mmax]
 #    gamma_analytic = gamma(n, np.arange(mmin, mmax+1), p)
 
-    gamma_sweep = -n**(-4/3)*ssoln[n-1][:p.mmax]
+    gamma_sweep = -n**(-4/3)*ssoln[n-nmin-1][:p.mmax]
     plt.plot(np.arange(1, p.mmax+1), p.radius/fc.clight/(p.a*p.tau0)**(1/3.)/gamma_sweep, '-', lw=linewidths[n-1], c=colors[n-1])#, label='$\gamma$ sweep')
 
-n=1
+n=nmin
 gamma_analytic = n**(-4/3)*gamma(n, np.arange(1, p.mmax+1), p)
 plt.plot(np.arange(1, p.mmax+1), p.radius/fc.clight/(p.a*p.tau0)**(1/3.)/gamma_analytic, 'k--', lw=1, label='Analytic $\gamma_{nm}$')
 

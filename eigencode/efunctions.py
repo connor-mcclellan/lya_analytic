@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from constants import fundconst, lymanalpha
 from scipy.integrate import solve_ivp, odeint
 from parameters import Parameters
-from util import line_profile, get_sigma_bounds
+from util import line_profile, get_sigma_bounds, gamma
 import warnings
 import pdb
 
@@ -307,7 +307,6 @@ def solve(s1, s2, s3, n, p):
 
     return sres, Jres, nres
 
-
 def sweep(p, nmin=1, output_dir=None):
     '''
     Sweeps over n and s=-i\omega to find maxima in the size of the response.
@@ -329,9 +328,7 @@ def sweep(p, nmin=1, output_dir=None):
     None. sres, Jres, and intJdsigmares output is saved to file.
     '''
 
-    gamma_const = fc.clight / p.radius / \
-        (p.a * p.tau0)**0.333 * np.pi**(13.0 / 6.0) / 2.0**0.333
-    sweep_resolution = 0.005
+    sweep_resolution = 0.01
 
     for n in range(nmin, p.nmax + 1):
         print("n=", n)
@@ -342,7 +339,7 @@ def sweep(p, nmin=1, output_dir=None):
             data_fname = sorted(glob(str(output_dir/'n{:03d}_*.npy'.format(n))))[-1]
             data = np.load(data_fname, allow_pickle=True).item()
             nsoln = int(data_fname.split('.npy')[0].split('_m')[-1]) + 1
-            s = data['s'] - sweep_resolution * gamma_const * n**(4.0 / 3.0) * 0.667 * (nsoln + 1.0 / 8.0)**(-1.0 / 3.0)
+            s = data['s'] - sweep_resolution * gamma(n, nsoln, p)
         except:
             s = -0.00000001
             nsoln = 1
@@ -351,8 +348,7 @@ def sweep(p, nmin=1, output_dir=None):
         if n == 1 and nsoln == 1:
             s_increment = - sweep_resolution
         else:
-            s_increment = - sweep_resolution * gamma_const * \
-                n**(4.0 / 3.0) * 0.667 * (nsoln + 1.0 / 8.0)**(-1.0 / 3.0)
+            s_increment = - sweep_resolution * gamma(n, nsoln, p)
 
         # Sweep, check resonance, save outputs
         norm = []
@@ -366,7 +362,7 @@ def sweep(p, nmin=1, output_dir=None):
                 np.save(output_dir/'n{:03d}_m{:03d}.npy'.format(n, nsoln), out)
                 #pdb.set_trace()
                 nsoln = nsoln + 1
-                s_increment = -0.25 * gamma_const * n**(4.0 / 3.0) * 0.667 * (nsoln + 1.0 / 8.0)**(-1.0 / 3.0)
+                s_increment = - sweep_resolution * gamma(n, nsoln, p)
                 print("\nds={}".format(s_increment))
             s += s_increment
     return
