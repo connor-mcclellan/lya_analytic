@@ -295,7 +295,7 @@ def solve(s1, s2, s3, n, p):
         s2, J2, n2 = sguess, Jguess, nguess
         n_iter += 1
 
-    print("res: {:.7f}    err: {:.7f}".format(s2, err))
+    print("\nres: {:.7f}    err: {:.7f}".format(s2, err))
     sres = s2
     Jres = (J3 - J1) * (s3 - sres) * (s1 - sres) / (s1 - s3)
     nres = (n3 - n1) * (s3 - sres) * (s1 - sres) / (s1 - s3)
@@ -361,7 +361,7 @@ def sweep(p, nmin=1, output_dir=None):
         # Sweep, check resonance, save outputs
         norm = []
         nsweeps = 0
-        print("  m  n  s          f(s)      sweep#")
+        print("  m  n  s         f(s)      sweep#")
 
         while nsoln < p.mmax + 1:
             nsweeps += 1
@@ -390,7 +390,8 @@ def sweep(p, nmin=1, output_dir=None):
                 nsweeps = 0
                 print("\nNEXT RESONANCE: ", gamma(n, nsoln, p))
                 print("INCREMENT: ", s_increment)
-                print("  m  n  s          f(s)      sweep#")
+                print("  m  n  s        f(s)      sweep#")
+                s = - gamma(n, nsoln, p) - 5 * s_increment
             s += s_increment
     return
 
