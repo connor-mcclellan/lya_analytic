@@ -47,7 +47,7 @@ def get_Pnm(ssoln, intJsoln, p):
     return Pnmsoln
 
 def gamma(n, m, p): 
-     return 2**(-1/3) * np.pi**(13/6)*n**(4/3)*(m-7/8)**(2/3)*fc.clight/p.radius/(p.a * p.tau0)**(1/3.) 
+     return (2./3) * 2**(-1/3) * np.pi**(13/6)*n**(4/3)*(m-7/8)**(-1/3)*fc.clight/p.radius/(p.a * p.tau0)**(1/3.) 
 
 def waittime(Jsoln, ssoln, intJsoln, t, p):
     Pnmsoln = get_Pnm(ssoln, intJsoln, p)
