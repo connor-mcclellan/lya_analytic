@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from constants import fundconst, lymanalpha
 from scipy.integrate import solve_ivp, odeint
 from parameters import Parameters
-from util import line_profile, get_sigma_bounds, gamma
+from util import line_profile, get_sigma_bounds, gamma, dgamma
 import warnings
 import pdb
 
@@ -275,20 +275,19 @@ def solve(s1, s2, s3, n, p):
 
     n_iter = 0
     err = 1e20
-    while n_iter < 5 and err > 1e-6:
+    while n_iter < 10 and err > 1e-6:
         ratio1 = (n2 - n1) / (n2 - n3)
         ratio2 = ratio1 * (s3 - s2) / (s1 - s2)
         sguess = (s1 * ratio2 - s3) / (ratio2 - 1.0)
         Jguess, dJguess, nguess = one_s_value(n, sguess, p)
 
-        print("\nguess:")
-        print("s:    {:.6f}    {:.6f}    {:.6f}".format(
-            sguess / s1, sguess / s2, sguess / s3))
-        print("n:    {:.1e}    {:.1e}    {:.1e}".format(
-            nguess / n1, nguess / n2, nguess / n3))
+#        print("\nguess:")
+#        print("s:    {:.6f}    {:.6f}    {:.6f}".format(
+#            sguess / s1, sguess / s2, sguess / s3))
+#        print("n:    {:.1e}    {:.1e}    {:.1e}".format(
+#            nguess / n1, nguess / n2, nguess / n3))
 
         err = np.abs(s2 - sguess)
-        print("err: {:.7f}".format(err))
         if (sguess - s1) * (sguess - s2) < 0.0:
             s3, J3, n3 = s2, J2, n2
         else:
@@ -296,6 +295,7 @@ def solve(s1, s2, s3, n, p):
         s2, J2, n2 = sguess, Jguess, nguess
         n_iter += 1
 
+    print("res: {:.7f}    err: {:.7f}".format(s2, err))
     sres = s2
     Jres = (J3 - J1) * (s3 - sres) * (s1 - sres) / (s1 - s3)
     nres = (n3 - n1) * (s3 - sres) * (s1 - sres) / (s1 - s3)
@@ -328,7 +328,8 @@ def sweep(p, nmin=1, output_dir=None):
     None. sres, Jres, and intJdsigmares output is saved to file.
     '''
 
-    sweep_resolution = 0.01
+    middle_sweep_res = 0.1
+    early_sweep_res = 0.001
 
     for n in range(nmin, p.nmax + 1):
         print("n=", n)
@@ -339,31 +340,57 @@ def sweep(p, nmin=1, output_dir=None):
             data_fname = sorted(glob(str(output_dir/'n{:03d}_*.npy'.format(n))))[-1]
             data = np.load(data_fname, allow_pickle=True).item()
             nsoln = int(data_fname.split('.npy')[0].split('_m')[-1]) + 1
-            s = data['s'] - sweep_resolution * gamma(n, nsoln, p)
+            s = data['s'] - middle_sweep_res * dgamma(n, nsoln, p)
         except:
             s = -0.00000001
             nsoln = 1
 
         # Set starting sweep increment in s based on the dispersion relation.
         if n == 1 and nsoln == 1:
-            s_increment = - sweep_resolution
+            s_increment = - early_sweep_res
+            sweep_resolution = early_sweep_res
+        elif nsoln < 10:
+            s_increment = - early_sweep_res * dgamma(n, nsoln, p)
+            sweep_resolution = early_sweep_res
         else:
-            s_increment = - sweep_resolution * gamma(n, nsoln, p)
+            s_increment = - middle_sweep_res * dgamma(n, nsoln, p)
+            sweep_resolution = middle_sweep_res
+        print("\nNEXT RESONANCE: ", gamma(n, nsoln, p))
+        print("INCREMENT: ", s_increment)
 
         # Sweep, check resonance, save outputs
         norm = []
+        nsweeps = 0
+        print("  m  n  s          f(s)      sweep#")
+
         while nsoln < p.mmax + 1:
+            nsweeps += 1
             J, dJ, intJdsigma = one_s_value(n, s, p)
             norm.append(np.abs(intJdsigma))
-            print("nsoln,n,s,response=", nsoln, n, s, norm[-1])
+            print("{} {} {:.6f} {:.3e} {}".format(str(nsoln).rjust(3), str(n).rjust(3), s, norm[-1], nsweeps), end="\r")
             if len(norm) > 2 and norm[-3] < norm[-2] and norm[-1] < norm[-2]:
                 sres, Jres, intJdsigmares = solve(s - 2 * s_increment, s - s_increment, s, n, p)
                 out = {"s": sres, "J": Jres, "Jint": intJdsigmares}
                 np.save(output_dir/'n{:03d}_m{:03d}.npy'.format(n, nsoln), out)
                 #pdb.set_trace()
                 nsoln = nsoln + 1
-                s_increment = - sweep_resolution * gamma(n, nsoln, p)
-                print("\nds={}".format(s_increment))
+
+                # Set starting sweep increment in s based on the dispersion relation.
+                if n == 1 and nsoln == 1:
+                    s_increment = - early_sweep_res
+                    sweep_resolution = early_sweep_res
+                elif nsoln < 10:
+                    s_increment = - early_sweep_res * dgamma(n, nsoln, p)
+                    sweep_resolution = early_sweep_res
+                else:
+                    s_increment = - middle_sweep_res * dgamma(n, nsoln, p)
+                    sweep_resolution = middle_sweep_res
+
+                s_increment = - sweep_resolution * dgamma(n, nsoln, p)
+                nsweeps = 0
+                print("\nNEXT RESONANCE: ", gamma(n, nsoln, p))
+                print("INCREMENT: ", s_increment)
+                print("  m  n  s          f(s)      sweep#")
             s += s_increment
     return
 
