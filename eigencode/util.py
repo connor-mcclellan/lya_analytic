@@ -22,9 +22,9 @@ def construct_sol(directory, nmax, mmax, nmin=1):
     for n in range(nmin, nmax+1):
         for m in range(1, mmax+1):
             data = np.load(directory/"n{:03d}_m{:03d}.npy".format(n, m), allow_pickle=True).item()
-            Jsoln[n-nmin-1, m-1, :] = data['J']
-            ssoln[n-nmin-1, m-1] = data['s']
-            intJsoln[n-nmin-1, m-1] = data['Jint']
+            Jsoln[n-nmin, m-1, :] = data['J']
+            ssoln[n-nmin, m-1] = data['s']
+            intJsoln[n-nmin, m-1] = data['Jint']
 
     p = pickle.load(open(directory/'parameters.p', 'rb'))
     p.nmax = nmax
