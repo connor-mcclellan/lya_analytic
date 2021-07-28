@@ -33,7 +33,7 @@ def efunc(path, nmax, mmax, c, xmin=1):
     tlc = p.radius/fc.clight
     tau0 = p.tau0
     xinit = p.xsource
-    pdb.set_trace()
+
     # Eigenfunctions wait time
     print('Calculating wait time...')
     t = tlc * np.arange(xmin,140.0,0.1)
@@ -52,11 +52,11 @@ def efunc(path, nmax, mmax, c, xmin=1):
 #    monte_carlo(1e6, xinit, colors[i])
 #    colorlegend.append(Patch(facecolor=colors[i], label=r'$x_s={:.1f}$'.format(xinit)))
 
-#xmin = monte_carlo(1e6, 0.0, '#696969')
-monte_carlo(1e7, 0.0, 'k')
-#efunc('./data/tau1e6_xinit0', 20, 500, '#696969', xmin=xmin)
-#efunc('./data/tau1e6_xinit6', 20, 500, 'k', xmin=xmin)
-efunc('./data/210521_m500', 20, 500, 'k')
+xmin = monte_carlo(1e6, 0.0, '#696969')
+monte_carlo(1e6, 6.0, 'k')
+efunc('./data/tau1e6_xinit0', 20, 500, '#696969', xmin=xmin)
+efunc('./data/tau1e6_xinit6', 20, 500, 'k', xmin=xmin)
+
 
 formatlegend = [Line2D([1], [0], color='k', label='Eigenfunctions'), Line2D([1], [1], ls='--', color='k', label='Fitting function'), Line2D([1], [0], color='k', ls='None', marker='s', ms=2, label='Monte Carlo')]
 fmtlegend = plt.legend(handles=formatlegend, loc='upper left', bbox_to_anchor=(0.7, 0.8), fontsize='x-small', frameon=False)

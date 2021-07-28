@@ -243,7 +243,7 @@ def wait_time_freq_dependence(ssoln,Jsoln,Pnmsoln,times,p,bounds,):
 if __name__ == "__main__":
     from pathlib import Path
 
-    directory = Path('./data/210521_m500').resolve()
+    directory = Path('./data/tau1e6_xinit6').resolve()
     Jsoln, ssoln, intJsoln, p = construct_sol(directory, 20, 500)
 
     Pnmsoln = get_Pnm(ssoln, intJsoln, p)
