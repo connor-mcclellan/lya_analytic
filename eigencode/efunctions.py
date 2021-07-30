@@ -398,11 +398,11 @@ def sweep(p, nmin=1, output_dir=None):
 if __name__ == "__main__":
     energy = 1.e0
     temp = 1.e4
-    tau0 = 1.e6
+    tau0 = 1.e7
     radius = 1.e11
     alpha_abs = 0.0
     prob_dest = 0.0
-    xsource = 6.0
+    xsource = 12.0
     nsigma = 1024
 
     from pathlib import Path
