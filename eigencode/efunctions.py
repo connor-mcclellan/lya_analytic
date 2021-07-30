@@ -344,7 +344,8 @@ def sweep(p, nmin=1, output_dir=None):
             s = data['s'] - middle_sweep_res * dgamma(n, nsoln, p)
         except:
             nsoln = 1
-            s = - gamma(n, nsoln, p) + 2 * n_sweep_buffers * early_sweep_res * dgamma(n, nsoln, p) if n!=1 else -0.00000001
+            s = - gamma(n, nsoln, p) + 10 * n_sweep_buffers * early_sweep_res * dgamma(n, nsoln, p) if n!=1 else -0.00000001
+            s = min(s, -0.00000001)
 
         # Set starting sweep increment in s based on the dispersion relation.
         if n == 1 and nsoln == 1:
