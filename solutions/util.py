@@ -98,6 +98,15 @@ def midpoint_diff(t):
   dt = np.append(dt, midpoints[-1] - midpoints[-2])
   return dt
 
+def find_doppler_boundary(x_guess, a): 
+    err = 1e10 
+    while err > 1e-6: 
+        oldguess = x_guess 
+        x_guess = np.sqrt(np.log(np.sqrt(np.pi)*x_guess**2/a)) 
+        err = np.abs(x_guess - oldguess) 
+        print(x_guess) 
+    return x_guess 
+
 def read_bin(path):
     filenames = sorted(glob(path + '*.bin'))
     for filename in filenames:

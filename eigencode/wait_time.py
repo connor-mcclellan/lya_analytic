@@ -7,6 +7,7 @@ from parameters import Parameters
 from mc_visual import fit_mc_exp, mc_wait_time
 from scipy.interpolate import interp1d
 import pdb
+import matplotlib.pylab as pl
 import matplotlib
 matplotlib.rcParams['text.usetex'] = True
 from util import construct_sol, midpoint_diff, get_Pnm
@@ -249,12 +250,17 @@ if __name__ == "__main__":
     Pnmsoln = get_Pnm(ssoln, intJsoln, p)
     print("SUM OF PNMSOLN: {}".format(np.sum(Pnmsoln)))
 
-    m = np.arange(p.mmax)
-    plt.figure()
+    m = np.arange(1, p.mmax+1)
+    fig = plt.figure()
+    colors = pl.cm.viridis(np.linspace(0, 1, 20))
+    linewidths = np.logspace(np.log10(4), np.log10(1), 20)
     for n in range(1,p.nmax):
-        plt.plot(m,np.abs(Pnmsoln[n,:]),label=str(n))
-        plt.xlabel('mode number')
-        plt.ylabel(r'$|P_{nm}|$')
+        plt.plot(m,np.abs(Pnmsoln[n,:]),c=colors[n-1], linewidth=linewidths[n-1])
+    sm = plt.cm.ScalarMappable(cmap=pl.cm.viridis, norm=plt.Normalize(vmin=1, vmax=20)) 
+    cbar = fig.colorbar(sm) 
+    cbar.ax.set_ylabel('n', rotation=90)
+    plt.xlabel('mode number')
+    plt.ylabel(r'$|P_{nm}|$')
     plt.plot(m,0.5/(m+1.0/8.0)**(2./3),'--',label=r'$m^{-2/3}$')
     plt.legend(loc='best')
     plt.yscale('log')
