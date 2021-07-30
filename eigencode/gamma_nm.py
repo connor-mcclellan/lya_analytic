@@ -14,9 +14,9 @@ matplotlib.rc('font', **{'family': 'serif',
                          'serif': ['Computer Modern Roman']})
 import pickle   
 
-directory = Path('./data/210730-0049').resolve()
-nmin = 17
-Jsoln, ssoln, intJsoln, p = construct_sol(directory, nmax=17, mmax=4, nmin=nmin)
+directory = Path('./data/tau1e7_xinit12').resolve()
+nmin = 1
+Jsoln, ssoln, intJsoln, p = construct_sol(directory, nmax=20, mmax=5, nmin=nmin)
 colors = pl.cm.viridis(np.linspace(0, 1, 20))
 fig = plt.figure()
 
