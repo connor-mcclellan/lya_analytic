@@ -328,8 +328,9 @@ def sweep(p, nmin=1, output_dir=None):
     None. sres, Jres, and intJdsigmares output is saved to file.
     '''
 
-    middle_sweep_res = 0.1
-    early_sweep_res = 0.001
+    middle_sweep_res = 0.05
+    early_sweep_res = 0.0005
+    n_sweep_buffers = 40
 
     for n in range(nmin, p.nmax + 1):
         print("n=", n)
@@ -342,8 +343,8 @@ def sweep(p, nmin=1, output_dir=None):
             nsoln = int(data_fname.split('.npy')[0].split('_m')[-1]) + 1
             s = data['s'] - middle_sweep_res * dgamma(n, nsoln, p)
         except:
-            s = -0.00000001
             nsoln = 1
+            s = - gamma(n, nsoln, p) + 2 * n_sweep_buffers * early_sweep_res * dgamma(n, nsoln, p)
 
         # Set starting sweep increment in s based on the dispersion relation.
         if n == 1 and nsoln == 1:
@@ -355,7 +356,7 @@ def sweep(p, nmin=1, output_dir=None):
         else:
             s_increment = - middle_sweep_res * dgamma(n, nsoln, p)
             sweep_resolution = middle_sweep_res
-        print("\nNEXT RESONANCE: ", gamma(n, nsoln, p))
+        print("\nNEXT RESONANCE: ", - gamma(n, nsoln, p))
         print("INCREMENT: ", s_increment)
 
         # Sweep, check resonance, save outputs
@@ -391,7 +392,7 @@ def sweep(p, nmin=1, output_dir=None):
                 print("\nNEXT RESONANCE: ", gamma(n, nsoln, p))
                 print("INCREMENT: ", s_increment)
                 print("  m  n  s        f(s)      sweep#")
-                s = - gamma(n, nsoln, p) - 5 * s_increment
+                s = - gamma(n, nsoln, p) - n_sweep_buffers * s_increment
             s += s_increment
     return
 

@@ -14,9 +14,9 @@ matplotlib.rc('font', **{'family': 'serif',
                          'serif': ['Computer Modern Roman']})
 import pickle   
 
-directory = Path('./data/tests/tau1e7_xinit12_gammatest').resolve()
-nmin = 14
-Jsoln, ssoln, intJsoln, p = construct_sol(directory, nmax=20, mmax=10, nmin=nmin)
+directory = Path('./data/210730-0049').resolve()
+nmin = 17
+Jsoln, ssoln, intJsoln, p = construct_sol(directory, nmax=17, mmax=4, nmin=nmin)
 colors = pl.cm.viridis(np.linspace(0, 1, 20))
 fig = plt.figure()
 
@@ -43,7 +43,7 @@ for n in range(nmin, p.nmax+1):
     gamma_sweep = -n**(-4/3)*ssoln[n-nmin-1][:p.mmax]
     plt.plot(np.arange(1, p.mmax+1), p.radius/fc.clight/(p.a*p.tau0)**(1/3.)/gamma_sweep, '-', lw=linewidths[n-1], c=colors[n-1])#, label='$\gamma$ sweep')
 
-n=nmin
+n=1
 gamma_analytic = n**(-4/3)*gamma(n, np.arange(1, p.mmax+1), p)
 plt.plot(np.arange(1, p.mmax+1), p.radius/fc.clight/(p.a*p.tau0)**(1/3.)/gamma_analytic, 'k--', lw=1, label='Analytic $\gamma_{nm}$')
 
