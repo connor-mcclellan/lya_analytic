@@ -329,8 +329,8 @@ def sweep(p, nmin=1, output_dir=None):
     '''
 
     middle_sweep_res = 0.05
-    early_sweep_res = 0.0005
-    n_sweep_buffers = 40
+    early_sweep_res = 0.0001
+    n_sweep_buffers = 15
 
     for n in range(nmin, p.nmax + 1):
         print("n=", n)
