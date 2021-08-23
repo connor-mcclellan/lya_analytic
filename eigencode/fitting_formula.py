@@ -52,15 +52,15 @@ def efunc(path, nmax, mmax, c, xmin=1):
 #    monte_carlo(1e6, xinit, colors[i])
 #    colorlegend.append(Patch(facecolor=colors[i], label=r'$x_s={:.1f}$'.format(xinit)))
 
-xmin = monte_carlo(1e6, 0.0, '#696969')
-monte_carlo(1e6, 6.0, 'k')
-efunc('./data/tau1e6_xinit0', 20, 500, '#696969', xmin=xmin)
-efunc('./data/tau1e6_xinit6', 20, 500, 'k', xmin=xmin)
+monte_carlo(1e7, 12.0, '#696969')
+xmin = monte_carlo(1e7, 0., 'k')
+efunc('./data/tau1e7_xinit12', 20, 500, '#696969', xmin=xmin)
+efunc('./data/210521_m500', 20, 500, 'k', xmin=xmin)
 
 
 formatlegend = [Line2D([1], [0], color='k', label='Eigenfunctions'), Line2D([1], [1], ls='--', color='k', label='Fitting function'), Line2D([1], [0], color='k', ls='None', marker='s', ms=2, label='Monte Carlo')]
-fmtlegend = plt.legend(handles=formatlegend, loc='upper left', bbox_to_anchor=(0.7, 0.8), fontsize='x-small', frameon=False)
-clegend = plt.legend(handles=colorlegend, loc='lower left', bbox_to_anchor=(0.7, 0.8), fontsize='small', frameon=False)
+fmtlegend = plt.legend(handles=formatlegend, loc='upper left', bbox_to_anchor=(0.75, 0.85), fontsize='x-small', frameon=False)
+clegend = plt.legend(handles=colorlegend, loc='lower left', bbox_to_anchor=(0.75, 0.85), fontsize='small', frameon=False)
 plt.gca().add_artist(clegend)
 plt.gca().add_artist(fmtlegend)
 
