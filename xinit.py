@@ -1,5 +1,5 @@
 import solutions.ftsoln as ftsoln
-from solutions.util import voigtx
+from solutions.util import voigtx, find_doppler_boundary
 import matplotlib.pylab as pl
 import numpy as np
 import matplotlib.pyplot as plt
@@ -23,6 +23,10 @@ if __name__ == "__main__":
     colorlegend=[]
     fig, ax = plt.subplots(1, 1, figsize=(7, 5))
     ### PLOT THEORY LINES
+
+    xdop = find_doppler_boundary(3.0, a)
+    print("Peak at dop. boundary when tau0={}".format(xdop**3./a))
+
     for j, tau0 in enumerate([1e5, 1e7, 1e9]):
         for i, sigmas in enumerate([0, tau0, 2*tau0]):
             x = get_x_from_sigma(sigmas, a)
@@ -35,17 +39,22 @@ if __name__ == "__main__":
                 ls = '-'
             elif tau0==1e7:
                 lw = 2.5
-                ls = '--'
+                ls = '-'
             else:
                 lw = 3.25
                 ls = '-'
             ax.plot(x_ft/tauscale, norm*Hh_ft*tauscale**2, alpha=0.9, lw=lw, ls=ls, c=colors[i], zorder=100-30*i)
             if j==0:
-#                ax.axvline(x/tauscale, color=colors[i], lw=1)
                 colorlegend.append(Patch(facecolor=colors[i], label=r'$\sigma_s = {:d}\times \tau_0$'.format(i)))
+            if i==0:
+                ax.axvline(xdop/tauscale, color='limegreen', lw=lw, alpha=0.5)
+
+    boundarylegend = [Patch(facecolor='limegreen', label=r'Doppler core boundary')]
+    blegend = ax.legend(handles=boundarylegend, loc='lower right', frameon=False)
     formatlegend = [Line2D([1], [0], color='k', lw=1, label=r'$\tau_0=10^5$'), Line2D([1], [1], lw=2, ls='-', color='k', label=r'$\tau_0=10^7$'), Line2D([1], [0], color='k', lw=3, label=r'$\tau_0=10^9$')]
     fmtlegend = ax.legend(handles=formatlegend, loc='upper left', frameon=False)
     clegend = ax.legend(handles=colorlegend, loc='lower left', frameon=False)
+    plt.gca().add_artist(blegend)
     plt.gca().add_artist(clegend)
     plt.gca().add_artist(fmtlegend)
     plt.ylabel(r'$(a\tau_0)^{2/3}P(x)$')

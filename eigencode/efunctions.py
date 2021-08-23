@@ -329,7 +329,7 @@ def sweep(p, nmin=1, output_dir=None):
     '''
 
     middle_sweep_res = 0.05
-    early_sweep_res = 0.0001
+    early_sweep_res = 0.001
     n_sweep_buffers = 15
 
     for n in range(nmin, p.nmax + 1):
@@ -362,6 +362,7 @@ def sweep(p, nmin=1, output_dir=None):
 
         # Sweep, check resonance, save outputs
         norm = []
+        sses = []
         nsweeps = 0
         print("  m  n  s         f(s)      sweep#")
 
@@ -369,11 +370,12 @@ def sweep(p, nmin=1, output_dir=None):
             nsweeps += 1
             J, dJ, intJdsigma = one_s_value(n, s, p)
             norm.append(np.abs(intJdsigma))
+            sses.append(s)
             print("{} {} {:.6f} {:.3e} {}".format(str(nsoln).rjust(3), str(n).rjust(3), s, norm[-1], nsweeps), end="\r")
             if len(norm) > 2 and norm[-3] < norm[-2] and norm[-1] < norm[-2]:
-                sres, Jres, intJdsigmares = solve(s - 2 * s_increment, s - s_increment, s, n, p)
-                out = {"s": sres, "J": Jres, "Jint": intJdsigmares}
-                np.save(output_dir/'n{:03d}_m{:03d}.npy'.format(n, nsoln), out)
+#                sres, Jres, intJdsigmares = solve(s - 2 * s_increment, s - s_increment, s, n, p)
+#                out = {"s": sres, "J": Jres, "Jint": intJdsigmares}
+#                np.save(output_dir/'n{:03d}_m{:03d}.npy'.format(n, nsoln), out)
                 #pdb.set_trace()
                 nsoln = nsoln + 1
 
@@ -388,12 +390,17 @@ def sweep(p, nmin=1, output_dir=None):
                     s_increment = - middle_sweep_res * dgamma(n, nsoln, p)
                     sweep_resolution = middle_sweep_res
 
+                plt.plot(sses, norm, marker='s', ms=3)
+                plt.yscale('log')
+                plt.show()
+
                 s_increment = - sweep_resolution * dgamma(n, nsoln, p)
                 nsweeps = 0
                 print("\nNEXT RESONANCE: ", gamma(n, nsoln, p))
                 print("INCREMENT: ", s_increment)
                 print("  m  n  s        f(s)      sweep#")
                 s = - gamma(n, nsoln, p) - n_sweep_buffers * s_increment
+                
             s += s_increment
     return
 
