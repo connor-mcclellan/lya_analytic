@@ -14,9 +14,9 @@ matplotlib.rc('font', **{'family': 'serif',
                          'serif': ['Computer Modern Roman']})
 import pickle   
 
-directory = Path('./data/tests/n1test_again').resolve()
+directory = Path('./data/tau1e7_xinit12').resolve()
 nmin = 1
-Jsoln, ssoln, intJsoln, p = construct_sol(directory, nmax=1, mmax=5, nmin=nmin)
+Jsoln, ssoln, intJsoln, p = construct_sol(directory, nmax=20, mmax=500, nmin=nmin)
 colors = pl.cm.viridis(np.linspace(0, 1, 20))
 fig = plt.figure()
 
@@ -39,13 +39,12 @@ for n in range(nmin, p.nmax+1):
 
 #    gamma_sweep = -n**(-4/3)*ssoln[n-1][:mmax]
 #    gamma_analytic = gamma(n, np.arange(mmin, mmax+1), p)
-
-    gamma_sweep = -n**(-4/3)*ssoln[n-nmin-1][:p.mmax]
-    plt.plot(np.arange(1, p.mmax+1), p.radius/fc.clight/(p.a*p.tau0)**(1/3.)/gamma_sweep, '-', lw=linewidths[n-1], c=colors[n-1])#, label='$\gamma$ sweep')
+    gamma_sweep = -n**(-4/3)*ssoln[n-nmin][:p.mmax]
+    plt.plot(np.arange(1, p.mmax+1), fc.clight/p.radius/(p.a*p.tau0)**(1/3.)/gamma_sweep, '-', lw=linewidths[n-1], c=colors[n-1])#, label='$\gamma$ sweep')
 
 n=1
 gamma_analytic = n**(-4/3)*gamma(n, np.arange(1, p.mmax+1), p)
-plt.plot(np.arange(1, p.mmax+1), p.radius/fc.clight/(p.a*p.tau0)**(1/3.)/gamma_analytic, 'k--', lw=1, label='Analytic $\gamma_{nm}$')
+plt.plot(np.arange(1, p.mmax+1), fc.clight/p.radius/(p.a*p.tau0)**(1/3.)/gamma_analytic, 'k--', lw=1, label='Analytic $\gamma_{nm}$')
 
 sm = plt.cm.ScalarMappable(cmap=pl.cm.viridis, norm=plt.Normalize(vmin=1, vmax=20)) 
 cbar = fig.colorbar(sm) 
@@ -55,7 +54,7 @@ bounds = ['1', '5', '10', '15', '20']
 cbar.set_ticks(np.array(bounds).astype(float))
 cbar.set_ticklabels(bounds)
 
-plt.ylabel(r'$Rc^{-1} (a\tau_0)^{-1/3} n^{-4/3} \gamma_{nm}^{\ \ -1}$')
+plt.ylabel(r'$R^{-1}c (a\tau_0)^{-1/3} n^{-4/3} \gamma_{nm}^{\ \ -1}$')
 plt.xlabel('m')
 plt.xscale('log')
 plt.yscale('log')
