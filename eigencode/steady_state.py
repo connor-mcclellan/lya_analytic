@@ -42,15 +42,15 @@ def fluence(sigma, p, Jsoln=None, ssoln=None, dijkstra=False):
         for n in range(1, p.nmax+1):
 
             spec[n-1] = (
-                        np.sqrt(6) * np.pi / 3. / p.k / phi
+                         - np.sqrt(6) * np.pi / 3. / p.k / phi
                         * p.energy / p.radius * n * (-1)**n 
-                        * np.exp(-n * np.pi * p.Delta / p.k / p.radius * np.abs(sigma))
+                        * np.exp(-n * np.pi * p.Delta / p.k / p.radius * np.abs(sigma - p.sigmas))
                         )
 
     elif Jsoln is None and dijkstra is True:
         H0 = (
              np.sqrt(6) * p.energy / (3. * p.k * phi) / 32 / np.pi
-             / p.radius**3 / (np.cosh(np.pi * p.Delta / p.k / p.radius * sigma) + 1)
+             / p.radius**3 / (np.cosh(np.pi * p.Delta / p.k / p.radius * (sigma - p.sigmas)) + 1)
              )
         F = 4 * np.pi * H0
         spec[0] = 4 * np.pi * p.radius**2 * F
@@ -85,7 +85,7 @@ def mfluence(sigma, p, Jsoln=None, ssoln=None, dijkstra=False):
         # STEADY STATE SOLUTION
         for n in range(1, p.nmax+1):
             spec[0] += (                   ## FACTOR OF 2???
-                        - norm * np.sqrt(6) * np.pi / 3. / p.k / p.Delta / phi
+                        norm * np.sqrt(6) * np.pi / 3. / p.k / p.Delta / phi
                         * p.energy / p.radius * n * (-1)**n 
                         * np.exp(-n * np.pi * p.Delta / p.k / p.radius * np.abs(sigma))
                         )
@@ -127,9 +127,9 @@ if __name__ == '__main__':
     
     for n in range(p.nmax-1, p.nmax):
         fig, ax = plt.subplots(1, 1)
-        ax.plot(x_t, np.abs(np.sum(tdep_spec[:n], axis=0)), '-', c='gray', marker='s', ms=2, lw=1, alpha=0.5, label='Time-integrated')
-        ax.plot(x_d, np.abs(dijkstra[0]), '-', c='purple', alpha=0.7, lw=3, label=r'Steady State'.format(n))
-        ax.plot(x_s, np.abs(np.sum(steady_state[:n], axis=0)), '--', c='c', lw=3, label='Steady State (Partial Sum)')
+        ax.plot(x_t, np.sum(tdep_spec[:n], axis=0), '-', c='gray', marker='s', ms=2, lw=1, alpha=0.5, label='Time-integrated')
+        ax.plot(x_d, dijkstra[0], '-', c='purple', alpha=0.7, lw=3, label=r'Steady State'.format(n))
+        ax.plot(x_s, np.sum(steady_state[:n], axis=0), '--', c='c', lw=3, label='Steady State (Partial Sum)')
 #        ax.plot(x_t2, np.abs(np.sum(tdep_spec2[:n], axis=0)), 'm--', marker='^', ms=1, alpha=0.7, label=r'$n < 20$, $m < 100$'.format(n))
         #plt.yscale('log')
         plt.ylim(-0.001, 0.05)
