@@ -300,7 +300,7 @@ def solve(s1, s2, s3, n, p):
     Jres = (J3 - J1) * (s3 - sres) * (s1 - sres) / (s1 - s3)
     nres = (n3 - n1) * (s3 - sres) * (s1 - sres) / (s1 - s3)
 
-    one_s_value(n, sres, p)#, plot=True)
+    one_s_value(n, sres, p, plot=True)
 #    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
 #    ax1.plot(np.cbrt(p.sigma/p.c1), Jres, lw=0.5, alpha=0.75)
 #    ax2.plot(np.cbrt(p.sigma/p.c1), Jres, lw=0.5, alpha=0.75)
@@ -373,7 +373,7 @@ def sweep(p, nmin=1, output_dir=None):
             sses.append(s)
             print("{} {} {:.6f} {:.3e} {}".format(str(nsoln).rjust(3), str(n).rjust(3), s, norm[-1], nsweeps), end="\r")
             if len(norm) > 2 and norm[-3] < norm[-2] and norm[-1] < norm[-2]:
-#                sres, Jres, intJdsigmares = solve(s - 2 * s_increment, s - s_increment, s, n, p)
+                sres, Jres, intJdsigmares = solve(s - 2 * s_increment, s - s_increment, s, n, p)
 #                out = {"s": sres, "J": Jres, "Jint": intJdsigmares}
 #                np.save(output_dir/'n{:03d}_m{:03d}.npy'.format(n, nsoln), out)
                 #pdb.set_trace()
@@ -390,9 +390,9 @@ def sweep(p, nmin=1, output_dir=None):
                     s_increment = - middle_sweep_res * dgamma(n, nsoln, p)
                     sweep_resolution = middle_sweep_res
 
-                plt.plot(sses, norm, marker='s', ms=3)
-                plt.yscale('log')
-                plt.show()
+#                plt.plot(sses, norm, marker='s', ms=3)
+#                plt.yscale('log')
+#                plt.show()
 
                 s_increment = - sweep_resolution * dgamma(n, nsoln, p)
                 nsweeps = 0
