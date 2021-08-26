@@ -226,6 +226,14 @@ def one_s_value(n, s, p, plot=False):
         fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
         ax1.plot(np.cbrt(sigmas/p.c1), J, marker='+', ms=3, alpha=0.5)
         ax2.plot(np.cbrt(sigmas/p.c1), dJ, marker='+', ms=3, alpha=0.5)
+        ax2.axvline(p.xsource, alpha=0.25, c='limegreen')
+
+        # MEASURE DISCONTINUITY IN dJ AT SOURCE
+        _, cts = np.unique(sigmas, return_counts=True)
+        idx = np.where(cts == 2)[0]
+        discontinuity = dJ[idx+1] - dJ[idx]
+        pdb.set_trace()
+
         ax2.set_xlabel('x')
         ax2.set_ylabel('dJ(x)/dsigma')
         ax1.set_ylabel('J(x)')
@@ -297,7 +305,7 @@ def solve(s1, s2, s3, n, p):
     # MEASURE DISCONTINUITY IN dJ AT SOURCE
     _, cts = np.unique(p.sigma, return_counts=True)
     idx = np.where(cts == 2)[0]
-    discontinuity = dJguess[idx] - dJguess[idx-1]
+    discontinuity = dJguess[idx+1] - dJguess[idx]
 
     print("\n\nres: {:.7f}    err: {:.7f}    ΔdJ: {:.4e}".format(s2, err, discontinuity[0]))
     print("EXPECTED ΔdJ: {:.4e}".format(-np.sqrt(6)/8. * n**2 * p.energy / p.k / p.radius**3))
@@ -305,7 +313,7 @@ def solve(s1, s2, s3, n, p):
     Jres = (J3 - J1) * (s3 - sres) * (s1 - sres) / (s1 - s3)
     nres = (n3 - n1) * (s3 - sres) * (s1 - sres) / (s1 - s3)
 
-    one_s_value(n, sres, p)#, plot=True)
+    one_s_value(n, sres, p, plot=True)
 #    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
 #    ax1.plot(np.cbrt(p.sigma/p.c1), Jres, lw=0.5, alpha=0.75)
 #    ax2.plot(np.cbrt(p.sigma/p.c1), Jres, lw=0.5, alpha=0.75)
@@ -378,7 +386,8 @@ def sweep(p, nmin=1, output_dir=None):
             # MEASURE DISCONTINUITY IN dJ AT SOURCE
             _, cts = np.unique(p.sigma, return_counts=True)
             idx = np.where(cts == 2)[0]
-            discontinuity = dJ[idx] - dJ[idx-1]
+            discontinuity = dJ[idx+1] - dJ[idx]
+            pdb.set_trace()
 
             norm.append(np.abs(intJdsigma))
             sses.append(s)

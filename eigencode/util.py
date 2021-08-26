@@ -129,7 +129,7 @@ def make_sigma_grids(p, xuniform=True): ## Make master sigma grid uniform in x
 
     ### Create grids
     leftgrid = np.linspace(*left, nleft)
-    middlegrid = np.linspace(*middle, nmiddle)
+    middlegrid = np.linspace(*middle, nmiddle, endpoint=False) #TODO: Does this still work if source is left of line center?
     rightgrid = np.linspace(*right, nright)
 
     if xuniform:
