@@ -78,9 +78,9 @@ def get_sigma_bounds(n, s, p):
     source = p.sigmas
     offset = p.sigma_offset
 
-    return ((sigma_left, min(source, 0-offset)), 
-            (min(source, 0+offset), max(source, 0-offset)),
-            (max(source, 0+offset), sigma_right))
+    return ((sigma_left, min(source-1e-2, 0-offset)), 
+            (min(source+1e-2, 0+offset), max(source-1e-2, 0-offset)),
+            (max(source+1e-2, 0+offset), sigma_right))
 
 def scinot(num):
     ''' 
@@ -95,9 +95,9 @@ def make_sigma_grids(p, xuniform=True): ## Make master sigma grid uniform in x
     print("SIGMA GRID WIDTH: {:.1f}   ({:.0f} * tau0)    (x={:.1f})".format(width, width/p.tau0, np.cbrt(width/p.c1)))
     source = p.sigmas
     offset = p.sigma_offset
-    left, middle, right = ((-width, min(source, 0-offset)), 
-                           (min(source, 0+offset), max(source, 0-offset)),
-                           (max(source, 0+offset), width))
+    left, middle, right = ((-width, min(source-1e-2, 0-offset)), 
+                           (min(source+1e-2, 0+offset), max(source-1e-2, 0-offset)),
+                           (max(source+1e-2, 0+offset), width))
 
     if xuniform:
         left = np.cbrt(np.array(left)/p.c1)
@@ -129,7 +129,7 @@ def make_sigma_grids(p, xuniform=True): ## Make master sigma grid uniform in x
 
     ### Create grids
     leftgrid = np.linspace(*left, nleft)
-    middlegrid = np.linspace(*middle, nmiddle, endpoint=False) #TODO: Does this still work if source is left of line center?
+    middlegrid = np.linspace(*middle, nmiddle)
     rightgrid = np.linspace(*right, nright)
 
     if xuniform:

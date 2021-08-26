@@ -6,6 +6,7 @@ from parameters import Parameters
 from util import line_profile, get_sigma_bounds, gamma, dgamma
 import warnings
 import pdb
+from glob import glob
 
 # TODO:
 # [X] Add in master sigma grid
@@ -227,18 +228,12 @@ def one_s_value(n, s, p, plot=False):
         ax1.plot(np.cbrt(sigmas/p.c1), J, marker='+', ms=3, alpha=0.5)
         ax2.plot(np.cbrt(sigmas/p.c1), dJ, marker='+', ms=3, alpha=0.5)
         ax2.axvline(p.xsource, alpha=0.25, c='limegreen')
-
-        # MEASURE DISCONTINUITY IN dJ AT SOURCE
-        _, cts = np.unique(sigmas, return_counts=True)
-        idx = np.where(cts == 2)[0]
-        discontinuity = dJ[idx+1] - dJ[idx]
-        pdb.set_trace()
-
         ax2.set_xlabel('x')
         ax2.set_ylabel('dJ(x)/dsigma')
         ax1.set_ylabel('J(x)')
         plt.suptitle('n={}, s={:.4f}'.format(n, s))
-#        plt.savefig('Jres_n={}_s={:08.3f}.pdf'.format(n, s))
+        
+#        plt.savefig('./jres_animation/jres{:03d}.png'.format(len(glob('./jres_animation/jres*.png'))))
         plt.show()
 #        plt.close()
 
@@ -303,17 +298,16 @@ def solve(s1, s2, s3, n, p):
         n_iter += 1
 
     # MEASURE DISCONTINUITY IN dJ AT SOURCE
-    _, cts = np.unique(p.sigma, return_counts=True)
-    idx = np.where(cts == 2)[0]
+    idx = np.where(p.sigma < p.sigmas)[0][-1]
     discontinuity = dJguess[idx+1] - dJguess[idx]
 
-    print("\n\nres: {:.7f}    err: {:.7f}    ΔdJ: {:.4e}".format(s2, err, discontinuity[0]))
+    print("\n\nres: {:.7f}    err: {:.7f}    ΔdJ: {:.4e}".format(s2, err, discontinuity))
     print("EXPECTED ΔdJ: {:.4e}".format(-np.sqrt(6)/8. * n**2 * p.energy / p.k / p.radius**3))
     sres = s2
     Jres = (J3 - J1) * (s3 - sres) * (s1 - sres) / (s1 - s3)
     nres = (n3 - n1) * (s3 - sres) * (s1 - sres) / (s1 - s3)
 
-    one_s_value(n, sres, p, plot=True)
+    one_s_value(n, sres, p)#, plot=True)
 #    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
 #    ax1.plot(np.cbrt(p.sigma/p.c1), Jres, lw=0.5, alpha=0.75)
 #    ax2.plot(np.cbrt(p.sigma/p.c1), Jres, lw=0.5, alpha=0.75)
@@ -342,7 +336,7 @@ def sweep(p, nmin=1, output_dir=None):
     '''
 
     middle_sweep_res = 0.05
-    early_sweep_res = 0.01
+    early_sweep_res = 0.001
     n_sweep_buffers = 15
 
     for n in range(nmin, p.nmax + 1):
@@ -384,19 +378,16 @@ def sweep(p, nmin=1, output_dir=None):
             J, dJ, intJdsigma = one_s_value(n, s, p)#, plot=True)
 
             # MEASURE DISCONTINUITY IN dJ AT SOURCE
-            _, cts = np.unique(p.sigma, return_counts=True)
-            idx = np.where(cts == 2)[0]
+            idx = np.where(p.sigma < p.sigmas)[0][-1]
             discontinuity = dJ[idx+1] - dJ[idx]
-            pdb.set_trace()
 
             norm.append(np.abs(intJdsigma))
             sses.append(s)
-            print("{} {} {:.6f} {:.3e} {} {:.4e}".format(str(nsoln).rjust(3), str(n).rjust(3), s, norm[-1], str(nsweeps).ljust(5), discontinuity[0]), end="\r")
+            print("{} {} {:.6f} {:.3e} {} {:.4e}".format(str(nsoln).rjust(3), str(n).rjust(3), s, norm[-1], str(nsweeps).ljust(5), discontinuity), end="\r")
             if len(norm) > 2 and norm[-3] < norm[-2] and norm[-1] < norm[-2]:
                 sres, Jres, intJdsigmares = solve(s - 2 * s_increment, s - s_increment, s, n, p)
 #                out = {"s": sres, "J": Jres, "Jint": intJdsigmares}
 #                np.save(output_dir/'n{:03d}_m{:03d}.npy'.format(n, nsoln), out)
-                #pdb.set_trace()
                 nsoln = nsoln + 1
 
                 # Set starting sweep increment in s based on the dispersion relation.
@@ -432,7 +423,7 @@ if __name__ == "__main__":
     radius = 1.e11
     alpha_abs = 0.0
     prob_dest = 0.0
-    xsource = 6.0
+    xsource = 12.0
     nsigma = 1024
 
     from pathlib import Path
