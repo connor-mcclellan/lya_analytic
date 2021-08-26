@@ -224,12 +224,11 @@ def one_s_value(n, s, p, plot=False):
     if plot:
         sigmas = p.sigma
         fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
-        ax1.plot(np.cbrt(sigmas/p.c1), dJ, marker='+', ms=3, alpha=0.5)
-        ax2.plot(np.cbrt(sigmas/p.c1), np.abs(dJ), marker='+', ms=3, alpha=0.5)
+        ax1.plot(np.cbrt(sigmas/p.c1), J, marker='+', ms=3, alpha=0.5)
+        ax2.plot(np.cbrt(sigmas/p.c1), dJ, marker='+', ms=3, alpha=0.5)
         ax2.set_xlabel('x')
-        ax2.set_yscale('log')
-        ax1.set_ylabel('dJ(x)/dsigma')
-        ax2.set_ylabel('|dJ(x)/dsigma|')
+        ax2.set_ylabel('dJ(x)/dsigma')
+        ax1.set_ylabel('J(x)')
         plt.suptitle('n={}, s={:.4f}'.format(n, s))
 #        plt.savefig('Jres_n={}_s={:08.3f}.pdf'.format(n, s))
         plt.show()
@@ -295,12 +294,18 @@ def solve(s1, s2, s3, n, p):
         s2, J2, n2 = sguess, Jguess, nguess
         n_iter += 1
 
-    print("\nres: {:.7f}    err: {:.7f}".format(s2, err))
+    # MEASURE DISCONTINUITY IN dJ AT SOURCE
+    _, cts = np.unique(p.sigma, return_counts=True)
+    idx = np.where(cts == 2)[0]
+    discontinuity = dJguess[idx] - dJguess[idx-1]
+
+    print("\n\nres: {:.7f}    err: {:.7f}    ΔdJ: {:.4e}".format(s2, err, discontinuity[0]))
+    print("EXPECTED ΔdJ: {:.4e}".format(-np.sqrt(6)/8. * n**2 * p.energy / p.k / p.radius**3))
     sres = s2
     Jres = (J3 - J1) * (s3 - sres) * (s1 - sres) / (s1 - s3)
     nres = (n3 - n1) * (s3 - sres) * (s1 - sres) / (s1 - s3)
 
-    one_s_value(n, sres, p, plot=True)
+    one_s_value(n, sres, p)#, plot=True)
 #    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
 #    ax1.plot(np.cbrt(p.sigma/p.c1), Jres, lw=0.5, alpha=0.75)
 #    ax2.plot(np.cbrt(p.sigma/p.c1), Jres, lw=0.5, alpha=0.75)
@@ -329,7 +334,7 @@ def sweep(p, nmin=1, output_dir=None):
     '''
 
     middle_sweep_res = 0.05
-    early_sweep_res = 0.001
+    early_sweep_res = 0.01
     n_sweep_buffers = 15
 
     for n in range(nmin, p.nmax + 1):
@@ -364,14 +369,20 @@ def sweep(p, nmin=1, output_dir=None):
         norm = []
         sses = []
         nsweeps = 0
-        print("  m  n  s         f(s)      sweep#")
+        print("  m   n  s        f(s)      #      ΔdJ")
 
         while nsoln < p.mmax + 1:
             nsweeps += 1
-            J, dJ, intJdsigma = one_s_value(n, s, p)
+            J, dJ, intJdsigma = one_s_value(n, s, p)#, plot=True)
+
+            # MEASURE DISCONTINUITY IN dJ AT SOURCE
+            _, cts = np.unique(p.sigma, return_counts=True)
+            idx = np.where(cts == 2)[0]
+            discontinuity = dJ[idx] - dJ[idx-1]
+
             norm.append(np.abs(intJdsigma))
             sses.append(s)
-            print("{} {} {:.6f} {:.3e} {}".format(str(nsoln).rjust(3), str(n).rjust(3), s, norm[-1], nsweeps), end="\r")
+            print("{} {} {:.6f} {:.3e} {} {:.4e}".format(str(nsoln).rjust(3), str(n).rjust(3), s, norm[-1], str(nsweeps).ljust(5), discontinuity[0]), end="\r")
             if len(norm) > 2 and norm[-3] < norm[-2] and norm[-1] < norm[-2]:
                 sres, Jres, intJdsigmares = solve(s - 2 * s_increment, s - s_increment, s, n, p)
 #                out = {"s": sres, "J": Jres, "Jint": intJdsigmares}
@@ -394,12 +405,13 @@ def sweep(p, nmin=1, output_dir=None):
 #                plt.yscale('log')
 #                plt.show()
 
-                s_increment = - sweep_resolution * dgamma(n, nsoln, p)
-                nsweeps = 0
-                print("\nNEXT RESONANCE: ", gamma(n, nsoln, p))
-                print("INCREMENT: ", s_increment)
-                print("  m  n  s        f(s)      sweep#")
-                s = - gamma(n, nsoln, p) - n_sweep_buffers * s_increment
+                if nsoln < p.mmax+1:
+                    s_increment = - sweep_resolution * dgamma(n, nsoln, p)
+                    nsweeps = 0
+                    print("\nNEXT RESONANCE: ", gamma(n, nsoln, p))
+                    print("INCREMENT: ", s_increment)
+                    print("  m   n  s        f(s)      #      ΔdJ")
+                    s = - gamma(n, nsoln, p) - n_sweep_buffers * s_increment
                 
             s += s_increment
     return
@@ -411,7 +423,7 @@ if __name__ == "__main__":
     radius = 1.e11
     alpha_abs = 0.0
     prob_dest = 0.0
-    xsource = 12.0
+    xsource = 6.0
     nsigma = 1024
 
     from pathlib import Path

@@ -42,7 +42,7 @@ def dijkstra(sigma, p):
 def time_integrated(sigma, p, Jsoln, ssoln):
     spec = np.zeros((p.nmax, np.shape(sigma)[0]))
     phi = line_profile(sigma, p)
-    pdb.set_trace()
+
     for n in range(1, p.nmax+1):
         for m in range(1, p.mmax+1):
             spec[n-1] += (
@@ -55,9 +55,11 @@ def time_integrated(sigma, p, Jsoln, ssoln):
 
 if __name__ == '__main__':
     directory = Path('./data/tau1e7_xinit12').resolve()
-    Jsoln, ssoln, intJsoln, p = construct_sol(directory, nmax=19, mmax=500)
+    Jsoln, ssoln, intJsoln, p = construct_sol(directory, nmax=20, mmax=500)
 
     x_t, tdep_spec = time_integrated(p.sigma, p, Jsoln, ssoln)
+#    p.nmax = 201
+#    p.mmax = 500
     x_s, steady_state = steady_state_partial_sum(p.sigma, p)
     x_d, dijkstra = dijkstra(p.sigma, p)
 
