@@ -386,8 +386,8 @@ def sweep(p, nmin=1, output_dir=None):
             print("{} {} {:.6f} {:.3e} {} {:.4e}".format(str(nsoln).rjust(3), str(n).rjust(3), s, norm[-1], str(nsweeps).ljust(5), discontinuity), end="\r")
             if len(norm) > 2 and norm[-3] < norm[-2] and norm[-1] < norm[-2]:
                 sres, Jres, intJdsigmares = solve(s - 2 * s_increment, s - s_increment, s, n, p)
-#                out = {"s": sres, "J": Jres, "Jint": intJdsigmares}
-#                np.save(output_dir/'n{:03d}_m{:03d}.npy'.format(n, nsoln), out)
+                out = {"s": sres, "J": Jres, "Jint": intJdsigmares}
+                np.save(output_dir/'n{:03d}_m{:03d}.npy'.format(n, nsoln), out)
                 nsoln = nsoln + 1
 
                 # Set starting sweep increment in s based on the dispersion relation.
