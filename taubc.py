@@ -84,9 +84,10 @@ if __name__ == "__main__":
 
     formatlegend = [Line2D([], [], color='k', label=r'$H_{\rm bc}$'), Line2D([], [], linestyle='', marker='+', color='k', label='MC - $H_0$')]
     plt.xlim((-2.8, 2.8))
-    clegend = plt.legend(handles=colorlegend, loc='lower right')
-    plt.legend(handles=formatlegend, loc='upper right')
+    clegend = plt.legend(handles=colorlegend, loc='lower right', frameon=False)
+    plt.legend(handles=formatlegend, loc='lower right', frameon=False)
     plt.gca().add_artist(clegend)
+    plt.grid(linestyle='--', alpha=0.25)
     plt.xlabel(r'$x (a\tau_0)^{-1/3}$')
     plt.ylabel(r'$(a\tau_0)^{2/3}P(x)$')
     plt.show()

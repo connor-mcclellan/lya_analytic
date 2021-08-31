@@ -8,9 +8,9 @@ import pdb
 if __name__ == "__main__":
 
     filenames = [
-      '1M tau0_1000000.0_xinit_0.0_temp_10000.0_probabs_0.0',
-      '1M tau0_1000000.0_xinit_6.0_temp_10000.0_probabs_0.0',
-      '1M tau0_1000000.0_xinit_12.0_temp_10000.0_probabs_0.0',
+      '1M tau0_10000000.0_xinit_0.0_temp_10000.0_probabs_0.0',
+      '1M tau0_10000000.0_xinit_6.0_temp_10000.0_probabs_0.0',
+      '1M tau0_10000000.0_xinit_12.0_temp_10000.0_probabs_0.0',
 #       '1M tau0_100000.0_xinit_0.0_temp_10000.0_probabs_0.0',
 #       '1M tau0_1000000.0_xinit_0.0_temp_10000.0_probabs_0.0',
 #       '1M tau0_10000000.0_xinit_0.0_temp_10000.0_probabs_0.0',

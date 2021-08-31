@@ -14,7 +14,7 @@ import matplotlib
 matplotlib.rc('text', usetex=True)
 matplotlib.rc('font', **{'family': 'serif',
                          'serif': ['Computer Modern Roman']})
-from matplotlib.ticker import LogFormatterExponent
+from matplotlib.ticker import LogFormatterExponent, MultipleLocator
 from pathlib import Path
 import pickle
 
@@ -94,9 +94,9 @@ def bin_x(x, n, mytitle, filename, tau0, xinit, temp, radius, L, delta, a, p, mc
     sigma_xuniform = np.array([get_sigma(xpt) for xpt in xuniform])
 
     # Calculate line profile at all the x points needed
-    phix = voigtx_full(a, x_ft)
-    phix_xuniform = voigtx_full(a, xuniform)
-    phix_xc = voigtx_full(a, xc)
+    phix = voigtx(a, x_ft)
+    phix_xuniform = voigtx(a, xuniform)
+    phix_xc = voigtx(a, xc)
 
     # Interpolate solutions from _ft points
     hsp_interp = interp1d(x_ft, Hsp_ft * phix * norm)
@@ -120,7 +120,7 @@ def bin_x(x, n, mytitle, filename, tau0, xinit, temp, radius, L, delta, a, p, mc
     ymax = max([ymax1, ymax2, ymax3, ymax4]) * 1.1
     ymin = np.amin(Hh_ft * norm) * 1.1
 
-#    return (xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, a, tau0)
+    #return (xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, a, tau0)
     return (x_ft, Hp_ft*norm, Hsp_ft*norm, Hh_ft*norm, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, a, tau0)
 
 
@@ -157,7 +157,7 @@ def residual_plot(xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, e
     ax2.set_xlim((min(xc)-2, max(xc)+2))
 #    ax2.text(1.23, 1, mytitle, transform=ax2.transAxes, ha='left', va='top')
     ax2.plot(xuniform, np.abs(hh_xuniform), ':', label=r'$H_{\rm bc}$', alpha=alpha, c=color[3], linewidth=1)
-    ax2.set_ylim((0.00000005, 0.1))
+    ax2.set_ylim((1e-6, 0.1))
     ax2.set_ylabel('$\log{P(x)}$')
     ax2.set_yscale('log')
     ax2.grid(linestyle='--', alpha=0.25)
@@ -206,7 +206,7 @@ def comparison_plot(*args, tauax=True, divergent=True):
         #linear-scale solutions
         axi.axvline(xinit, c=color[4], lw=1, alpha=0.5)
         if not tauax:
-            ypos = 0.001 if i==0 else 3e-8
+            ypos = 0.001 if i==0 else 3e-6
             xpos = xinit+0.4
         else:
             ypos = 0.5
@@ -225,16 +225,13 @@ def comparison_plot(*args, tauax=True, divergent=True):
         axi.set_xlim(((min(xc)-2)/tauscale, (max(xc)+2)/tauscale))
         axi.set_ylabel(r'$(a\tau_0)^{1/3}P(x)$') if tauax else axi.set_ylabel('log $|P(x)|$')
         axi.grid(linestyle='--', alpha=0.25)
-        axi.set_ylim((1.1e-8, 1.25))# if tauax else axi.set_ylim((-.01, .15)) 
+        axi.set_ylim((1.e-6, 1.25))# if tauax else axi.set_ylim((-.01, .15)) 
         axi.set_yscale('log')
+        axi.yaxis.set_minor_locator(MultipleLocator(10))
         print('XINIT: {}    TAU SOURCE: {}'.format(xinit, tau_source))
     plt.xlabel(r'$x (a\tau_0)^{-1/3}$') if tauax else plt.xlabel('$x$')
-    plt.subplots_adjust(top=0.97,
-                        bottom=0.11,
-                        left=0.11,
-                        right=0.80,
-                        hspace=0.1,
-                        wspace=0.0)
+    plt.tight_layout()
+    plt.subplots_adjust(hspace=0.130)
     plt.show()
 
 
