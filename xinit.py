@@ -8,6 +8,8 @@ import matplotlib
 from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
 matplotlib.rcParams['text.usetex'] = True
+matplotlib.rc('font', **{'family': 'serif',
+                         'serif': ['Computer Modern Roman']})
 
 delta = 105691974558.58401
 a = 0.0004717036097750442
@@ -28,7 +30,7 @@ if __name__ == "__main__":
     print("Peak at dop. boundary when tau0={}".format(xdop**3./a))
 
     for j, tau0 in enumerate([1e5, 1e7, 1e9]):
-        for i, sigmas in enumerate([0, tau0, 2*tau0]):
+        for i, sigmas in enumerate([0,0.855 * tau0, 2*0.855 * tau0]):
             x = get_x_from_sigma(sigmas, a)
             tau0, xinit, temp, radius, L = (tau0, x, 1e4, 1e11, 1.)
             x_ft, sigma_ft, Jp_ft, Hp_ft, Jsp_ft, Hsp_ft, Jh_ft, Hh_ft = ftsoln.ftsoln_wrapper(tau0, xinit, temp, radius, L)
@@ -50,10 +52,10 @@ if __name__ == "__main__":
                 ax.axvline(xdop/tauscale, color='limegreen', lw=lw, alpha=0.5)
 
     boundarylegend = [Patch(facecolor='limegreen', label=r'Doppler core boundary')]
-    blegend = ax.legend(handles=boundarylegend, loc='lower right', frameon=False)
+    blegend = ax.legend(handles=boundarylegend, loc='lower left', bbox_to_anchor=[0.7, 0.025], frameon=False)
     formatlegend = [Line2D([1], [0], color='k', lw=1, label=r'$\tau_0=10^5$'), Line2D([1], [1], lw=2, ls='-', color='k', label=r'$\tau_0=10^7$'), Line2D([1], [0], color='k', lw=3, label=r'$\tau_0=10^9$')]
-    fmtlegend = ax.legend(handles=formatlegend, loc='upper left', frameon=False)
-    clegend = ax.legend(handles=colorlegend, loc='lower left', frameon=False)
+    fmtlegend = ax.legend(handles=formatlegend, loc='lower left', bbox_to_anchor=[0.8, 0.2], frameon=False)
+    clegend = ax.legend(handles=colorlegend, loc='lower left', bbox_to_anchor=[0.8, 0.4], frameon=False)
     plt.gca().add_artist(blegend)
     plt.gca().add_artist(clegend)
     plt.gca().add_artist(fmtlegend)
