@@ -72,7 +72,7 @@ def get_sigma_bounds(n, s, p):
     x_tp = np.sqrt( p.a/(np.pi*p.Delta*phi_crit) )
     sigma_tp = p.c1*x_tp**3
     sigma_efold = p.k/(kappan*p.Delta)
-
+    pdb.set_trace()
     sigma_left = -(sigma_tp + 23*sigma_efold) # TODO: Parametrize?
     sigma_right = (sigma_tp + 23*sigma_efold)
     source = p.sigmas
