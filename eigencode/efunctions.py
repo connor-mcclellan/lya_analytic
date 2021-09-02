@@ -307,7 +307,7 @@ def solve(s1, s2, s3, n, p):
     Jres = (J3 - J1) * (s3 - sres) * (s1 - sres) / (s1 - s3)
     nres = (n3 - n1) * (s3 - sres) * (s1 - sres) / (s1 - s3)
 
-    one_s_value(n, sres, p)#, plot=True)
+    one_s_value(n, sres, p, plot=True)
 #    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
 #    ax1.plot(np.cbrt(p.sigma/p.c1), Jres, lw=0.5, alpha=0.75)
 #    ax2.plot(np.cbrt(p.sigma/p.c1), Jres, lw=0.5, alpha=0.75)
@@ -375,7 +375,7 @@ def sweep(p, nmin=1, output_dir=None):
 
         while nsoln < p.mmax + 1:
             nsweeps += 1
-            J, dJ, intJdsigma = one_s_value(n, s, p)#, plot=True)
+            J, dJ, intJdsigma = one_s_value(n, s, p, plot=True)
 
             # MEASURE DISCONTINUITY IN dJ AT SOURCE
             idx = np.where(p.sigma < p.sigmas)[0][-1]
