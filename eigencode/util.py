@@ -80,7 +80,7 @@ def get_sigma_bounds(n, s, p):
 
     return ((sigma_left, min(source-1e-2, 0-offset)), 
             (min(source+1e-2, 0+offset), max(source-1e-2, 0-offset)),
-            (max(source+1e-2, 0+offset), sigma_right))
+            (max(source+1e-2, 0+offset), sigma_right), (sigma_tp, sigma_efold, sigma_right))
 
 def scinot(num):
     ''' 

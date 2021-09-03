@@ -119,7 +119,8 @@ def one_s_value(n, s, p, plot=False):
     wavenum = kappan * p.Delta / p.k
 
     # Construct grids for this value of n and s
-    left, middle, right = get_sigma_bounds(n, s, p)
+    left, middle, right, sigma_vals = get_sigma_bounds(n, s, p)
+    sigma_tp, sigma_efold, sigma_right = sigma_vals
 
     # rightward integration
     J = 1.0
@@ -226,13 +227,18 @@ def one_s_value(n, s, p, plot=False):
         sigmas = p.sigma
         fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
         ax1.plot(np.cbrt(sigmas/p.c1), J, marker='+', ms=3, alpha=0.5)
+        ax1.axvline(np.cbrt(sigma_tp/p.c1), c='c', label=r'$\sigma_{\rm tp}$')
+        ax1.axvline(np.cbrt(sigma_right/p.c1), c='m', label=r'$\sigma_{\rm right}$')
+        ax1.axvline(p.xsource, alpha=0.25, c='limegreen', label=r'$\sigma_s$')
+        ax1.legend(frameon=False)
         ax2.plot(np.cbrt(sigmas/p.c1), dJ, marker='+', ms=3, alpha=0.5)
         ax2.axvline(p.xsource, alpha=0.25, c='limegreen')
+        ax2.axvline(np.cbrt(sigma_tp/p.c1), c='c')
+        ax2.axvline(np.cbrt(sigma_right/p.c1), c='m')
         ax2.set_xlabel('x')
         ax2.set_ylabel('dJ(x)/dsigma')
         ax1.set_ylabel('J(x)')
         plt.suptitle('n={}, s={:.4f}'.format(n, s))
-        
 #        plt.savefig('./jres_animation/jres{:03d}.png'.format(len(glob('./jres_animation/jres*.png'))))
         plt.show()
 #        plt.close()
