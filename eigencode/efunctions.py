@@ -88,7 +88,7 @@ def integrate(sigma_bounds, y_start, n, s, p):
         sigma.
     '''
     sol = solve_ivp(func, [sigma_bounds[0], sigma_bounds[1]], y_start, args=(
-        n, s, p), rtol=1e-10, atol=1e-10, dense_output=True)
+        n, s, p), rtol=1e-12, atol=1e-12, dense_output=True)
     return sol.y.T, sol.sol
 
 
@@ -229,10 +229,10 @@ def one_s_value(n, s, p, plot=False):
         ax1.plot(np.cbrt(sigmas/p.c1), J, marker='+', ms=3, alpha=0.5)
         ax1.axvline(np.cbrt(sigma_tp/p.c1), c='c', label=r'$\sigma_{\rm tp}$')
         ax1.axvline(np.cbrt(sigma_right/p.c1), c='m', label=r'$\sigma_{\rm right}$')
-        ax1.axvline(p.xsource, alpha=0.25, c='limegreen', label=r'$\sigma_s$')
+        ax1.axvline(p.xsource, c='limegreen', label=r'$\sigma_s$')
         ax1.legend(frameon=False)
         ax2.plot(np.cbrt(sigmas/p.c1), dJ, marker='+', ms=3, alpha=0.5)
-        ax2.axvline(p.xsource, alpha=0.25, c='limegreen')
+        ax2.axvline(p.xsource, c='limegreen')
         ax2.axvline(np.cbrt(sigma_tp/p.c1), c='c')
         ax2.axvline(np.cbrt(sigma_right/p.c1), c='m')
         ax2.set_xlabel('x')
@@ -283,17 +283,17 @@ def solve(s1, s2, s3, n, p):
 
     n_iter = 0
     err = 1e20
-    while n_iter < 10 and err > 1e-6:
+    while err > 1e-11:
         ratio1 = (n2 - n1) / (n2 - n3)
         ratio2 = ratio1 * (s3 - s2) / (s1 - s2)
         sguess = (s1 * ratio2 - s3) / (ratio2 - 1.0)
         Jguess, dJguess, nguess = one_s_value(n, sguess, p)
 
-#        print("\nguess:")
-#        print("s:    {:.6f}    {:.6f}    {:.6f}".format(
-#            sguess / s1, sguess / s2, sguess / s3))
-#        print("n:    {:.1e}    {:.1e}    {:.1e}".format(
-#            nguess / n1, nguess / n2, nguess / n3))
+        print("\nguess:")
+        print("s:    {:.6f}    {:.6f}    {:.6f}".format(
+            sguess / s1, sguess / s2, sguess / s3))
+        print("n:    {:.1e}    {:.1e}    {:.1e}".format(
+            nguess / n1, nguess / n2, nguess / n3))
 
         err = np.abs(s2 - sguess)
         if (sguess - s1) * (sguess - s2) < 0.0:
@@ -306,6 +306,7 @@ def solve(s1, s2, s3, n, p):
     # MEASURE DISCONTINUITY IN dJ AT SOURCE
     idx = np.where(p.sigma < p.sigmas)[0][-1]
     discontinuity = dJguess[idx+1] - dJguess[idx]
+    pdb.set_trace()
 
     print("\n\nres: {:.7f}    err: {:.7f}    ΔdJ: {:.4e}".format(s2, err, discontinuity))
     print("EXPECTED ΔdJ: {:.4e}".format(-np.sqrt(6)/8. * n**2 * p.energy / p.k / p.radius**3))
@@ -357,8 +358,9 @@ def sweep(p, nmin=1, output_dir=None):
             s = data['s'] - middle_sweep_res * dgamma(n, nsoln, p)
         except:
             nsoln = 1
-            s = - gamma(n, nsoln, p) + 50 * n_sweep_buffers * early_sweep_res * dgamma(n, nsoln, p) if n!=1 else -0.00000001
-            s = min(s, -0.00000001)
+            #s = - gamma(n, nsoln, p) + 5 * n_sweep_buffers * early_sweep_res * dgamma(n, nsoln, p)# if n!=1 else -0.00000001
+            #s = min(s, -0.00000001)
+            s = -0.00000001
 
         # Set starting sweep increment in s based on the dispersion relation.
         if n == 1 and nsoln == 1:
@@ -381,7 +383,7 @@ def sweep(p, nmin=1, output_dir=None):
 
         while nsoln < p.mmax + 1:
             nsweeps += 1
-            J, dJ, intJdsigma = one_s_value(n, s, p, plot=True)
+            J, dJ, intJdsigma = one_s_value(n, s, p)#, plot=True)
 
             # MEASURE DISCONTINUITY IN dJ AT SOURCE
             idx = np.where(p.sigma < p.sigmas)[0][-1]
@@ -407,9 +409,9 @@ def sweep(p, nmin=1, output_dir=None):
                     s_increment = - middle_sweep_res * dgamma(n, nsoln, p)
                     sweep_resolution = middle_sweep_res
 
-#                plt.plot(sses, norm, marker='s', ms=3)
-#                plt.yscale('log')
-#                plt.show()
+                plt.plot(sses, norm, marker='s', ms=3)
+                plt.yscale('log')
+                plt.show()
 
                 if nsoln < p.mmax+1:
                     s_increment = - sweep_resolution * dgamma(n, nsoln, p)
