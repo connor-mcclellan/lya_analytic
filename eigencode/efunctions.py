@@ -306,7 +306,6 @@ def solve(s1, s2, s3, n, p):
     # MEASURE DISCONTINUITY IN dJ AT SOURCE
     idx = np.where(p.sigma < p.sigmas)[0][-1]
     discontinuity = dJguess[idx+1] - dJguess[idx]
-    pdb.set_trace()
 
     print("\n\nres: {:.7f}    err: {:.7f}    ΔdJ: {:.4e}".format(s2, err, discontinuity))
     print("EXPECTED ΔdJ: {:.4e}".format(-np.sqrt(6)/8. * n**2 * p.energy / p.k / p.radius**3))
@@ -314,7 +313,7 @@ def solve(s1, s2, s3, n, p):
     Jres = (J3 - J1) * (s3 - sres) * (s1 - sres) / (s1 - s3)
     nres = (n3 - n1) * (s3 - sres) * (s1 - sres) / (s1 - s3)
 
-    one_s_value(n, sres, p, plot=True)
+    one_s_value(n, sres, p)#, plot=True)
 #    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
 #    ax1.plot(np.cbrt(p.sigma/p.c1), Jres, lw=0.5, alpha=0.75)
 #    ax2.plot(np.cbrt(p.sigma/p.c1), Jres, lw=0.5, alpha=0.75)
@@ -378,6 +377,7 @@ def sweep(p, nmin=1, output_dir=None):
         # Sweep, check resonance, save outputs
         norm = []
         sses = []
+        Js = []
         nsweeps = 0
         print("  m   n  s        f(s)      #      ΔdJ")
 
@@ -390,13 +390,19 @@ def sweep(p, nmin=1, output_dir=None):
             discontinuity = dJ[idx+1] - dJ[idx]
 
             norm.append(np.abs(intJdsigma))
+            Js.append(J)
             sses.append(s)
             print("{} {} {:.6f} {:.3e} {} {:.4e}".format(str(nsoln).rjust(3), str(n).rjust(3), s, norm[-1], str(nsweeps).ljust(5), discontinuity), end="\r")
             if len(norm) > 2 and norm[-3] < norm[-2] and norm[-1] < norm[-2]:
                 sres, Jres, intJdsigmares = solve(s - 2 * s_increment, s - s_increment, s, n, p)
-                out = {"s": sres, "J": Jres, "Jint": intJdsigmares}
-                np.save(output_dir/'n{:03d}_m{:03d}.npy'.format(n, nsoln), out)
-                nsoln = nsoln + 1
+                #out = {"s": sres, "J": Jres, "Jint": intJdsigmares}
+                #np.save(output_dir/'n{:03d}_m{:03d}.npy'.format(n, nsoln), out)
+                #nsoln = nsoln + 1
+
+                a2 = []
+                for i, J_debug in enumerate(Js):
+                    a2.append(J_debug - Jres/(sses[i]-sres))
+                pdb.set_trace()
 
                 # Set starting sweep increment in s based on the dispersion relation.
                 if n == 1 and nsoln == 1:
