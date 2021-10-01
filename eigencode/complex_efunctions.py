@@ -305,14 +305,23 @@ if __name__ == "__main__":
         mmax)
     pickle.dump(p, open(output_dir / 'parameters.p', 'wb'))
 
-    radii = np.linspace(0.0000001, 0.4, 500)
+    radii = np.linspace(0.0000001, 0.4, 10)
     vals = []
+    Js = []
+    domegas = []
     for r in radii:
         integral, J_circ, domega = omega_circ_integral(r)
         vals.append(integral)
+        Js.append(J_circ)
+        domegas.append(domega)
 
     vals = np.array(vals)
-   
+
+    np.save('./data/c_J.npy', np.array(Js))
+    np.save('./data/c_domega.npy', np.array(domegas))
+    np.save('./data/c_integral.npy', vals)
+    np.save('./data/c_radii.npy', radii)
+
     plt.plot(radii, vals.real, label='real')
     plt.plot(radii, vals.imag, label='imag')
 
