@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from constants import fundconst, lymanalpha
 from scipy.integrate import solve_ivp, odeint
 from parameters import Parameters
-from util import line_profile, get_sigma_bounds, gamma, dgamma
+from util import line_profile, get_sigma_bounds, gamma, dgamma, midpoint_diff
 import warnings
 import pdb
 from glob import glob
@@ -41,7 +41,7 @@ def func(sigma, y, n, omega, p):
     wavenum = kappan * p.Delta / p.k
     term1 = wavenum**2
     term2 = -3.0 * 1j * omega * p.Delta**2 * phi / (fc.clight * p.k)
-    dydsigma = np.zeros(3)
+    dydsigma = np.zeros(3, dtype=complex)
     dydsigma[0] = dJ
     dydsigma[1] = (term2 - term1) * J
     dydsigma[2] = J
@@ -79,11 +79,11 @@ def integrate(sigma_bounds, y_start, n, omega, p):
         sigma.
     '''
     sol = solve_ivp(func, [sigma_bounds[0], sigma_bounds[1]], y_start, args=(
-        n, omega, p), rtol=1e-12, atol=1e-12, dense_output=True)
+        n, omega, p), rtol=1e-8, atol=1e-8, dense_output=True)
     return sol.y.T, sol.sol
 
 
-def one_s_value(n, omega, p, plot=False):
+def one_omega_value(n, omega, p, plot=False):
     '''
     Solves for the function's response given n and omega.
 
@@ -110,13 +110,13 @@ def one_s_value(n, omega, p, plot=False):
     wavenum = kappan * p.Delta / p.k
 
     # Construct grids for this value of n and s
-    left, middle, right, sigma_vals = get_sigma_bounds(n, omega.imag, p)
+    left, middle, right, sigma_vals = get_sigma_bounds(n, abs(omega), p)
     sigma_tp, sigma_efold, sigma_right = sigma_vals
 
     # rightward integration
-    J = 1.0
+    J = 1.0 + 0j
     dJ = wavenum * J
-    y_start = np.array((J, dJ, 0.0))
+    y_start = np.array((J, dJ, 0.0 + 0j))
     soll, interp_left = integrate(left, y_start, n, omega, p)
     Jleft = soll[:, 0]
     dJleft = soll[:, 1]
@@ -126,9 +126,9 @@ def one_s_value(n, omega, p, plot=False):
     left_P = intJdsigmaleft[-1]
 
     # leftward integration
-    J = 1.0
+    J = 1.0 + 0j
     dJ = -wavenum * J
-    y_start = np.array((J, dJ, 0.0))
+    y_start = np.array((J, dJ, 0.0 + 0j))
     solr, interp_right = integrate(right[::-1], y_start, n, omega, p)
     Jright = solr[:, 0]
     dJright = solr[:, 1]
@@ -204,7 +204,7 @@ def one_s_value(n, omega, p, plot=False):
         scales = [scale_left, scale_right]
         interps = [interp_left, interp_right]
 
-    J, dJ = np.zeros(p.nsigma), np.zeros(p.nsigma)
+    J, dJ = np.zeros(p.nsigma, dtype=complex), np.zeros(p.nsigma, dtype=complex)
     for i in range(len(scales)):
         mask = np.logical_and(
             p.sigma <= interps[i].t_max,
@@ -233,6 +233,25 @@ def one_s_value(n, omega, p, plot=False):
         plt.show()
 
     return J, dJ, intJdsigma
+
+
+def omega_circ_integral(r, npoints=100):
+
+    n = 1
+
+    angles = np.linspace(0, 2*np.pi, npoints)
+    points = r*(np.cos(angles) + 1j*np.sin(angles))
+    domega = midpoint_diff(points)
+
+    J_vals = []
+    for omega in points:
+        print("omega={}".format(omega), end='\r')
+        J, dJ, intJdsigma = one_omega_value(n, omega, p)
+        J_vals.append(J)
+
+    J_vals = np.array(J_vals)
+    integral = np.sum(np.expand_dims(domega, 1) * J_circ)
+    return J_vals, domega
 
 
 if __name__ == "__main__":
@@ -285,3 +304,7 @@ if __name__ == "__main__":
         nmax,
         mmax)
     pickle.dump(p, open(output_dir / 'parameters.p', 'wb'))
+
+    J_circ, domega = omega_circ_integral(0.25)
+    pdb.set_trace()
+    
