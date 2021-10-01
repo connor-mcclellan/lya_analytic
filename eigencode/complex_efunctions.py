@@ -8,14 +8,6 @@ import warnings
 import pdb
 from glob import glob
 
-# TODO:
-# [X] Add in master sigma grid
-# [X] Rewrite sol to use interpolants on master sigma grid
-# [X] Speed improvements to sweep routine
-# [X] Add int J dsigma as a more accurate normalization
-# [X] Change sweep step based on dispersion relation
-# [ ] Insert zero at line center for Jsoln?
-
 fc = fundconst()
 la = lymanalpha()
 
@@ -48,15 +40,15 @@ def func(sigma, y, n, omega, p):
     kappan = n * np.pi / p.radius
     wavenum = kappan * p.Delta / p.k
     term1 = wavenum**2
-    term2 = -3.0 * omega * p.Delta**2 * phi / (fc.clight * p.k)
+    term2 = -3.0 * 1j * omega * p.Delta**2 * phi / (fc.clight * p.k)
     dydsigma = np.zeros(3)
     dydsigma[0] = dJ
-    dydsigma[1] = (term1 + term2) * J
+    dydsigma[1] = (term2 - term1) * J
     dydsigma[2] = J
     return dydsigma
 
 
-def integrate(sigma_bounds, y_start, n, s, p):
+def integrate(sigma_bounds, y_start, n, omega, p):
     '''
     Integrates the solution over a given range of sigma, given starting 
     conditions, mode number, and imaginary frequency.
@@ -68,13 +60,13 @@ def integrate(sigma_bounds, y_start, n, s, p):
         If provided as (a, b) with a > b, the integrator will work from left
         to right. If given as (b, a) with a > b, the integrator will work from
         right to left.
-    y_start : array
+    y_start : complex array
         Starting values for (J, dJ, intJdsigma) at the first value of 
-        sigma_bounds.
+        sigma_bounds
     n : int
         Spatial eigenmode.
-    s : float
-        Imaginary frequency.
+    omega : complex
+        Complex frequency.
     p : `Parameters` object
         Physical parameters of the problem.
 
@@ -87,20 +79,20 @@ def integrate(sigma_bounds, y_start, n, s, p):
         sigma.
     '''
     sol = solve_ivp(func, [sigma_bounds[0], sigma_bounds[1]], y_start, args=(
-        n, s, p), rtol=1e-12, atol=1e-12, dense_output=True)
+        n, omega, p), rtol=1e-12, atol=1e-12, dense_output=True)
     return sol.y.T, sol.sol
 
 
-def one_s_value(n, s, p, plot=False):
+def one_s_value(n, omega, p, plot=False):
     '''
-    Solves for the function's response given n and s.
+    Solves for the function's response given n and omega.
 
     Parameters
     ----------
     n : int
         Spatial eigenmode.
-    s : float
-        Imaginary frequency.
+    omega : complex
+        Complex frequency.
     p : `Parameters` object
         Physical parameters of the problem.
 
@@ -118,14 +110,14 @@ def one_s_value(n, s, p, plot=False):
     wavenum = kappan * p.Delta / p.k
 
     # Construct grids for this value of n and s
-    left, middle, right, sigma_vals = get_sigma_bounds(n, s, p)
+    left, middle, right, sigma_vals = get_sigma_bounds(n, omega.imag, p)
     sigma_tp, sigma_efold, sigma_right = sigma_vals
 
     # rightward integration
     J = 1.0
     dJ = wavenum * J
     y_start = np.array((J, dJ, 0.0))
-    soll, interp_left = integrate(left, y_start, n, s, p)
+    soll, interp_left = integrate(left, y_start, n, omega, p)
     Jleft = soll[:, 0]
     dJleft = soll[:, 1]
     intJdsigmaleft = soll[:, 2]
@@ -137,7 +129,7 @@ def one_s_value(n, s, p, plot=False):
     J = 1.0
     dJ = -wavenum * J
     y_start = np.array((J, dJ, 0.0))
-    solr, interp_right = integrate(right[::-1], y_start, n, s, p)
+    solr, interp_right = integrate(right[::-1], y_start, n, omega, p)
     Jright = solr[:, 0]
     dJright = solr[:, 1]
     intJdsigmaright = solr[:, 2]
@@ -156,7 +148,7 @@ def one_s_value(n, s, p, plot=False):
         y_start = np.array((J, dJ, left_P))
 
         # Find solution in middle region
-        solm, interp_middle = integrate(middle, y_start, n, s, p)
+        solm, interp_middle = integrate(middle, y_start, n, omega, p)
         Jmiddle = solm[:, 0]
         dJmiddle = solm[:, 1]
         intJdsigmamiddle = solm[:, 2]
@@ -184,7 +176,7 @@ def one_s_value(n, s, p, plot=False):
         y_start = np.array((J, dJ, right_P))
 
         # Find solution in middle region
-        sol, interp_middle = integrate(middle[::-1], y_start, n, s, p)
+        sol, interp_middle = integrate(middle[::-1], y_start, n, omega, p)
         Jmiddle = sol[:, 0]
         dJmiddle = sol[:, 1]
         intJdsigmamiddle = sol[:, 2]
@@ -238,196 +230,10 @@ def one_s_value(n, s, p, plot=False):
         ax2.set_ylabel('dJ(x)/dsigma')
         ax1.set_ylabel('J(x)')
         plt.suptitle('n={}, s={:.4f}'.format(n, s))
-#        plt.savefig('./jres_animation/jres{:03d}.png'.format(len(glob('./jres_animation/jres*.png'))))
         plt.show()
-#        plt.close()
 
     return J, dJ, intJdsigma
 
-
-def solve(s1, s2, s3, n, p):
-    '''
-    Iterate to find the eigenfrequency sres and eigenvector Jres(sigma)
-    given three frequencies s1, s2, s3.
-
-    Parameters
-    ----------
-    s1 : float
-        Imaginary frequency at the leftmost point.
-    s2 : float
-        Imaginary frequency at the middle point.
-    s3 : float
-        Imaginary frequency at the rightmost point.
-    n : int
-        Spatial eigenmode.
-    p : `Parameters` object
-        Physical parameters of the problem.
-
-    Returns
-    -------
-    sres : float
-        Eigenfrequency of the resonance which has been solved for.
-    Jres : array
-        Eigenfunction at the resonance which has been solved for.
-    nres : float
-        Integrated response with respect to sigma.
-    '''
-
-    if s1 > s3:
-        s1, s3 = s3, s1
-
-    J1, dJ1, n1 = one_s_value(n, s1, p)
-    J2, dJ2, n2 = one_s_value(n, s2, p)
-    J3, dJ3, n3 = one_s_value(n, s3, p)
-
-    n_iter = 0
-    err = 1e20
-    while err > 1e-11:
-        ratio1 = (n2 - n1) / (n2 - n3)
-        ratio2 = ratio1 * (s3 - s2) / (s1 - s2)
-        sguess = (s1 * ratio2 - s3) / (ratio2 - 1.0)
-        Jguess, dJguess, nguess = one_s_value(n, sguess, p)
-
-        print("\nguess:")
-        print("s:    {:.6f}    {:.6f}    {:.6f}".format(
-            sguess / s1, sguess / s2, sguess / s3))
-        print("n:    {:.1e}    {:.1e}    {:.1e}".format(
-            nguess / n1, nguess / n2, nguess / n3))
-
-        err = np.abs(s2 - sguess)
-        if (sguess - s1) * (sguess - s2) < 0.0:
-            s3, J3, n3 = s2, J2, n2
-        else:
-            s1, J1, n1 = s2, J2, n2
-        s2, J2, n2 = sguess, Jguess, nguess
-        n_iter += 1
-
-    # MEASURE DISCONTINUITY IN dJ AT SOURCE
-    idx = np.where(p.sigma < p.sigmas)[0][-1]
-    discontinuity = dJguess[idx+1] - dJguess[idx]
-
-    print("\n\nres: {:.7f}    err: {:.7f}    ΔdJ: {:.4e}".format(s2, err, discontinuity))
-    print("EXPECTED ΔdJ: {:.4e}".format(-np.sqrt(6)/8. * n**2 * p.energy / p.k / p.radius**3))
-    sres = s2
-    Jres = (J3 - J1) * (s3 - sres) * (s1 - sres) / (s1 - s3)
-    nres = (n3 - n1) * (s3 - sres) * (s1 - sres) / (s1 - s3)
-
-    one_s_value(n, sres, p)#, plot=True)
-#    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
-#    ax1.plot(np.cbrt(p.sigma/p.c1), Jres, lw=0.5, alpha=0.75)
-#    ax2.plot(np.cbrt(p.sigma/p.c1), Jres, lw=0.5, alpha=0.75)
-
-    return sres, Jres, nres
-
-def sweep(p, nmin=1, output_dir=None):
-    '''
-    Sweeps over n and s=-i\omega to find maxima in the size of the response.
-
-    Parameters
-    ----------
-    p : `Parameters` object
-        Physical parameters of the problem.
-    nmin : int, optional  
-        Starting value of n, built in for parallelization purposes. Default
-        value is 1.
-    output_dir : `pathlib.Path` object
-        Base directory within which outputs will be stored. Default is None 
-        (current working directory). If outputs already exist in the output
-        directory, the sweep will pick up from the last eigenvalue found.
-
-    Returns
-    -------
-    None. sres, Jres, and intJdsigmares output is saved to file.
-    '''
-
-    middle_sweep_res = 0.05
-    early_sweep_res = 0.001
-    n_sweep_buffers = 15
-
-    for n in range(nmin, p.nmax + 1):
-        print("n=", n)
-
-        # Set starting s based on what eigenmode solution number we're starting
-        # on. If no previous solution has been calculated, start close to 0.
-        try:
-            data_fname = sorted(glob(str(output_dir/'n{:03d}_*.npy'.format(n))))[-1]
-            data = np.load(data_fname, allow_pickle=True).item()
-            nsoln = int(data_fname.split('.npy')[0].split('_m')[-1]) + 1
-            s = data['s'] - middle_sweep_res * dgamma(n, nsoln, p)
-        except:
-            nsoln = 1
-            #s = - gamma(n, nsoln, p) + 5 * n_sweep_buffers * early_sweep_res * dgamma(n, nsoln, p)# if n!=1 else -0.00000001
-            #s = min(s, -0.00000001)
-            s = -0.00000001
-
-        # Set starting sweep increment in s based on the dispersion relation.
-        if n == 1 and nsoln == 1:
-            s_increment = - early_sweep_res
-            sweep_resolution = early_sweep_res
-        elif nsoln < 10:
-            s_increment = - early_sweep_res * dgamma(n, nsoln, p)
-            sweep_resolution = early_sweep_res
-        else:
-            s_increment = - middle_sweep_res * dgamma(n, nsoln, p)
-            sweep_resolution = middle_sweep_res
-        print("\nNEXT RESONANCE: ", - gamma(n, nsoln, p))
-        print("INCREMENT: ", s_increment)
-
-        # Sweep, check resonance, save outputs
-        norm = []
-        sses = []
-        Js = []
-        nsweeps = 0
-        print("  m   n  s        f(s)      #      ΔdJ")
-
-        while nsoln < p.mmax + 1:
-            nsweeps += 1
-            J, dJ, intJdsigma = one_s_value(n, s, p)#, plot=True)
-
-            # MEASURE DISCONTINUITY IN dJ AT SOURCE
-            idx = np.where(p.sigma < p.sigmas)[0][-1]
-            discontinuity = dJ[idx+1] - dJ[idx]
-
-            norm.append(np.abs(intJdsigma))
-            Js.append(J)
-            sses.append(s)
-            print("{} {} {:.6f} {:.3e} {} {:.4e}".format(str(nsoln).rjust(3), str(n).rjust(3), s, norm[-1], str(nsweeps).ljust(5), discontinuity), end="\r")
-            if len(norm) > 2 and norm[-3] < norm[-2] and norm[-1] < norm[-2]:
-                sres, Jres, intJdsigmares = solve(s - 2 * s_increment, s - s_increment, s, n, p)
-                #out = {"s": sres, "J": Jres, "Jint": intJdsigmares}
-                #np.save(output_dir/'n{:03d}_m{:03d}.npy'.format(n, nsoln), out)
-                #nsoln = nsoln + 1
-
-                a2 = []
-                for i, J_debug in enumerate(Js):
-                    a2.append(J_debug - Jres/(sses[i]-sres))
-                pdb.set_trace()
-
-                # Set starting sweep increment in s based on the dispersion relation.
-                if n == 1 and nsoln == 1:
-                    s_increment = - early_sweep_res
-                    sweep_resolution = early_sweep_res
-                elif nsoln < 10:
-                    s_increment = - early_sweep_res * dgamma(n, nsoln, p)
-                    sweep_resolution = early_sweep_res
-                else:
-                    s_increment = - middle_sweep_res * dgamma(n, nsoln, p)
-                    sweep_resolution = middle_sweep_res
-
-                plt.plot(sses, norm, marker='s', ms=3)
-                plt.yscale('log')
-                plt.show()
-
-                if nsoln < p.mmax+1:
-                    s_increment = - sweep_resolution * dgamma(n, nsoln, p)
-                    nsweeps = 0
-                    print("\nNEXT RESONANCE: ", gamma(n, nsoln, p))
-                    print("INCREMENT: ", s_increment)
-                    print("  m   n  s        f(s)      #      ΔdJ")
-                    s = - gamma(n, nsoln, p) - n_sweep_buffers * s_increment
-                
-            s += s_increment
-    return
 
 if __name__ == "__main__":
     energy = 1.e0
@@ -441,7 +247,6 @@ if __name__ == "__main__":
 
     from pathlib import Path
     from datetime import datetime
-    from glob import glob
     import time
     import pickle
     import argparse
@@ -459,14 +264,6 @@ if __name__ == "__main__":
     mmax = args.mmax
     path = args.path
 
-    ###
-    # Command line call should look like this:
-        # python efunctions.py --nmax 20 --mmax 500 -p ./data/sample_run
-    # Then, to continue up to m=1000 for all the same n, you would do this:
-        # python efunctions.py --nmax 20 --mmax 1000 -p ./data/sample_run
-    # The code will start at n=1, m=501 and sweep through the remaining modes.
-    ###
-
     # If no directory is provided, make one using the current date
     if path is None:
         datestr = datetime.today().strftime('%y%m%d-%H%M')
@@ -476,9 +273,6 @@ if __name__ == "__main__":
         output_dir = Path(path).resolve()
         output_dir.mkdir(parents=True, exist_ok=True)
 
-
-    # Set up the parameters object and the clock and begin sweeping
-    start = time.time()
     p = Parameters(
         temp,
         tau0,
@@ -491,7 +285,3 @@ if __name__ == "__main__":
         nmax,
         mmax)
     pickle.dump(p, open(output_dir / 'parameters.p', 'wb'))
-    sweep(p, nmin=nmin, output_dir=output_dir)
-    stop = time.time()
-    with open(output_dir / 'time.txt', 'w') as f:
-        f.write(str(stop - start))
