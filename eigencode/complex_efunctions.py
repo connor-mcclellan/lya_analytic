@@ -250,8 +250,8 @@ def omega_circ_integral(r, npoints=100):
         J_vals.append(J)
 
     J_vals = np.array(J_vals)
-    integral = np.sum(np.expand_dims(domega, 1) * J_circ)
-    return J_vals, domega
+    integral = np.sum(np.expand_dims(domega, 1) * J_vals)
+    return integral, J_vals, domega
 
 
 if __name__ == "__main__":
@@ -305,6 +305,19 @@ if __name__ == "__main__":
         mmax)
     pickle.dump(p, open(output_dir / 'parameters.p', 'wb'))
 
-    J_circ, domega = omega_circ_integral(0.25)
-    pdb.set_trace()
-    
+    radii = np.linspace(0.0000001, 0.4, 500)
+    vals = []
+    for r in radii:
+        integral, J_circ, domega = omega_circ_integral(r)
+        vals.append(integral)
+
+    vals = np.array(vals)
+   
+    plt.plot(radii, vals.real, label='real')
+    plt.plot(radii, vals.imag, label='imag')
+
+    plt.title('circular integrals over J')
+    plt.xlabel('|$\omega$|')
+    plt.ylabel('$\sum J \Delta \omega$')
+
+    plt.show()
