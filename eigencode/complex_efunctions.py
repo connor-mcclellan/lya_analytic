@@ -79,7 +79,7 @@ def integrate(sigma_bounds, y_start, n, omega, p):
         sigma.
     '''
     sol = solve_ivp(func, [sigma_bounds[0], sigma_bounds[1]], y_start, args=(
-        n, omega, p), rtol=1e-8, atol=1e-8, dense_output=True)
+        n, omega, p), rtol=1e-10, atol=1e-10, dense_output=True)
     return sol.y.T, sol.sol
 
 
@@ -305,28 +305,28 @@ if __name__ == "__main__":
         mmax)
     pickle.dump(p, open(output_dir / 'parameters.p', 'wb'))
 
-    radii = np.linspace(0.0000001, 0.4, 10)
+    radii = np.linspace(0.000000000001, 0.4, 500)
     vals = []
     Js = []
     domegas = []
     for r in radii:
-        integral, J_circ, domega = omega_circ_integral(r)
+        integral, J_circ, domega = omega_circ_integral(r, npoints=200)
         vals.append(integral)
         Js.append(J_circ)
         domegas.append(domega)
 
     vals = np.array(vals)
 
-    np.save('./data/c_J.npy', np.array(Js))
-    np.save('./data/c_domega.npy', np.array(domegas))
-    np.save('./data/c_integral.npy', vals)
-    np.save('./data/c_radii.npy', radii)
+    np.save('/LyraShared/bcm2vn/eigencode/data/c_J.npy', np.array(Js))
+    np.save('/LyraShared/bcm2vn/eigencode/data/c_domega.npy', np.array(domegas))
+    np.save('/LyraShared/bcm2vn/eigencode/data/c_integral.npy', vals)
+    np.save('/LyraShared/bcm2vn/eigencode/data/c_radii.npy', radii)
 
-    plt.plot(radii, vals.real, label='real')
-    plt.plot(radii, vals.imag, label='imag')
+#    plt.plot(radii, vals.real, label='real')
+#    plt.plot(radii, vals.imag, label='imag')
 
-    plt.title('circular integrals over J')
-    plt.xlabel('|$\omega$|')
-    plt.ylabel('$\sum J \Delta \omega$')
+#    plt.title('circular integrals over J')
+#    plt.xlabel('|$\omega$|')
+#    plt.ylabel('$\sum J \Delta \omega$')
 
-    plt.show()
+#    plt.show()

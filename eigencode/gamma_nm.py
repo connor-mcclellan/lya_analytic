@@ -16,7 +16,7 @@ import pickle
 
 directory = Path('./data/tau1e7_xinit12').resolve()
 nmin = 1
-Jsoln, ssoln, intJsoln, p = construct_sol(directory, nmax=20, mmax=500, nmin=nmin)
+Jsoln, ssoln, intJsoln, p = construct_sol(directory, nmax=20, mmax=450, nmin=nmin)
 colors = pl.cm.viridis(np.linspace(0, 1, 20))
 fig = plt.figure()
 

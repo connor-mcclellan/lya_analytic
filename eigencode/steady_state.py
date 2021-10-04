@@ -55,11 +55,11 @@ def time_integrated(sigma, p, Jsoln, ssoln):
 
 if __name__ == '__main__':
     directory = Path('./data/tau1e7_xinit12').resolve()
-    Jsoln, ssoln, intJsoln, p = construct_sol(directory, nmax=20, mmax=500)
+    Jsoln, ssoln, intJsoln, p = construct_sol(directory, nmax=20, mmax=450)
 
     x_t, tdep_spec = time_integrated(p.sigma, p, Jsoln, ssoln)
 #    p.nmax = 201
-#    p.mmax = 500
+#    p.mmax = 300
     x_s, steady_state = steady_state_partial_sum(p.sigma, p)
     x_d, dijkstra = dijkstra(p.sigma, p)
 
