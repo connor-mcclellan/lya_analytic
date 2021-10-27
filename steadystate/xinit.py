@@ -51,8 +51,8 @@ if __name__ == "__main__":
             if i==0:
                 ax.axvline(xdop/tauscale, color='limegreen', lw=lw, alpha=0.5)
 
-    boundarylegend = [Patch(facecolor='limegreen', label=r'Doppler core boundary')]
-    blegend = ax.legend(handles=boundarylegend, loc='lower left', bbox_to_anchor=[0.7, 0.025], frameon=False)
+    boundarylegend = [Patch(facecolor='limegreen', label=r'$x_{\rm cw}$')]
+    blegend = ax.legend(handles=boundarylegend, loc='lower left', bbox_to_anchor=[0.8, 0.025], frameon=False)
     formatlegend = [Line2D([1], [0], color='k', lw=1, label=r'$\tau_0=10^5$'), Line2D([1], [1], lw=2, ls='-', color='k', label=r'$\tau_0=10^7$'), Line2D([1], [0], color='k', lw=3, label=r'$\tau_0=10^9$')]
     fmtlegend = ax.legend(handles=formatlegend, loc='lower left', bbox_to_anchor=[0.8, 0.2], frameon=False)
     clegend = ax.legend(handles=colorlegend, loc='lower left', bbox_to_anchor=[0.8, 0.4], frameon=False)

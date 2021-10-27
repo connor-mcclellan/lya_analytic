@@ -28,7 +28,7 @@ for k, directory in enumerate(dirs):
 
     taustr = str(directory).split('_tau')[-1].split('.npy')[0]
     if taustr in ['1e5', '1e6', '1e7']:
-        mcdir = '/home/connor/Documents/lya_analytic/data/1M tau0_'+str(float(taustr))+'_xinit_0.0_temp_10000.0_probabs_0.0/'
+        mcdir = '/home/connor/Documents/lya_analytic/steadystate/data/1M tau0_'+str(float(taustr))+'_xinit_0.0_temp_10000.0_probabs_0.0/'
         tdata, _, poly = mc_wait_time(mcdir)
         t, n = tdata
         tlc = p.radius / fc.clight
@@ -48,7 +48,7 @@ for k, directory in enumerate(dirs):
 norm = data[2][-1]/(fc.clight/p.radius*(data[0][-1])**(1./3))
 plt.figure(figsize=(5, 3))
 plt.plot(data[0]/data[3], norm*fc.clight/p.radius*(data[0])**(1./3), alpha=0.5, label=r'$t \propto (a\tau_0)^{1/3}$', ls=':', c='k')
-plt.plot(data[0]/data[3], data[2], '-', marker='s', ms=3, alpha=0.5, label=r'$\gamma_{00}^{\ \ -1}$')
+plt.plot(data[0]/data[3], data[2], '-', marker='s', ms=3, alpha=0.5, label=r'$\gamma_{11}^{\ \ -1}$')
 plt.scatter(data[0][:3]/data[3][:3], data[1][:3], label='Monte Carlo', marker='+', c='k')
 
 #plt.plot(data[0], fc.clight/p.radius*(data[0])**(1./2), alpha=0.5, label=r'$t = (a\tau)^{1/2}$', ls=':', c='k')
