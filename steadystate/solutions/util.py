@@ -141,7 +141,7 @@ def voigtx_full(a, x):
 #    z = x + a*1j
 #    H = np.real(wofz(z))
 #    line_profile = H/np.sqrt(np.pi)
-#   return line_profile
+#    return line_profile
     return a / np.pi / (0.01 + x**2)
 
 def tanf(x, tau):

@@ -218,12 +218,12 @@ def comparison_plot(*args, tauax=True, divergent=True):
         axi.plot(xuniform/tauscale, tauscale*(hsp_xuniform + hh_xuniform), '-.', label=r'$H_{\rm 0+bc}$', alpha=alpha, c=color[1], linewidth=1.5)
         axi.errorbar(xc/tauscale, tauscale*count, yerr=err, fmt='.', label="MC", alpha=0.75, ms=3., c='k', elinewidth=0.25, capsize=0.5)
         axi.text(0.85, 0.87, r'$\tau_0=${}'.format(scinot(tau0)), fontsize=8, transform=axi.transAxes)
-        axi.plot(xuniform/tauscale, np.abs(tauscale*hh_xuniform), ':', label=r'$H_{\rm bc}$', alpha=alpha, c=color[3], linewidth=1.5)
+        axi.plot(xuniform/tauscale, np.abs(tauscale*hh_xuniform), ':', label=r'$|H_{\rm bc}|$', alpha=alpha, c=color[3], linewidth=1.5)
         if i==0:
             axi.legend(bbox_to_anchor=(1.04, 0.8), loc='upper left', fontsize='x-small', frameon=False)
 
         axi.set_xlim(((min(xc)-2)/tauscale, (max(xc)+2)/tauscale))
-        axi.set_ylabel(r'$(a\tau_0)^{1/3}P(x)$') if tauax else axi.set_ylabel('log $|P(x)|$')
+        axi.set_ylabel(r'$(a\tau_0)^{1/3}P(x)$') if tauax else axi.set_ylabel('$P(x)$')
         axi.grid(linestyle='--', alpha=0.25)
         axi.set_ylim((1.e-6, 1.25))# if tauax else axi.set_ylim((-.01, .15)) 
         axi.set_yscale('log')
@@ -281,7 +281,7 @@ def multiplot_time(tc, t0, tau0):
 if __name__ == '__main__':
 
     filename = '1M tau0_10000000.0_xinit_0.0_temp_10000.0_probabs_0.0'
-    data_dir = '/home/connor/Documents/lya_analytic/data/'+filename+'/'
+    data_dir = '/home/connor/Documents/lya_analytic/steadystate/data/'+filename+'/'
 #    Path("./plots/"+filename).mkdir(parents=True, exist_ok=True)
 
 
@@ -295,7 +295,7 @@ if __name__ == '__main__':
     vth = np.sqrt(2.0 * c.k_B.cgs.value * temp / c.m_p.cgs.value)
     delta = lya.nu0 * vth / c.c.cgs.value
     a = lya.gamma / (4.0 * np.pi * delta)
-    
+    pdb.set_trace()
     mytitle = r'$\tau_0=${}'.format(scinot(tau0))+'\n'+r'$x_{{0}}={:.1f}$'.format(xinit)+'\n'+'$T=${}'.format(scinot(temp))
     
 
