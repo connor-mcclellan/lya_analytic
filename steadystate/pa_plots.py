@@ -195,7 +195,7 @@ def comparison_plot(*args, tauax=True, divergent=True):
     color = ['xkcd:muted blue', 'xkcd:darkish green', 'xkcd:golden rod', 'xkcd:blue', 'xkcd:grey']
     alpha = 0.8
 
-    fig, ax = plt.subplots(3, 1, sharex=True, gridspec_kw={'height_ratios': [1, 1, 1]}, figsize=(7, 5))
+    fig, ax = plt.subplots(3, 1, sharex=True, gridspec_kw={'height_ratios': [1, 1, 1]}, figsize=(8, 5))
     for i, arg in enumerate(args):
         xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, err, x0, xinit, ymin, ymax, phix_xc, hp_interp, hsp_interp, hh_interp, a, tau0 = arg
         axi = ax[i]
@@ -218,14 +218,15 @@ def comparison_plot(*args, tauax=True, divergent=True):
         axi.plot(xuniform/tauscale, tauscale*(hsp_xuniform + hh_xuniform), '-.', label=r'$H_0+H_{\rm bc}$', alpha=alpha, c=color[1], linewidth=1.5)
         axi.errorbar(xc/tauscale, tauscale*count, yerr=err, fmt='.', label="MC", alpha=0.75, ms=3., c='k', elinewidth=0.25, capsize=0.5)
         axi.text(0.85, 0.87, r'$\tau_0=${}'.format(scinot(tau0)), fontsize=8, transform=axi.transAxes)
-        axi.plot(xuniform/tauscale, np.abs(tauscale*hh_xuniform), ':', label=r'$|H_{\rm bc}|$', alpha=alpha, c=color[3], linewidth=1.5)
+#        axi.plot(xuniform/tauscale, np.abs(tauscale*hh_xuniform), ':', label=r'$|H_{\rm bc}|$', alpha=alpha, c=color[3], linewidth=1.5)
+        axi.plot(xuniform/tauscale, tauscale*hh_xuniform, ':', label=r'$H_{\rm bc}$', alpha=alpha, c=color[3], linewidth=1.5)
         if i==0:
             axi.legend(bbox_to_anchor=(1.04, 0.8), loc='upper left', fontsize='x-small', frameon=False)
 
         axi.set_xlim(((min(xc)-2)/tauscale, (max(xc)+2)/tauscale))
         axi.set_ylabel(r'$(a\tau_0)^{1/3}P(x)$') if tauax else axi.set_ylabel('$P(x)$')
         axi.grid(linestyle='--', alpha=0.25)
-        axi.set_ylim((1.e-6, 1.25))# if tauax else axi.set_ylim((-.01, .15)) 
+        axi.set_ylim((-.15, 1.05)) if tauax else axi.set_ylim((6.2e-7, .675))
         #axi.set_yscale('log')
         axi.yaxis.set_minor_locator(MultipleLocator(10))
         print('XINIT: {}    TAU SOURCE: {}'.format(xinit, tau_source))
