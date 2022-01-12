@@ -6,8 +6,8 @@ import pdb
 # USER PARAMETERS
 # =================
 temp = 1e4 # Kelvin
-R_s = 1e11 # cm
-R_p = 1e10 # cm
+#R_s = 1e11 # cm
+#R_p = 1e10 # cm
 d = 1e13 # cm
 num_dens=1701290465.5139434
 # =================
@@ -46,18 +46,19 @@ def xsec(nu):
 def get_nu(x): 
     return delta * x + nu0
 
-def tau(b, nu):
-    return num_dens * (2*np.sqrt(R_p**2 - b**2)) * xsec(nu)
+def tau(nu, Rp=1e10):
+    return 2*Rp*num_dens*xsec(nu)
 
-def spec(nu, I0=1., R_s=1e11, R_p=1e10):
-    abs_piece = (1 - np.exp(-tau(0, nu))*(tau(0, nu) + 1))/2/(num_dens * xsec(nu))**2
-    direct_piece = (R_s**2 - R_p**2)
-    return (np.pi * I0 / d**2 * (abs_piece + direct_piece)) / (np.pi * I0 * R_s**2 / d**2)
+def spec(nu, I0=1., Rs=1e11, Rp=1e10):
+    abs_piece = Rp**2/tau(nu, Rp=Rp)**2 * (1 - np.exp(-tau(nu, Rp=Rp))*(tau(nu, Rp=Rp) + 1))
+    direct_piece = 0.5*(Rs**2 - Rp**2)
+    return (2 * np.pi * I0 / d**2 * (abs_piece + direct_piece)) / (np.pi * I0 * Rs**2 / d**2)
 
 nu_bins = get_nu(np.linspace(-100, 100, 300))
 vel = (nu_bins - nu0)/nu0 * c
 
-plt.plot(vel, spec(nu_bins), marker='o', alpha=0.7, lw=1, label=r'$R_s=10^{11}$ cm, $R_p=10^{10}$ cm')
+plt.plot(vel, spec(nu_bins), marker='o', ms=1, alpha=0.7, lw=1, label=r'$R_s=10^{11}$ cm, $R_p=10^{10}$ cm')
+plt.plot(vel, spec(nu_bins, Rp=1.5e10), marker='s', ms=1, alpha=0.7, lw=1, label=r'$R_s=10^{11}$ cm, $R_p=1.5\times 10^{10}$ cm')
 
 plt.xlabel('velocity (cm/s)')
 plt.ylabel(r'flux fraction ($F_{\rm transit}/F_0$)')
