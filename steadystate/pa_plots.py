@@ -296,7 +296,7 @@ if __name__ == '__main__':
     vth = np.sqrt(2.0 * c.k_B.cgs.value * temp / c.m_p.cgs.value)
     delta = lya.nu0 * vth / c.c.cgs.value
     a = lya.gamma / (4.0 * np.pi * delta)
-    pdb.set_trace()
+
     mytitle = r'$\tau_0=${}'.format(scinot(tau0))+'\n'+r'$x_{{0}}={:.1f}$'.format(xinit)+'\n'+'$T=${}'.format(scinot(temp))
     
 

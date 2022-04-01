@@ -42,6 +42,7 @@ def init():
   numden = tau0 / (sigma0*radius)
   kx=numden*line_strength/delta			# in x units. tau0 = kx*radius/sqrt(pi).
   xmax=np.rint(4.0*(a*tau0)**0.333)		# wing 1.e4 times smaller than center
+  print('XMAX: ', xmax)
   beta=np.sqrt(2.0/3.0)*np.pi/3.0		# sigma(x) = beta*x^3/a, beta = 0.855
 
 ##########################################################################################################
@@ -122,6 +123,7 @@ def get_arrays_uniform_in_sigma_slow():
   oldsigma=sigma
 
   sigmamax=get_sigma(xmax)
+  print("SIGMAMAX = ", sigmamax)
   dsigma=2.0*sigmamax/(n-1)
   sigma=np.zeros(n)
   x=np.zeros(n)
@@ -294,7 +296,7 @@ def get_homo_soln_fast():
   i0=spherical_in(0,z,derivative=False)
   di0=spherical_in(0,z,derivative=True)
   rat = di0/i0
-
+  print("NUMBER OF POINTS, SIGMAMAX = ", n, np.max(sigma))
   # Construct matrix using array operations
   M=(ds/2.0/np.pi)*np.exp(1j*s[:]*sigma[:, None])*(1.0+np.abs(s[:])*rat/np.sqrt(3.0)/phix[:, None])
 
