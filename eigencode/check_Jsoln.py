@@ -16,11 +16,11 @@ for i, n in enumerate(ns):
         ax = axs[i]
     except:
         ax = axs
-    directory = Path('./data/tau1e7_xinit12').resolve()
+    directory = Path('./data/tau1e6_xinit0').resolve()
     sol = construct_sol(directory, 20, 500)
     Jdata = sol[0][n-1, :]
     p = sol[3]
-    voffset = np.max(Jdata)
+    voffset = 0#np.max(Jdata)
     print(voffset)
 
     for i, data in enumerate(Jdata): 

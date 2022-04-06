@@ -47,7 +47,7 @@ for k, directory in enumerate(dirs):
 
 norm = data[2][-1]/(fc.clight/p.radius*(data[0][-1])**(1./3))
 plt.figure(figsize=(5, 3))
-plt.plot(data[0]/data[3], norm*fc.clight/p.radius*(data[0])**(1./3), alpha=0.5, label=r'$t \propto (a\tau_0)^{1/3}$', ls=':', c='k')
+plt.plot(data[0]/data[3], norm*fc.clight/p.radius*(data[0])**(1./3), alpha=0.5, label=r'$ct/R = {:.2f}(a\tau_0)^{{1/3}}$'.format(norm*fc.clight/p.radius), ls=':', c='k')
 plt.plot(data[0]/data[3], data[2], '-', marker='s', ms=3, alpha=0.5, label=r'$\gamma_{11}^{\ \ -1}$')
 plt.scatter(data[0][:3]/data[3][:3], data[1][:3], label='Monte Carlo', marker='+', c='k')
 
@@ -59,4 +59,17 @@ plt.ylabel('$ct/R$')
 plt.xlabel(r'$\tau_0$')
 plt.tight_layout()
 
+plt.show()
+
+residual = np.abs(data[1][:3] - norm*fc.clight/p.radius*(data[0][:3])**(1./3))/(norm*fc.clight/p.radius*(data[0][:3])**(1./3))
+print("MC RESIDUAL: ", residual)
+plt.scatter(data[0][:3]/data[3][:3], residual)
+z = np.polyfit(np.log10(data[0][:3]/data[3][:3]), np.log10(residual), 1)
+
+xdata = np.linspace(1e5, 1e9, 100)
+log_fit = 10**(z[1]) * (xdata)**(z[0])
+print(log_fit[-1])
+plt.plot(xdata, log_fit, 'm--')
+plt.yscale('log')
+plt.xscale('log')
 plt.show()

@@ -152,7 +152,9 @@ def residual_plot(xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, e
     ax2.plot(xuniform, hsp_xuniform, '-', label=r'$H_0$', alpha=alpha, c=color[2], linewidth=1)
     ax2.plot(xuniform, hp_xuniform, '--', label=r'$H_{\rm d}$', alpha=alpha, c=color[0], linewidth=1)
     ax2.plot(xuniform, hsp_xuniform + hh_xuniform, '-.', label=r'$H_0 + H_{bc}$', alpha=alpha, c=color[1], linewidth=1)
-    ax2.errorbar(xc, count, yerr=err, fmt='.', label="MC", alpha=0.75, ms=3., c='k', elinewidth=0.25, capsize=0.5)
+    ax2.errorbar(xc, count, yerr=0.43*err/count, fmt='.', label="MC", alpha=0.75, ms=3., c='k', elinewidth=0.25, capsize=0.5)
+    print("ERR:", 0.43*err/count)
+    pdb.set_trace()
     ax2.axvline(xinit, c=color[4], lw=1, alpha=0.5)
     ax2.set_xlim((min(xc)-2, max(xc)+2))
 #    ax2.text(1.23, 1, mytitle, transform=ax2.transAxes, ha='left', va='top')
@@ -216,7 +218,7 @@ def comparison_plot(*args, tauax=True, divergent=True):
             axi.plot(xuniform/tauscale, tauscale*hp_xuniform, '--', label=r'$H_{\rm d}$', alpha=alpha, c=color[0], linewidth=1.5)
         axi.plot(xuniform/tauscale, tauscale*hsp_xuniform, '-', label=r'$H_0$', alpha=alpha, c=color[2], linewidth=1.5)
         axi.plot(xuniform/tauscale, tauscale*(hsp_xuniform + hh_xuniform), '-.', label=r'$H_0+H_{\rm bc}$', alpha=alpha, c=color[1], linewidth=1.5)
-        axi.errorbar(xc/tauscale, tauscale*count, yerr=err, fmt='.', label="MC", alpha=0.75, ms=3., c='k', elinewidth=0.25, capsize=0.5)
+        axi.errorbar(xc/tauscale, tauscale*count, yerr=err*tauscale, fmt='.', label="MC", alpha=0.75, ms=3., c='k', elinewidth=0.25, capsize=0.5)
         axi.text(0.85, 0.87, r'$\tau_0=${}'.format(scinot(tau0)), fontsize=8, transform=axi.transAxes)
 #        axi.plot(xuniform/tauscale, np.abs(tauscale*hh_xuniform), ':', label=r'$|H_{\rm bc}|$', alpha=alpha, c=color[3], linewidth=1.5)
         axi.plot(xuniform/tauscale, tauscale*hh_xuniform, ':', label=r'$H_{\rm bc}$', alpha=alpha, c=color[3], linewidth=1.5)
@@ -286,7 +288,7 @@ if __name__ == '__main__':
 #    Path("./plots/"+filename).mkdir(parents=True, exist_ok=True)
 
 
-    generate_new = True
+    generate_new = False
 
     lya = Line(1215.6701, 0.4164, 6.265e8)
     p = Params(line=lya, temp=1e4, tau0=1e7, 
@@ -296,6 +298,8 @@ if __name__ == '__main__':
     vth = np.sqrt(2.0 * c.k_B.cgs.value * temp / c.m_p.cgs.value)
     delta = lya.nu0 * vth / c.c.cgs.value
     a = lya.gamma / (4.0 * np.pi * delta)
+
+    print("ATAU=", a*tau0)
 
     mytitle = r'$\tau_0=${}'.format(scinot(tau0))+'\n'+r'$x_{{0}}={:.1f}$'.format(xinit)+'\n'+'$T=${}'.format(scinot(temp))
     
