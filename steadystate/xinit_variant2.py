@@ -12,12 +12,12 @@ matplotlib.rcParams['text.usetex'] = True
 matplotlib.rc('font', **{'family': 'serif',
                          'serif': ['Computer Modern Roman']})
 
-generate_new = True
+generate_new = False
 
 delta = 105691974558.58401
 a = 0.0004717036097750442
 #colors = ['#adadad', '#696969', '#000000']
-colors = pl.cm.inferno(np.linspace(0.15, .7, 5))
+colors = pl.cm.viridis(np.linspace(0.0, .85, 5))
 powers = [5, 6, 7, 8, 9]
 
 def sigma(x, a):
@@ -58,7 +58,7 @@ if __name__ == "__main__":
         for i, sigmas in enumerate([0,0.855 * tau0, 2*0.855 * tau0]):
             ax = axs[i]
             dind = j*3 + i
-            lw = 6 - (j/5)**2 * 4.5
+            lw = 7.5 - (j/4) * 5.5
             ax.plot(xdata[dind], ydata[dind], lw=lw, ls='-', c=colors[j])
             if i==0:
                 colorlegend.append(Patch(facecolor=colors[j], label=r'$\tau_0=10^{}$'.format(powers[j])))
@@ -66,7 +66,7 @@ if __name__ == "__main__":
                 ax.text(0.85, 0.1, r'$\sigma_s = {:d}\times \tau_0$'.format(i), transform=ax.transAxes)
 
             tauscale = (a*tau0)**(1/3.)
-            ax.axvline(xdop/tauscale, color=colors[j], lw=2, ls=":", alpha=1)
+            ax.axvline(xdop/tauscale, color=colors[j], lw=1.6, ls="--", alpha=1)
             ax.set_ylim((-3.99, 1.99))
             ax.set_xlim((-.05, 2))
             ax.set_ylabel(r'$(a\tau_0)^{2/3}P_{bc}(x)$')

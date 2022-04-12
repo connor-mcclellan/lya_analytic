@@ -141,7 +141,7 @@ def residual_plot(xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, e
 
     ax1.errorbar(xc, count, yerr=err, fmt='.', label="MC", alpha=0.75, ms=3., c='k', elinewidth=0.25, capsize=0.5)
 
-    ax1.text(xinit+0.5, 0.02, r'x$_{\rm s} = 0.0$', rotation=90, fontsize=8, color='gray')
+    ax1.text(xinit+0.5, 0.02, r'x$_{\rm s} = 0$', rotation=90, fontsize=8, color='gray')
     ax1.set_xlim((min(xc)-2, max(xc)+2))
     ax1.set_ylabel(r'$P(x)$')
     ax1.grid(linestyle='--', alpha=0.25)
@@ -150,19 +150,17 @@ def residual_plot(xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, e
     ax1.legend(bbox_to_anchor=(1.04, 0.8), loc='upper left', fontsize='x-small', frameon=False)
 
     # Top right panel: log-scale solutions
-    #ax2.plot(xuniform, hsp_xuniform, '-', label=r'$H_0$', alpha=alpha, c=color[2], linewidth=1)
-    #ax2.plot(xuniform, hp_xuniform, '--', label=r'$H_{\rm d}$', alpha=alpha, c=color[0], linewidth=1)
-    #ax2.plot(xuniform, hsp_xuniform + hh_xuniform, '-.', label=r'$H_0 + H_{bc}$', alpha=alpha, c=color[1], linewidth=1)
-    ax2.errorbar(xc, np.log10(count), yerr=0.43*err/count, fmt='.', label="MC", alpha=0.75, ms=3., c='k', elinewidth=0.25, capsize=0.5)
-    print("ERR:", 0.43*err/count)
-    #pdb.set_trace()
+    ax2.plot(xuniform, hsp_xuniform, '-', label=r'$H_0$', alpha=alpha, c=color[2], linewidth=1)
+    ax2.plot(xuniform, hp_xuniform, '--', label=r'$H_{\rm d}$', alpha=alpha, c=color[0], linewidth=1)
+    ax2.plot(xuniform, hsp_xuniform + hh_xuniform, '-.', label=r'$H_0 + H_{bc}$', alpha=alpha, c=color[1], linewidth=1)
+    ax2.errorbar(xc, count, yerr=err, fmt='.', label="MC", alpha=0.75, ms=3., c='k', elinewidth=0.25, capsize=0.5) 
     ax2.axvline(xinit, c=color[4], lw=1, alpha=0.5)
     ax2.set_xlim((min(xc)-2, max(xc)+2))
 #    ax2.text(1.23, 1, mytitle, transform=ax2.transAxes, ha='left', va='top')
-    #ax2.plot(xuniform, np.abs(hh_xuniform), ':', label=r'$H_{\rm bc}$', alpha=alpha, c=color[3], linewidth=1)
-    #ax2.set_ylim((1e-6, 0.1))
+    ax2.plot(xuniform, np.abs(hh_xuniform), ':', label=r'$H_{\rm bc}$', alpha=alpha, c=color[3], linewidth=1)
+    ax2.set_ylim((1e-6, 0.1))
     ax2.set_ylabel('$P(x)$')
-    #ax2.set_yscale('log')
+    ax2.set_yscale('log')
     ax2.grid(linestyle='--', alpha=0.25)
 #    ax2.yaxis.set_major_formatter(LogFormatterExponent())
 #    ax2.yaxis.tick_right()
@@ -214,15 +212,15 @@ def comparison_plot(*args, tauax=True, divergent=True):
         else:
             ypos = 0.5
             xpos = 0.05
-        axi.text(xpos, ypos, r'$\rm x_{{\rm s}}= {:.1f}$'.format(xinit), rotation=90, fontsize=8, color='gray')
+        axi.text(xpos, ypos, r'$\rm x_{{\rm s}}= {:1d}$'.format(int(xinit)), rotation=90, fontsize=8, color='gray')
         if divergent:
             axi.plot(xuniform/tauscale, tauscale*hp_xuniform, '--', label=r'$H_{\rm d}$', alpha=alpha, c=color[0], linewidth=1.5)
         axi.plot(xuniform/tauscale, tauscale*hsp_xuniform, '-', label=r'$H_0$', alpha=alpha, c=color[2], linewidth=1.5)
         axi.plot(xuniform/tauscale, tauscale*(hsp_xuniform + hh_xuniform), '-.', label=r'$H_0+H_{\rm bc}$', alpha=alpha, c=color[1], linewidth=1.5)
         axi.errorbar(xc/tauscale, tauscale*count, yerr=err*tauscale, fmt='.', label="MC", alpha=0.75, ms=3., c='k', elinewidth=0.25, capsize=0.5)
-        axi.text(0.85, 0.87, r'$\tau_0=${}'.format(scinot(tau0)), fontsize=8, transform=axi.transAxes)
-#        axi.plot(xuniform/tauscale, np.abs(tauscale*hh_xuniform), ':', label=r'$|H_{\rm bc}|$', alpha=alpha, c=color[3], linewidth=1.5)
-        axi.plot(xuniform/tauscale, tauscale*hh_xuniform, ':', label=r'$H_{\rm bc}$', alpha=alpha, c=color[3], linewidth=1.5)
+        axi.text(0.92, 0.87, r'$\tau_0=${}'.format('$'+scinot(tau0).split("times ")[-1]), fontsize=8, transform=axi.transAxes)
+        axi.plot(xuniform/tauscale, np.abs(tauscale*hh_xuniform), ':', label=r'$|H_{\rm bc}|$', alpha=alpha, c=color[3], linewidth=1.5)
+#        axi.plot(xuniform/tauscale, tauscale*hh_xuniform, ':', label=r'$H_{\rm bc}$', alpha=alpha, c=color[3], linewidth=1.5)
         if i==0:
             axi.legend(bbox_to_anchor=(1.04, 0.8), loc='upper left', fontsize='x-small', frameon=False)
 
@@ -230,7 +228,7 @@ def comparison_plot(*args, tauax=True, divergent=True):
         axi.set_ylabel(r'$(a\tau_0)^{1/3}P(x)$') if tauax else axi.set_ylabel('$P(x)$')
         axi.grid(linestyle='--', alpha=0.25)
         axi.set_ylim((-.15, 1.05)) if tauax else axi.set_ylim((6.2e-7, .675))
-        #axi.set_yscale('log')
+        axi.set_yscale('log')
         axi.yaxis.set_minor_locator(MultipleLocator(10))
         print('XINIT: {}    TAU SOURCE: {}'.format(xinit, tau_source))
     plt.xlabel(r'$x (a\tau_0)^{-1/3}$') if tauax else plt.xlabel('$x$')
