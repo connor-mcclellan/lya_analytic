@@ -72,6 +72,7 @@ def bin_x(x, n, mytitle, filename, tau0, xinit, temp, radius, L, delta, a, p, mc
         if (xe[j + 1] - xval) * (xval - xe[j]) < 0.0:
             print(j, (xe[j + 1] - xval) * (xval - xe[j]))
         count[j] = count[j] + 1.0
+    print("COUNTS:", count)
     err = np.sqrt(np.abs(1.0 * count))
     count = count / x.size / dx
     err = err / x.size / dx
@@ -149,19 +150,19 @@ def residual_plot(xuniform, hp_xuniform, hsp_xuniform, hh_xuniform, xc, count, e
     ax1.legend(bbox_to_anchor=(1.04, 0.8), loc='upper left', fontsize='x-small', frameon=False)
 
     # Top right panel: log-scale solutions
-    ax2.plot(xuniform, hsp_xuniform, '-', label=r'$H_0$', alpha=alpha, c=color[2], linewidth=1)
-    ax2.plot(xuniform, hp_xuniform, '--', label=r'$H_{\rm d}$', alpha=alpha, c=color[0], linewidth=1)
-    ax2.plot(xuniform, hsp_xuniform + hh_xuniform, '-.', label=r'$H_0 + H_{bc}$', alpha=alpha, c=color[1], linewidth=1)
-    ax2.errorbar(xc, count, yerr=0.43*err/count, fmt='.', label="MC", alpha=0.75, ms=3., c='k', elinewidth=0.25, capsize=0.5)
+    #ax2.plot(xuniform, hsp_xuniform, '-', label=r'$H_0$', alpha=alpha, c=color[2], linewidth=1)
+    #ax2.plot(xuniform, hp_xuniform, '--', label=r'$H_{\rm d}$', alpha=alpha, c=color[0], linewidth=1)
+    #ax2.plot(xuniform, hsp_xuniform + hh_xuniform, '-.', label=r'$H_0 + H_{bc}$', alpha=alpha, c=color[1], linewidth=1)
+    ax2.errorbar(xc, np.log10(count), yerr=0.43*err/count, fmt='.', label="MC", alpha=0.75, ms=3., c='k', elinewidth=0.25, capsize=0.5)
     print("ERR:", 0.43*err/count)
-    pdb.set_trace()
+    #pdb.set_trace()
     ax2.axvline(xinit, c=color[4], lw=1, alpha=0.5)
     ax2.set_xlim((min(xc)-2, max(xc)+2))
 #    ax2.text(1.23, 1, mytitle, transform=ax2.transAxes, ha='left', va='top')
-    ax2.plot(xuniform, np.abs(hh_xuniform), ':', label=r'$H_{\rm bc}$', alpha=alpha, c=color[3], linewidth=1)
-    ax2.set_ylim((1e-6, 0.1))
+    #ax2.plot(xuniform, np.abs(hh_xuniform), ':', label=r'$H_{\rm bc}$', alpha=alpha, c=color[3], linewidth=1)
+    #ax2.set_ylim((1e-6, 0.1))
     ax2.set_ylabel('$P(x)$')
-    ax2.set_yscale('log')
+    #ax2.set_yscale('log')
     ax2.grid(linestyle='--', alpha=0.25)
 #    ax2.yaxis.set_major_formatter(LogFormatterExponent())
 #    ax2.yaxis.tick_right()
@@ -288,7 +289,7 @@ if __name__ == '__main__':
 #    Path("./plots/"+filename).mkdir(parents=True, exist_ok=True)
 
 
-    generate_new = False
+    generate_new = True
 
     lya = Line(1215.6701, 0.4164, 6.265e8)
     p = Params(line=lya, temp=1e4, tau0=1e7, 
