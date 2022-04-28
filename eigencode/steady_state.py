@@ -54,7 +54,7 @@ def time_integrated(sigma, p, Jsoln, ssoln):
 
 
 if __name__ == '__main__':
-    directory = Path('./data/tau1e7_xinit12').resolve()
+    directory = Path('./data/tau1e6_xinit0').resolve()
     Jsoln, ssoln, intJsoln, p = construct_sol(directory, nmax=20, mmax=450)
 
     x_t, tdep_spec = time_integrated(p.sigma, p, Jsoln, ssoln)

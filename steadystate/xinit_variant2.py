@@ -17,7 +17,7 @@ generate_new = False
 delta = 105691974558.58401
 a = 0.0004717036097750442
 #colors = ['#adadad', '#696969', '#000000']
-colors = pl.cm.viridis(np.linspace(0.0, .85, 5))
+colors = pl.cm.inferno(np.linspace(0.0, .75, 5))
 powers = [5, 6, 7, 8, 9]
 
 def sigma(x, a):
@@ -58,7 +58,8 @@ if __name__ == "__main__":
         for i, sigmas in enumerate([0,0.855 * tau0, 2*0.855 * tau0]):
             ax = axs[i]
             dind = j*3 + i
-            lw = 7.5 - (j/4) * 5.5
+            #lw = 7.5 - (j/4) * 5.5
+            lw=1.5
             ax.plot(xdata[dind], ydata[dind], lw=lw, ls='-', c=colors[j])
             if i==0:
                 colorlegend.append(Patch(facecolor=colors[j], label=r'$\tau_0=10^{}$'.format(powers[j])))

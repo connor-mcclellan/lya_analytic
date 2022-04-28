@@ -308,8 +308,9 @@ if __name__ == '__main__':
 
     if generate_new:
         mu, x, time = np.load(data_dir + 'mu_x_time.npy')  
+        x = x[:49711]
         binx_output = bin_x(x, 64, mytitle, filename, tau0, xinit, temp, radius, L, delta, a, p)
-#        pickle.dump(binx_output, open('binx_output_xinit{:.1f}.p'.format(xinit), 'wb'))
+        pickle.dump(binx_output, open('binx_output_tau{:.1f}_MASKED.p'.format(tau0), 'wb'))
         residual_plot(*binx_output)
     else:
         binx_output = pickle.load(open('binx_output_tau{:.1f}.p'.format(tau0), 'rb'))
