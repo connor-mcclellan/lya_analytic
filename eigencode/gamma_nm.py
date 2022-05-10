@@ -54,7 +54,7 @@ bounds = ['1', '5', '10', '15', '20']
 cbar.set_ticks(np.array(bounds).astype(float))
 cbar.set_ticklabels(bounds)
 
-plt.ylabel(r'$R^{-1}c (a\tau_0)^{-1/3} n^{-4/3} \gamma_{nm}^{\ \ -1}$')
+plt.ylabel(r'$(a\tau_0)^{-1/3} n^{4/3} c \left(R \gamma_{nm}\right)^{-1}$')
 plt.xlabel('m')
 plt.xscale('log')
 plt.yscale('log')
