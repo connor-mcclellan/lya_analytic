@@ -29,16 +29,24 @@ rsamp = np.array(rsamp)
 weights = np.array(weights)
 
 fig, ax = plt.subplots()
+
+# Weighted distribution
 ax.hist(rsamp, bins=50, histtype='step', weights=weights, label="Weighted by f(r)")
+
+# Uniform distribution
 ns, bins, _ = ax.hist(rsamp, bins=50, histtype='step', label='Uniform in $r^2 dr$')
+
 bincenters = (bins[1:] + bins[:-1])/2.
 binwidths = np.diff(bins)
 ax.set_xlabel('r')
 ax.set_ylabel('N')
 
-
 r = np.linspace(0, 10, 200)
+
+# Weighted analytic solution
 ax.plot(r, n * binwidths[0] * func(r) * r**2. / (funcint(R2) - funcint(R1)), label=r'$f(r) r^2 dr$ distribution')
+
+# Uniform analytic solution
 ax.plot(r, n * binwidths[0] * 3 * r**2. / (R2**3. - R1**3.), label=r'$r^2 dr$ distribution')
 plt.legend()
 plt.show()
